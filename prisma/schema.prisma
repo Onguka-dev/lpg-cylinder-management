@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleName {
+  ADMIN
+  WAREHOUSE_MANAGER
+  RSO
+  MSO
+  AUDITOR
+  CUSTOMER
+}
+
+enum LocationType {
+  HEAD_OFFICE
+  WAREHOUSE
+  DEPOT
+  RETAIL_OUTLET
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        RoleName @unique
+  description String
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  roleId       String
+  locationId   String?
+  role         Role     @relation(fields: [roleId], references: [id])
+  location     Location? @relation(fields: [locationId], references: [id])
+  auditLogs    AuditLog[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Location {
+  id        String       @id @default(cuid())
+  name      String
+  code      String       @unique
+  type      LocationType
+  users     User[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model LpgSku {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  capacityKg  Int
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  details   String
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+}
