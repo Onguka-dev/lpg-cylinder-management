@@ -9,7 +9,7 @@ export default function WarehousePage() {
       stats={[
         { label: "Warehouse views", value: "1" },
         { label: "SKU types", value: "3" },
-        { label: "Workflows", value: "Soon" }
+        { label: "Movement workflows", value: "Active" }
       ]}
     />
   );

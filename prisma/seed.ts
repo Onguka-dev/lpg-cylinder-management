@@ -1,5 +1,13 @@
 import { createHash } from "node:crypto";
-import { PrismaClient, RoleName, LocationType, MasterDataType, CylinderStatus } from "@prisma/client";
+import {
+  CylinderStatus,
+  InventoryMovementStatus,
+  InventoryMovementType,
+  LocationType,
+  MasterDataType,
+  PrismaClient,
+  RoleName
+} from "@prisma/client";
 import { seedMasterDataRecords } from "../lib/master-data";
 import { seedCustomers } from "../lib/customers";
 
@@ -277,6 +285,59 @@ async function main() {
           newStatus: saved.status,
           newLocationId: saved.currentLocationId,
           reason: "Stage 4 seed cylinder"
+        }
+      });
+    }
+  }
+
+  const warehouseUser = await prisma.user.findUnique({ where: { email: "warehouse@example.com" } });
+  const rsoUser = await prisma.user.findUnique({ where: { email: "rso@example.com" } });
+  const mombasaDepot = await prisma.masterDataRecord.findFirst({
+    where: { type: MasterDataType.LOCATION, code: "DP-MBS" }
+  });
+
+  if (sku13kg && warehouse && mombasaDepot && warehouseUser && rsoUser) {
+    const movement = await prisma.inventoryMovement.upsert({
+      where: { reference: "TRF-STAGE5-SEED" },
+      update: {
+        type: InventoryMovementType.TRANSFER,
+        status: InventoryMovementStatus.REQUESTED,
+        skuId: sku13kg.id,
+        sourceLocationId: warehouse.id,
+        destinationLocationId: mombasaDepot.id,
+        sourceStatus: CylinderStatus.FILLED,
+        destinationStatus: CylinderStatus.FILLED,
+        requestedQuantity: 1,
+        notes: "Seed transfer request for Stage 5 movement workflow testing",
+        requestedById: rsoUser.id
+      },
+      create: {
+        reference: "TRF-STAGE5-SEED",
+        type: InventoryMovementType.TRANSFER,
+        status: InventoryMovementStatus.REQUESTED,
+        skuId: sku13kg.id,
+        sourceLocationId: warehouse.id,
+        destinationLocationId: mombasaDepot.id,
+        sourceStatus: CylinderStatus.FILLED,
+        destinationStatus: CylinderStatus.FILLED,
+        requestedQuantity: 1,
+        notes: "Seed transfer request for Stage 5 movement workflow testing",
+        requestedById: rsoUser.id
+      }
+    });
+
+    const existingMovementHistory = await prisma.inventoryMovementHistory.findFirst({
+      where: { movementId: movement.id, action: "Stage 5 seed movement" }
+    });
+
+    if (!existingMovementHistory) {
+      await prisma.inventoryMovementHistory.create({
+        data: {
+          movementId: movement.id,
+          toStatus: movement.status,
+          action: "Stage 5 seed movement",
+          details: "Seeded transfer request for approval, dispatch, and receiving checks.",
+          changedById: warehouseUser.id
         }
       });
     }

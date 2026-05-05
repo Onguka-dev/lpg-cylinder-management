@@ -229,6 +229,7 @@ export const seedMasterDataRecords: MasterDataFormValues[] = [
   { type: "ZONE", code: "ZONE-WEST", name: "Westlands Zone", description: "Nairobi zone placeholder" },
   { type: "ROUTE", code: "ROUTE-WEST-01", name: "Westlands Route 01", description: "Route placeholder only" },
   { type: "LOCATION", code: "LOC-HQ", name: "Head Office", description: "Administration location" },
+  { type: "LOCATION", code: "DP-MBS", name: "Mombasa Depot", description: "Sample depot assigned to the RSO demo user" },
   { type: "WAREHOUSE", code: "WH-NBO", name: "Nairobi Main Warehouse", description: "Primary Nairobi warehouse" },
   { type: "RETAIL_OUTLET", code: "RO-KSM", name: "Kisumu Retail Outlet", description: "Sample retail outlet" },
   { type: "VEHICLE", code: "TRK-001", name: "Delivery Truck 001", description: "Sample delivery vehicle" },

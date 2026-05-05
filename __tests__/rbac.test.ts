@@ -21,6 +21,13 @@ describe("role-based access control", () => {
     expect(canAccessPath("AUDITOR", "/transfers")).toBe(false);
   });
 
+  it("allows RSO and MSO to reach assigned inventory movement workflows", () => {
+    expect(canAccessPath("RSO", "/inventory/movements")).toBe(true);
+    expect(canAccessPath("RSO", "/inventory/cylinders")).toBe(false);
+    expect(canAccessPath("MSO", "/api/inventory/movements")).toBe(true);
+    expect(canAccessPath("MSO", "/inventory/stock-balances")).toBe(false);
+  });
+
   it("has a default dashboard for each role", () => {
     expect(defaultRouteByRole.RSO).toBe("/rso");
     expect(defaultRouteByRole.CUSTOMER).toBe("/customer");

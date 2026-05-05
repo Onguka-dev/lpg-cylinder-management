@@ -22,8 +22,9 @@ export default async function StockBalancesPage() {
         <p className="text-sm font-semibold text-brand-700">Inventory</p>
         <h1 className="mt-2 text-2xl font-semibold text-slate-950">Stock Balances</h1>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-          Balances grouped by SKU, location, and cylinder status. Alert logic is
-          placeholder-only in Stage 4.
+          Balances grouped by SKU, location, and cylinder status. Movement
+          workflows now update these balances after dispatch, receiving, or
+          completion steps.
         </p>
       </section>
 

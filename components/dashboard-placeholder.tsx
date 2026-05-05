@@ -57,8 +57,8 @@ export function DashboardPlaceholder({
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
           <h2 className="text-base font-semibold text-slate-950">Workflow Placeholder</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Stage 4 adds cylinder records, opening balances, stock balance views, and
-            inventory alert placeholders. Sales, dispatch, and inventory movement
+            Stage 5 adds inventory movement requests, approvals, dispatch,
+            receiving, variance logging, and audit trails. Sales and delivery
             workflows remain placeholders until later stages.
           </p>
           <div className="mt-5 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-500">

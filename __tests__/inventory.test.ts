@@ -6,6 +6,14 @@ import {
   cylinderStatuses,
   openingBalanceSchema
 } from "@/lib/inventory";
+import {
+  canApproveInventoryMovements,
+  canCreateReceiptCylinders,
+  canRequestInventoryMovements,
+  canViewInventoryMovements,
+  inventoryMovementSchema,
+  inventoryMovementTypes
+} from "@/lib/inventory-movements";
 
 describe("inventory foundation", () => {
   it("supports the required cylinder statuses", () => {
@@ -65,5 +73,53 @@ describe("inventory foundation", () => {
     expect(canManageInventory("AUDITOR")).toBe(false);
     expect(canViewInventory("AUDITOR")).toBe(true);
     expect(canViewInventory("RSO")).toBe(false);
+  });
+
+  it("supports the required inventory movement types", () => {
+    expect(inventoryMovementTypes).toEqual([
+      "OPENING_BALANCE",
+      "RECEIPT",
+      "ISSUE",
+      "TRANSFER",
+      "RETURN_FROM_CUSTOMER",
+      "RETURN_FROM_VEHICLE",
+      "ADJUSTMENT",
+      "DAMAGED_QUARANTINE",
+      "MAINTENANCE_TRANSFER"
+    ]);
+  });
+
+  it("validates movement requests and source requirements", () => {
+    const validTransfer = inventoryMovementSchema.safeParse({
+      reference: "TRF-TEST",
+      type: "TRANSFER",
+      skuId: "sku-id",
+      sourceLocationId: "warehouse-id",
+      destinationLocationId: "retail-id",
+      sourceStatus: "FILLED",
+      destinationStatus: "FILLED",
+      requestedQuantity: 2
+    });
+    const invalidTransfer = inventoryMovementSchema.safeParse({
+      reference: "TRF-BAD",
+      type: "TRANSFER",
+      skuId: "sku-id",
+      destinationLocationId: "retail-id",
+      destinationStatus: "FILLED",
+      requestedQuantity: 2
+    });
+
+    expect(validTransfer.success).toBe(true);
+    expect(invalidTransfer.success).toBe(false);
+  });
+
+  it("applies movement role permissions", () => {
+    expect(canViewInventoryMovements("AUDITOR")).toBe(true);
+    expect(canRequestInventoryMovements("RSO")).toBe(true);
+    expect(canRequestInventoryMovements("CUSTOMER")).toBe(false);
+    expect(canApproveInventoryMovements("WAREHOUSE_MANAGER")).toBe(true);
+    expect(canApproveInventoryMovements("MSO")).toBe(false);
+    expect(canCreateReceiptCylinders("RECEIPT")).toBe(true);
+    expect(canCreateReceiptCylinders("TRANSFER")).toBe(false);
   });
 });

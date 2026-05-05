@@ -31,6 +31,7 @@ export const moduleNavItems = [
   { href: "/admin/master-data", label: "Master Data", icon: ListChecks },
   { href: "/customers", label: "Customers", icon: Users },
   { href: "/inventory", label: "Inventory", icon: Boxes },
+  { href: "/inventory/movements", label: "Movements", icon: PackageCheck },
   { href: "/transfers", label: "Transfers", icon: PackageCheck },
   { href: "/retail-sales", label: "Retail Sales", icon: ShoppingCart },
   { href: "/retail-inventory", label: "Retail Inventory", icon: Boxes },

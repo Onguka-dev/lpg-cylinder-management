@@ -65,6 +65,28 @@ enum CylinderStatus {
   WITH_CUSTOMER
 }
 
+enum InventoryMovementType {
+  OPENING_BALANCE
+  RECEIPT
+  ISSUE
+  TRANSFER
+  RETURN_FROM_CUSTOMER
+  RETURN_FROM_VEHICLE
+  ADJUSTMENT
+  DAMAGED_QUARANTINE
+  MAINTENANCE_TRANSFER
+}
+
+enum InventoryMovementStatus {
+  REQUESTED
+  APPROVED
+  DISPATCHED
+  RECEIVED
+  COMPLETED
+  VARIANCE_LOGGED
+  REJECTED
+}
+
 model Role {
   id          String   @id @default(cuid())
   name        RoleName @unique
@@ -86,6 +108,11 @@ model User {
   auditLogs    AuditLog[]
   cylinderHistoryEntries CylinderHistory[]
   openingBalanceBatches OpeningBalanceBatch[]
+  requestedInventoryMovements InventoryMovement[] @relation("MovementRequestedBy")
+  approvedInventoryMovements InventoryMovement[] @relation("MovementApprovedBy")
+  dispatchedInventoryMovements InventoryMovement[] @relation("MovementDispatchedBy")
+  receivedInventoryMovements InventoryMovement[] @relation("MovementReceivedBy")
+  inventoryMovementHistoryEntries InventoryMovementHistory[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -136,6 +163,9 @@ model MasterDataRecord {
   locationCylinders Cylinder[] @relation("CylinderLocation")
   openingBalanceSkuLines OpeningBalanceLine[] @relation("OpeningBalanceSku")
   openingBalanceLocationLines OpeningBalanceLine[] @relation("OpeningBalanceLocation")
+  movementSkus InventoryMovement[] @relation("MovementSku")
+  sourceMovements InventoryMovement[] @relation("MovementSourceLocation")
+  destinationMovements InventoryMovement[] @relation("MovementDestinationLocation")
   metadata    Json?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
@@ -177,12 +207,85 @@ model Cylinder {
   status            CylinderStatus
   notes             String?
   historyEntries    CylinderHistory[]
+  movementLines     InventoryMovementCylinder[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
   @@index([skuId])
   @@index([currentLocationId])
   @@index([status])
+}
+
+model InventoryMovement {
+  id                    String                  @id @default(cuid())
+  reference             String                  @unique
+  type                  InventoryMovementType
+  status                InventoryMovementStatus @default(REQUESTED)
+  skuId                 String
+  sku                   MasterDataRecord        @relation("MovementSku", fields: [skuId], references: [id])
+  sourceLocationId      String?
+  sourceLocation        MasterDataRecord?       @relation("MovementSourceLocation", fields: [sourceLocationId], references: [id])
+  destinationLocationId String?
+  destinationLocation   MasterDataRecord?       @relation("MovementDestinationLocation", fields: [destinationLocationId], references: [id])
+  sourceStatus          CylinderStatus?
+  destinationStatus     CylinderStatus
+  requestedQuantity     Int
+  approvedQuantity      Int?
+  dispatchedQuantity    Int?
+  receivedQuantity      Int?
+  varianceQuantity      Int?
+  varianceReason        String?
+  notes                 String?
+  requestedById         String?
+  requestedBy           User?                   @relation("MovementRequestedBy", fields: [requestedById], references: [id], onDelete: SetNull)
+  approvedById          String?
+  approvedBy            User?                   @relation("MovementApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  dispatchedById        String?
+  dispatchedBy          User?                   @relation("MovementDispatchedBy", fields: [dispatchedById], references: [id], onDelete: SetNull)
+  receivedById          String?
+  receivedBy            User?                   @relation("MovementReceivedBy", fields: [receivedById], references: [id], onDelete: SetNull)
+  approvedAt            DateTime?
+  dispatchedAt          DateTime?
+  receivedAt            DateTime?
+  completedAt           DateTime?
+  cylinders             InventoryMovementCylinder[]
+  historyEntries        InventoryMovementHistory[]
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+
+  @@index([type])
+  @@index([status])
+  @@index([skuId])
+  @@index([sourceLocationId])
+  @@index([destinationLocationId])
+}
+
+model InventoryMovementCylinder {
+  id         String            @id @default(cuid())
+  movementId String
+  movement   InventoryMovement @relation(fields: [movementId], references: [id], onDelete: Cascade)
+  cylinderId String
+  cylinder   Cylinder          @relation(fields: [cylinderId], references: [id], onDelete: Cascade)
+  createdAt  DateTime          @default(now())
+
+  @@unique([movementId, cylinderId])
+  @@index([cylinderId])
+}
+
+model InventoryMovementHistory {
+  id         String                   @id @default(cuid())
+  movementId String
+  movement   InventoryMovement        @relation(fields: [movementId], references: [id], onDelete: Cascade)
+  fromStatus InventoryMovementStatus?
+  toStatus   InventoryMovementStatus
+  action     String
+  details    String
+  changedById String?
+  changedBy  User?                    @relation(fields: [changedById], references: [id], onDelete: SetNull)
+  createdAt  DateTime                 @default(now())
+
+  @@index([movementId])
+  @@index([createdAt])
 }
 
 model CylinderHistory {
