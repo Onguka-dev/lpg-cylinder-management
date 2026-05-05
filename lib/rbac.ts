@@ -12,9 +12,9 @@ export const defaultRouteByRole: Record<AppRole, string> = {
 export const routePermissions: Record<AppRole, string[]> = {
   ADMIN: ["*"],
   WAREHOUSE_MANAGER: ["/", "/warehouse", "/inventory", "/transfers"],
-  RSO: ["/", "/rso", "/retail-sales", "/retail-inventory"],
-  MSO: ["/", "/mso", "/field-sales", "/deliveries"],
-  AUDITOR: ["/", "/auditor", "/reports", "/audit-logs"],
+  RSO: ["/", "/rso", "/retail-sales", "/retail-inventory", "/customers", "/api/customers"],
+  MSO: ["/", "/mso", "/field-sales", "/deliveries", "/customers", "/api/customers"],
+  AUDITOR: ["/", "/auditor", "/reports", "/audit-logs", "/customers", "/api/customers"],
   CUSTOMER: ["/", "/customer"]
 };
 

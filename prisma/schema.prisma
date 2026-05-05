@@ -23,6 +23,38 @@ enum LocationType {
   RETAIL_OUTLET
 }
 
+enum MasterDataType {
+  SKU_MASTER
+  CYLINDER_SIZE
+  CYLINDER_CATEGORY
+  PRICE
+  TAX
+  DISCOUNT_PROMOTION
+  DELIVERY_FEE
+  REGION
+  ZONE
+  ROUTE
+  LOCATION
+  WAREHOUSE
+  RETAIL_OUTLET
+  VEHICLE
+  MAINTENANCE_LOCATION
+  DAMAGED_QUARANTINE_LOCATION
+  STOCK_THRESHOLD
+}
+
+enum CustomerCategory {
+  DOMESTIC
+  COMMERCIAL
+  INDUSTRIAL
+}
+
+enum CustomerStatus {
+  ACTIVE
+  SUSPENDED
+  BLACKLISTED
+}
+
 model Role {
   id          String   @id @default(cuid())
   name        RoleName @unique
@@ -72,4 +104,46 @@ model AuditLog {
   userId    String?
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
+}
+
+model MasterDataRecord {
+  id          String           @id @default(cuid())
+  type        MasterDataType
+  code        String
+  name        String
+  description String?
+  isActive    Boolean          @default(true)
+  amount      Decimal?         @db.Decimal(12, 2)
+  rate        Decimal?         @db.Decimal(5, 2)
+  capacityKg  Int?
+  threshold   Int?
+  parentId    String?
+  parent      MasterDataRecord? @relation("MasterDataHierarchy", fields: [parentId], references: [id])
+  children    MasterDataRecord[] @relation("MasterDataHierarchy")
+  metadata    Json?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([type, code])
+  @@index([type, isActive])
+}
+
+model Customer {
+  id             String           @id @default(cuid())
+  name           String
+  phone          String           @unique
+  proofReference String           @unique
+  category       CustomerCategory
+  address        String
+  latitude       Decimal?         @db.Decimal(9, 6)
+  longitude      Decimal?         @db.Decimal(9, 6)
+  status         CustomerStatus   @default(ACTIVE)
+  creditLimit    Decimal?         @db.Decimal(12, 2)
+  notes          String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([name])
+  @@index([status])
+  @@index([category])
 }

@@ -13,7 +13,15 @@ const loginSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const parsed = loginSchema.safeParse(await request.json());
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Enter a valid email and password." }, { status: 400 });
+  }
+
+  const parsed = loginSchema.safeParse(body);
 
   if (!parsed.success) {
     return NextResponse.json({ error: "Enter a valid email and password." }, { status: 400 });

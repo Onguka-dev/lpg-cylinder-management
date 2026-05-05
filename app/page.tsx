@@ -4,12 +4,12 @@ export default function HomePage() {
   return (
     <DashboardPlaceholder
       title="Operations Dashboard"
-      eyebrow="Stage 0"
-      description="A clean starting point for LPG cylinder management. Metrics, alerts, and workflow summaries will be added in later stages."
+      eyebrow="Stage 3"
+      description="Authentication, role-based access control, master-data configuration, and customer management are active. Sales and inventory movement workflows remain placeholders for later stages."
       stats={[
-        { label: "Role workspaces", value: "5" },
-        { label: "Core modules", value: "7" },
-        { label: "Seed SKU types", value: "3" }
+        { label: "Role workspaces", value: "6" },
+        { label: "Master data areas", value: "17" },
+        { label: "Seed customers", value: "3" }
       ]}
     />
   );

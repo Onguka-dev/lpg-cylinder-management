@@ -5,6 +5,7 @@ import {
   CreditCard,
   FileClock,
   LayoutDashboard,
+  ListChecks,
   MapPinned,
   PackageCheck,
   Settings,
@@ -27,6 +28,7 @@ export const roleNavItems = [
 
 export const moduleNavItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/master-data", label: "Master Data", icon: ListChecks },
   { href: "/customers", label: "Customers", icon: Users },
   { href: "/inventory", label: "Inventory", icon: Boxes },
   { href: "/transfers", label: "Transfers", icon: PackageCheck },

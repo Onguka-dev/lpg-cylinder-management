@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
-import { PrismaClient, RoleName, LocationType } from "@prisma/client";
+import { PrismaClient, RoleName, LocationType, MasterDataType } from "@prisma/client";
+import { seedMasterDataRecords } from "../lib/master-data";
+import { seedCustomers } from "../lib/customers";
 
 const prisma = new PrismaClient();
 
@@ -158,6 +160,68 @@ async function main() {
           userId: adminUser.id
         }
       ]
+    });
+  }
+
+  for (const record of seedMasterDataRecords) {
+    await prisma.masterDataRecord.upsert({
+      where: {
+        type_code: {
+          type: record.type as MasterDataType,
+          code: record.code.toUpperCase()
+        }
+      },
+      update: {
+        name: record.name,
+        description: record.description,
+        isActive: record.isActive ?? true,
+        amount: record.amount,
+        rate: record.rate,
+        capacityKg: record.capacityKg,
+        threshold: record.threshold,
+        metadata: {}
+      },
+      create: {
+        type: record.type as MasterDataType,
+        code: record.code.toUpperCase(),
+        name: record.name,
+        description: record.description,
+        isActive: record.isActive ?? true,
+        amount: record.amount,
+        rate: record.rate,
+        capacityKg: record.capacityKg,
+        threshold: record.threshold,
+        metadata: {}
+      }
+    });
+  }
+
+  for (const customer of seedCustomers) {
+    await prisma.customer.upsert({
+      where: { phone: customer.phone },
+      update: {
+        name: customer.name,
+        proofReference: customer.proofReference,
+        category: customer.category,
+        address: customer.address,
+        latitude: customer.latitude,
+        longitude: customer.longitude,
+        status: customer.status,
+        creditLimit: customer.creditLimit,
+        notes: customer.notes
+      },
+      create: {
+        name: customer.name,
+        phone: customer.phone,
+        proofReference: customer.proofReference,
+        category: customer.category,
+        address: customer.address,
+        latitude: customer.latitude,
+        longitude: customer.longitude,
+        status: customer.status,
+        creditLimit: customer.creditLimit,
+        notes: customer.notes
+      }
     });
   }
 }

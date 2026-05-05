@@ -66,7 +66,7 @@ export function AppShell({
                   LPG Cylinder Management
                 </p>
                 <p className="truncate text-xs text-slate-500">
-                  Stage 1 authentication and RBAC placeholders
+                  Stage 3 customer management
                 </p>
               </div>
             </div>

@@ -57,9 +57,9 @@ export function DashboardPlaceholder({
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
           <h2 className="text-base font-semibold text-slate-950">Workflow Placeholder</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Business actions for this area are intentionally not implemented in Stage 0.
-            This panel marks where forms, approvals, data tables, and operational logic
-            can be added in later stages.
+            Stage 3 adds customer registration, search, edit, and profile screens.
+            Sales, inventory movements, payments, complaints, and service history remain
+            placeholders until later workflow stages.
           </p>
           <div className="mt-5 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-500">
             No workflow data yet.

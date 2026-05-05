@@ -16,6 +16,7 @@ describe("role-based access control", () => {
   it("limits auditor to reports and audit logs", () => {
     expect(canAccessPath("AUDITOR", "/reports")).toBe(true);
     expect(canAccessPath("AUDITOR", "/audit-logs")).toBe(true);
+    expect(canAccessPath("AUDITOR", "/customers")).toBe(true);
     expect(canAccessPath("AUDITOR", "/inventory")).toBe(false);
   });
 
