@@ -4,12 +4,12 @@ export default function HomePage() {
   return (
     <DashboardPlaceholder
       title="Operations Dashboard"
-      eyebrow="Stage 3"
-      description="Authentication, role-based access control, master-data configuration, and customer management are active. Sales and inventory movement workflows remain placeholders for later stages."
+      eyebrow="Stage 4"
+      description="Authentication, master data, customer management, and the cylinder inventory foundation are active. Sales and dispatch workflows remain placeholders for later stages."
       stats={[
         { label: "Role workspaces", value: "6" },
-        { label: "Master data areas", value: "17" },
-        { label: "Seed customers", value: "3" }
+        { label: "Cylinder statuses", value: "7" },
+        { label: "Inventory alerts", value: "3" }
       ]}
     />
   );

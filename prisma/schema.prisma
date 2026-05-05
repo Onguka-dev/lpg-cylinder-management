@@ -55,6 +55,16 @@ enum CustomerStatus {
   BLACKLISTED
 }
 
+enum CylinderStatus {
+  FILLED
+  EMPTY
+  DAMAGED
+  IN_TRANSIT
+  RESERVED
+  UNDER_MAINTENANCE
+  WITH_CUSTOMER
+}
+
 model Role {
   id          String   @id @default(cuid())
   name        RoleName @unique
@@ -74,6 +84,8 @@ model User {
   role         Role     @relation(fields: [roleId], references: [id])
   location     Location? @relation(fields: [locationId], references: [id])
   auditLogs    AuditLog[]
+  cylinderHistoryEntries CylinderHistory[]
+  openingBalanceBatches OpeningBalanceBatch[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -120,6 +132,10 @@ model MasterDataRecord {
   parentId    String?
   parent      MasterDataRecord? @relation("MasterDataHierarchy", fields: [parentId], references: [id])
   children    MasterDataRecord[] @relation("MasterDataHierarchy")
+  skuCylinders Cylinder[] @relation("CylinderSku")
+  locationCylinders Cylinder[] @relation("CylinderLocation")
+  openingBalanceSkuLines OpeningBalanceLine[] @relation("OpeningBalanceSku")
+  openingBalanceLocationLines OpeningBalanceLine[] @relation("OpeningBalanceLocation")
   metadata    Json?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
@@ -146,4 +162,70 @@ model Customer {
   @@index([name])
   @@index([status])
   @@index([category])
+}
+
+model Cylinder {
+  id                String             @id @default(cuid())
+  serialNumber      String             @unique
+  barcode           String?            @unique
+  skuId             String
+  sku               MasterDataRecord   @relation("CylinderSku", fields: [skuId], references: [id])
+  manufactureDate   DateTime?
+  inspectionDueDate DateTime?
+  currentLocationId String
+  currentLocation   MasterDataRecord   @relation("CylinderLocation", fields: [currentLocationId], references: [id])
+  status            CylinderStatus
+  notes             String?
+  historyEntries    CylinderHistory[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([skuId])
+  @@index([currentLocationId])
+  @@index([status])
+}
+
+model CylinderHistory {
+  id             String          @id @default(cuid())
+  cylinderId     String
+  cylinder       Cylinder        @relation(fields: [cylinderId], references: [id], onDelete: Cascade)
+  previousStatus CylinderStatus?
+  newStatus      CylinderStatus
+  previousLocationId String?
+  newLocationId  String
+  changedById    String?
+  changedBy      User?           @relation(fields: [changedById], references: [id], onDelete: SetNull)
+  reason         String
+  createdAt      DateTime        @default(now())
+
+  @@index([cylinderId])
+  @@index([createdAt])
+}
+
+model OpeningBalanceBatch {
+  id          String               @id @default(cuid())
+  reference   String               @unique
+  notes       String?
+  createdById String?
+  createdBy   User?                @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  lines       OpeningBalanceLine[]
+  createdAt   DateTime             @default(now())
+}
+
+model OpeningBalanceLine {
+  id          String              @id @default(cuid())
+  batchId     String
+  batch       OpeningBalanceBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  skuId       String
+  sku         MasterDataRecord    @relation("OpeningBalanceSku", fields: [skuId], references: [id])
+  locationId  String
+  location    MasterDataRecord    @relation("OpeningBalanceLocation", fields: [locationId], references: [id])
+  status      CylinderStatus
+  quantity    Int
+  serialPrefix String
+  createdAt   DateTime            @default(now())
+
+  @@index([skuId])
+  @@index([locationId])
+  @@index([status])
 }

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { PrismaClient, RoleName, LocationType, MasterDataType } from "@prisma/client";
+import { PrismaClient, RoleName, LocationType, MasterDataType, CylinderStatus } from "@prisma/client";
 import { seedMasterDataRecords } from "../lib/master-data";
 import { seedCustomers } from "../lib/customers";
 
@@ -223,6 +223,63 @@ async function main() {
         notes: customer.notes
       }
     });
+  }
+
+  const [sku6kg, sku13kg, sku50kg, warehouse, retailOutlet, maintenanceLocation, damagedLocation] =
+    await Promise.all([
+      prisma.masterDataRecord.findFirst({ where: { type: MasterDataType.SKU_MASTER, code: "LPG-6KG" } }),
+      prisma.masterDataRecord.findFirst({ where: { type: MasterDataType.SKU_MASTER, code: "LPG-13KG" } }),
+      prisma.masterDataRecord.findFirst({ where: { type: MasterDataType.SKU_MASTER, code: "LPG-50KG" } }),
+      prisma.masterDataRecord.findFirst({ where: { type: MasterDataType.WAREHOUSE, code: "WH-NBO" } }),
+      prisma.masterDataRecord.findFirst({ where: { type: MasterDataType.RETAIL_OUTLET, code: "RO-KSM" } }),
+      prisma.masterDataRecord.findFirst({ where: { type: MasterDataType.MAINTENANCE_LOCATION, code: "MAINT-NBO" } }),
+      prisma.masterDataRecord.findFirst({ where: { type: MasterDataType.DAMAGED_QUARANTINE_LOCATION, code: "DMG-NBO" } })
+    ]);
+
+  const seedCylinders = [
+    { serialNumber: "CYL-6KG-0001", barcode: "RFID-6KG-0001", skuId: sku6kg?.id, currentLocationId: warehouse?.id, status: CylinderStatus.FILLED },
+    { serialNumber: "CYL-6KG-0002", barcode: "RFID-6KG-0002", skuId: sku6kg?.id, currentLocationId: retailOutlet?.id, status: CylinderStatus.EMPTY },
+    { serialNumber: "CYL-13KG-0001", barcode: "RFID-13KG-0001", skuId: sku13kg?.id, currentLocationId: warehouse?.id, status: CylinderStatus.FILLED },
+    { serialNumber: "CYL-13KG-0002", barcode: "RFID-13KG-0002", skuId: sku13kg?.id, currentLocationId: damagedLocation?.id, status: CylinderStatus.DAMAGED },
+    { serialNumber: "CYL-50KG-0001", barcode: "RFID-50KG-0001", skuId: sku50kg?.id, currentLocationId: maintenanceLocation?.id, status: CylinderStatus.UNDER_MAINTENANCE }
+  ];
+
+  for (const cylinder of seedCylinders) {
+    if (!cylinder.skuId || !cylinder.currentLocationId) continue;
+
+    const saved = await prisma.cylinder.upsert({
+      where: { serialNumber: cylinder.serialNumber },
+      update: {
+        barcode: cylinder.barcode,
+        skuId: cylinder.skuId,
+        currentLocationId: cylinder.currentLocationId,
+        status: cylinder.status,
+        notes: "Seed cylinder for Stage 4 inventory foundation"
+      },
+      create: {
+        serialNumber: cylinder.serialNumber,
+        barcode: cylinder.barcode,
+        skuId: cylinder.skuId,
+        currentLocationId: cylinder.currentLocationId,
+        status: cylinder.status,
+        notes: "Seed cylinder for Stage 4 inventory foundation"
+      }
+    });
+
+    const existingHistory = await prisma.cylinderHistory.findFirst({
+      where: { cylinderId: saved.id, reason: "Stage 4 seed cylinder" }
+    });
+
+    if (!existingHistory) {
+      await prisma.cylinderHistory.create({
+        data: {
+          cylinderId: saved.id,
+          newStatus: saved.status,
+          newLocationId: saved.currentLocationId,
+          reason: "Stage 4 seed cylinder"
+        }
+      });
+    }
   }
 }
 

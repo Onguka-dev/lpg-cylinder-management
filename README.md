@@ -1,6 +1,6 @@
 # LPG Cylinder Management App
 
-Stage 3 adds customer management on top of authentication, role-based access control, and admin master-data configuration. Sales and inventory workflows are intentionally placeholders.
+Stage 4 adds the cylinder and inventory foundation on top of authentication, role-based access control, admin master-data configuration, and customer management. Sales, dispatch, and inventory movement workflows are intentionally placeholders.
 
 ## Stack
 
@@ -60,10 +60,19 @@ All seeded users use the same demo password: `password123`.
 npm test
 ```
 
-## Manual Stage 3 Checks
+## Manual Stage 4 Checks
 
 - Visit `/login` and sign in with each seeded role.
 - Confirm Admin can access all pages.
+- As Admin or Warehouse Manager, visit `/inventory`.
+- Create at least two cylinder records and confirm they appear in `/inventory/cylinders` and their detail pages.
+- Edit one cylinder status or location and confirm a history entry is created.
+- Use `/inventory/opening-balances/new` to create a small opening balance and confirm generated cylinders appear in the cylinder list.
+- Visit `/inventory/stock-balances` and confirm balances are grouped by SKU, location, and status.
+- Confirm alert placeholders are visible for low stock, overstock, and excess damaged cylinders.
+- Try invalid cylinder input such as a one-character serial number and confirm a validation message appears.
+- Confirm RSO, MSO, and Customer roles cannot access inventory screens or actions.
+- Confirm Auditor can view inventory screens but cannot create or edit cylinders.
 - As Admin, RSO, or MSO, visit `/customers`.
 - Register at least two customers and confirm they appear in the customer list and profile pages.
 - Search customers by name, phone, or ID/passport/proof reference.

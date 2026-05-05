@@ -17,7 +17,8 @@ describe("role-based access control", () => {
     expect(canAccessPath("AUDITOR", "/reports")).toBe(true);
     expect(canAccessPath("AUDITOR", "/audit-logs")).toBe(true);
     expect(canAccessPath("AUDITOR", "/customers")).toBe(true);
-    expect(canAccessPath("AUDITOR", "/inventory")).toBe(false);
+    expect(canAccessPath("AUDITOR", "/inventory")).toBe(true);
+    expect(canAccessPath("AUDITOR", "/transfers")).toBe(false);
   });
 
   it("has a default dashboard for each role", () => {
