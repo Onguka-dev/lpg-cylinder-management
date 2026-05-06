@@ -459,6 +459,116 @@ async function main() {
       }
     }
   }
+
+  if (maryCustomer && sku6kg && adminUser) {
+    const billingOrder = await prisma.customerOrder.upsert({
+      where: { orderNumber: "ORD-STAGE10-SEED" },
+      update: {
+        customerId: maryCustomer.id,
+        status: "DELIVERED",
+        channel: "CALL_CENTRE",
+        deliveryZoneId: westlandsZone?.id ?? null,
+        expectedDeliveryDate: new Date("2026-05-12"),
+        notes: "Seed delivered order for Stage 10 billing checks",
+        deliveryPlaceholder: "Delivered for billing seed.",
+        createdById: adminUser.id
+      },
+      create: {
+        orderNumber: "ORD-STAGE10-SEED",
+        customerId: maryCustomer.id,
+        status: "DELIVERED",
+        channel: "CALL_CENTRE",
+        deliveryZoneId: westlandsZone?.id ?? null,
+        expectedDeliveryDate: new Date("2026-05-12"),
+        notes: "Seed delivered order for Stage 10 billing checks",
+        deliveryPlaceholder: "Delivered for billing seed.",
+        createdById: adminUser.id
+      }
+    });
+
+    await prisma.customerOrderItem.deleteMany({ where: { orderId: billingOrder.id } });
+    await prisma.customerOrderItem.create({
+      data: { orderId: billingOrder.id, skuId: sku6kg.id, quantity: 1, notes: "Stage 10 invoice seed line" }
+    });
+
+    const invoice = await prisma.invoice.upsert({
+      where: { invoiceNumber: "INV-STAGE10-SEED" },
+      update: {
+        customerId: maryCustomer.id,
+        customerOrderId: billingOrder.id,
+        sourceType: "CUSTOMER_ORDER",
+        status: "PARTIALLY_PAID",
+        subtotalAmount: 1200,
+        taxAmount: 192,
+        deliveryFeeAmount: 300,
+        discountAmount: 100,
+        promotionPlaceholder: "Welcome promotion placeholder",
+        totalAmount: 1592,
+        amountPaid: 800,
+        balanceAmount: 792,
+        creditLimitChecked: true,
+        creditLimitExceeded: false,
+        refundPlaceholder: "Refund processing placeholder",
+        notes: "Stage 10 seed invoice"
+      },
+      create: {
+        invoiceNumber: "INV-STAGE10-SEED",
+        customerId: maryCustomer.id,
+        customerOrderId: billingOrder.id,
+        sourceType: "CUSTOMER_ORDER",
+        status: "PARTIALLY_PAID",
+        subtotalAmount: 1200,
+        taxAmount: 192,
+        deliveryFeeAmount: 300,
+        discountAmount: 100,
+        promotionPlaceholder: "Welcome promotion placeholder",
+        totalAmount: 1592,
+        amountPaid: 800,
+        balanceAmount: 792,
+        creditLimitChecked: true,
+        creditLimitExceeded: false,
+        refundPlaceholder: "Refund processing placeholder",
+        notes: "Stage 10 seed invoice",
+        createdById: adminUser.id
+      }
+    });
+
+    await prisma.invoiceLine.deleteMany({ where: { invoiceId: invoice.id } });
+    await prisma.invoiceLine.create({
+      data: {
+        invoiceId: invoice.id,
+        description: sku6kg.name,
+        quantity: 1,
+        unitAmount: 1200,
+        lineTotal: 1200
+      }
+    });
+
+    await prisma.billingPayment.upsert({
+      where: { receiptNumber: "RCT-STAGE10-SEED" },
+      update: {
+        invoiceId: invoice.id,
+        customerId: maryCustomer.id,
+        method: "MPESA",
+        status: "PAID",
+        amount: 800,
+        reference: "MPESA-STAGE10-SEED",
+        refundPlaceholder: "Refund processing placeholder",
+        recordedById: adminUser.id
+      },
+      create: {
+        receiptNumber: "RCT-STAGE10-SEED",
+        invoiceId: invoice.id,
+        customerId: maryCustomer.id,
+        method: "MPESA",
+        status: "PAID",
+        amount: 800,
+        reference: "MPESA-STAGE10-SEED",
+        refundPlaceholder: "Refund processing placeholder",
+        recordedById: adminUser.id
+      }
+    });
+  }
 }
 
 main()

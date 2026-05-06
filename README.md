@@ -1,6 +1,6 @@
 # LPG Cylinder Management App
 
-Stage 9 adds delivery management and proof of delivery on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, movement workflows, RSO refill sales, order management, and MSO field sales.
+Stage 10 adds billing, invoices, partial payments, receipts, outstanding dues, and payment reports on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, movement workflows, RSO refill sales, order management, MSO field sales, and delivery management.
 
 ## Stack
 
@@ -59,6 +59,21 @@ All seeded users use the same demo password: `password123`.
 ```bash
 npm test
 ```
+
+## Manual Stage 10 Checks
+
+- Visit `/login` and sign in as Admin, Warehouse Manager, RSO, or MSO.
+- Visit `/payments` and confirm invoice totals, amount paid, outstanding dues, and invoice list.
+- Generate an invoice from `/payments/invoices/new` using a delivered order or closed retail sale.
+- Confirm invoice detail shows line totals, tax, delivery fee, discount, promotion placeholder, invoice total, amount paid, balance, refund placeholder, and credit limit check.
+- Record one partial payment using cash, Mpesa, card, or online placeholder and confirm a receipt number appears.
+- Record a second payment and confirm invoice status changes to paid when balance reaches zero.
+- Visit a customer profile and confirm payment history and invoices are visible.
+- Visit `/reports` and confirm invoice/payment report totals and receipt list.
+- Try invalid input such as missing invoice source, payment amount of zero, payment above balance, or an invoice that exceeds customer credit limit and confirm a clear validation message.
+- Confirm Auditor can view billing and reports but cannot create invoices or record payments.
+- Confirm Customer cannot access billing screens or APIs.
+- Confirm `/api/health` returns stage `10`.
 
 ## Manual Stage 9 Checks
 

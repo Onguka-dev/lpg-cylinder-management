@@ -11,7 +11,13 @@ export default async function CustomerProfilePage({
 }) {
   const [session, customer] = await Promise.all([
     getCurrentSession(),
-    prisma.customer.findUnique({ where: { id: params.id } })
+    prisma.customer.findUnique({
+      where: { id: params.id },
+      include: {
+        invoices: { include: { payments: true }, orderBy: { updatedAt: "desc" }, take: 8 },
+        billingPayments: { include: { invoice: true }, orderBy: { createdAt: "desc" }, take: 8 }
+      }
+    })
   ]);
 
   if (!customer) {
@@ -55,16 +61,36 @@ export default async function CustomerProfilePage({
         </dl>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-4">
-        {["Orders", "Payments", "Complaints", "Service History"].map((title) => (
+      <section className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
+          <h2 className="text-base font-semibold text-slate-950">Payment History</h2>
+          <div className="mt-4 grid gap-3">
+            {customer.billingPayments.map((payment) => (
+              <Link className="rounded-lg border border-slate-200 p-3 text-sm hover:border-brand-200 hover:bg-brand-50" href={`/payments/invoices/${payment.invoiceId}`} key={payment.id}>
+                <span className="font-medium text-slate-900">{payment.receiptNumber}</span>
+                <span className="mt-1 block text-slate-500">{payment.amount.toString()} via {formatEnum(payment.method)} for {payment.invoice.invoiceNumber}</span>
+              </Link>
+            ))}
+            {!customer.billingPayments.length ? <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">No payments recorded yet.</p> : null}
+          </div>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
+          <h2 className="text-base font-semibold text-slate-950">Invoices</h2>
+          <div className="mt-4 grid gap-3">
+            {customer.invoices.map((invoice) => (
+              <Link className="rounded-lg border border-slate-200 p-3 text-sm hover:border-brand-200 hover:bg-brand-50" href={`/payments/invoices/${invoice.id}`} key={invoice.id}>
+                <span className="font-medium text-slate-900">{invoice.invoiceNumber}</span>
+                <span className="mt-1 block text-slate-500">{formatEnum(invoice.status)} - Balance {invoice.balanceAmount.toString()}</span>
+              </Link>
+            ))}
+            {!customer.invoices.length ? <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">No invoices recorded yet.</p> : null}
+          </div>
+        </div>
+        {["Complaints", "Service History"].map((title) => (
           <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel" key={title}>
             <h2 className="text-base font-semibold text-slate-950">{title}</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Placeholder only. This workflow is not implemented in Stage 3.
-            </p>
-            <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-              No records yet.
-            </div>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Placeholder only. This workflow is not implemented in Stage 10.</p>
+            <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">No records yet.</div>
           </div>
         ))}
       </section>

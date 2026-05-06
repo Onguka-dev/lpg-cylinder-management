@@ -10,7 +10,7 @@ describe("role-based access control", () => {
   it("limits warehouse manager to warehouse inventory and transfers", () => {
     expect(canAccessPath("WAREHOUSE_MANAGER", "/inventory")).toBe(true);
     expect(canAccessPath("WAREHOUSE_MANAGER", "/transfers")).toBe(true);
-    expect(canAccessPath("WAREHOUSE_MANAGER", "/reports")).toBe(false);
+    expect(canAccessPath("WAREHOUSE_MANAGER", "/reports")).toBe(true);
   });
 
   it("limits auditor to reports and audit logs", () => {
@@ -60,6 +60,14 @@ describe("role-based access control", () => {
     expect(canAccessPath("AUDITOR", "/deliveries")).toBe(true);
     expect(canAccessPath("CUSTOMER", "/deliveries")).toBe(false);
     expect(canAccessPath("RSO", "/api/deliveries")).toBe(false);
+  });
+
+  it("allows billing and reports for operational roles and auditor viewing", () => {
+    expect(canAccessPath("RSO", "/payments")).toBe(true);
+    expect(canAccessPath("MSO", "/api/billing/invoices")).toBe(true);
+    expect(canAccessPath("WAREHOUSE_MANAGER", "/reports")).toBe(true);
+    expect(canAccessPath("AUDITOR", "/payments")).toBe(true);
+    expect(canAccessPath("CUSTOMER", "/payments")).toBe(false);
   });
 
   it("has a default dashboard for each role", () => {

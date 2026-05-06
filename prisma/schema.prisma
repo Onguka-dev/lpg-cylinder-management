@@ -97,12 +97,29 @@ enum PaymentMethod {
   CASH
   MPESA
   CARD
+  ONLINE
 }
 
 enum PaymentStatus {
   PENDING
+  PARTIAL
   PAID
   FAILED
+  REFUNDED
+}
+
+enum InvoiceSourceType {
+  CUSTOMER_ORDER
+  RETAIL_REFILL
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
 }
 
 enum OrderChannel {
@@ -180,6 +197,8 @@ model User {
   assignedDeliveries Delivery[] @relation("DeliveryAssignedUser")
   createdDeliveries Delivery[] @relation("DeliveryCreatedBy")
   deliveryHistoryEntries DeliveryHistory[]
+  createdInvoices Invoice[] @relation("InvoiceCreatedBy")
+  recordedBillingPayments BillingPayment[] @relation("BillingPaymentRecordedBy")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -267,6 +286,8 @@ model Customer {
   refillOrders   RefillOrder[]
   customerOrders CustomerOrder[]
   fieldSales FieldSale[]
+  invoices       Invoice[]
+  billingPayments BillingPayment[]
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
@@ -293,6 +314,7 @@ model CustomerOrder {
   items                CustomerOrderItem[]
   historyEntries       CustomerOrderHistory[]
   delivery             Delivery?
+  invoice              Invoice?              @relation("OrderInvoice")
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
 
@@ -479,6 +501,7 @@ model RefillOrder {
   createdById           String?
   createdBy             User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
   payment               Payment?
+  invoice               Invoice?             @relation("RefillInvoice")
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
 
@@ -501,6 +524,76 @@ model Payment {
   recordedBy    User?         @relation(fields: [recordedById], references: [id], onDelete: SetNull)
   createdAt     DateTime      @default(now())
 
+  @@index([method])
+  @@index([status])
+}
+
+model Invoice {
+  id                    String            @id @default(cuid())
+  invoiceNumber         String            @unique
+  sourceType            InvoiceSourceType
+  customerId            String
+  customer              Customer          @relation(fields: [customerId], references: [id])
+  customerOrderId       String?           @unique
+  customerOrder         CustomerOrder?    @relation("OrderInvoice", fields: [customerOrderId], references: [id], onDelete: SetNull)
+  refillOrderId         String?           @unique
+  refillOrder           RefillOrder?      @relation("RefillInvoice", fields: [refillOrderId], references: [id], onDelete: SetNull)
+  status                InvoiceStatus     @default(ISSUED)
+  subtotalAmount        Decimal           @db.Decimal(12, 2)
+  taxAmount             Decimal           @default(0) @db.Decimal(12, 2)
+  deliveryFeeAmount     Decimal           @default(0) @db.Decimal(12, 2)
+  discountAmount        Decimal           @default(0) @db.Decimal(12, 2)
+  promotionPlaceholder  String?
+  totalAmount           Decimal           @db.Decimal(12, 2)
+  amountPaid            Decimal           @default(0) @db.Decimal(12, 2)
+  balanceAmount         Decimal           @db.Decimal(12, 2)
+  creditLimitChecked    Boolean           @default(false)
+  creditLimitExceeded   Boolean           @default(false)
+  refundPlaceholder     String?
+  notes                 String?
+  createdById           String?
+  createdBy             User?             @relation("InvoiceCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  lines                 InvoiceLine[]
+  payments              BillingPayment[]
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  @@index([sourceType])
+  @@index([customerId])
+  @@index([status])
+}
+
+model InvoiceLine {
+  id          String    @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int
+  unitAmount  Decimal   @db.Decimal(12, 2)
+  lineTotal   Decimal   @db.Decimal(12, 2)
+  createdAt   DateTime  @default(now())
+
+  @@index([invoiceId])
+}
+
+model BillingPayment {
+  id                String        @id @default(cuid())
+  receiptNumber     String        @unique
+  invoiceId         String
+  invoice           Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  customerId        String
+  customer          Customer      @relation(fields: [customerId], references: [id])
+  method            PaymentMethod
+  status            PaymentStatus @default(PAID)
+  amount            Decimal       @db.Decimal(12, 2)
+  reference         String?
+  refundPlaceholder String?
+  recordedById      String?
+  recordedBy        User?         @relation("BillingPaymentRecordedBy", fields: [recordedById], references: [id], onDelete: SetNull)
+  createdAt         DateTime      @default(now())
+
+  @@index([invoiceId])
+  @@index([customerId])
   @@index([method])
   @@index([status])
 }

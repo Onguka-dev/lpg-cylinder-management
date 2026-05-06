@@ -4,12 +4,12 @@ export default function HomePage() {
   return (
     <DashboardPlaceholder
       title="Operations Dashboard"
-      eyebrow="Stage 9"
-      description="Authentication, master data, customers, inventory, movements, RSO refills, order management, MSO field sales, and delivery proof of delivery are active."
+      eyebrow="Stage 10"
+      description="Authentication, master data, customers, inventory, movements, RSO refills, order management, MSO field sales, deliveries, and billing/payments are active."
       stats={[
         { label: "Role workspaces", value: "6" },
         { label: "Order statuses", value: "7" },
-        { label: "Delivery statuses", value: "7" }
+        { label: "Billing methods", value: "4" }
       ]}
     />
   );

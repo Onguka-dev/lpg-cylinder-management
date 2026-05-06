@@ -66,7 +66,7 @@ export function AppShell({
                   LPG Cylinder Management
                 </p>
                 <p className="truncate text-xs text-slate-500">
-                  Stage 9 delivery management
+                  Stage 10 billing and payments
                 </p>
               </div>
             </div>
