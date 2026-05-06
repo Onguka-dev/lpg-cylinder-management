@@ -11,10 +11,10 @@ export const defaultRouteByRole: Record<AppRole, string> = {
 
 export const routePermissions: Record<AppRole, string[]> = {
   ADMIN: ["*"],
-  WAREHOUSE_MANAGER: ["/", "/warehouse", "/inventory", "/transfers", "/orders", "/api/orders", "/api/cylinders", "/api/inventory"],
+  WAREHOUSE_MANAGER: ["/", "/warehouse", "/inventory", "/transfers", "/orders", "/deliveries", "/api/orders", "/api/deliveries", "/api/cylinders", "/api/inventory"],
   RSO: ["/", "/rso", "/retail-sales", "/retail-inventory", "/customers", "/orders", "/inventory/movements", "/api/customers", "/api/orders", "/api/inventory/movements", "/api/retail"],
-  MSO: ["/", "/mso", "/field-sales", "/deliveries", "/customers", "/orders", "/inventory/movements", "/api/customers", "/api/orders", "/api/inventory/movements", "/api/field-sales"],
-  AUDITOR: ["/", "/auditor", "/reports", "/audit-logs", "/customers", "/orders", "/api/orders", "/api/customers", "/inventory", "/api/cylinders", "/api/inventory", "/retail-sales/refills", "/api/retail/refill-orders", "/api/retail/refill-stock", "/field-sales", "/api/field-sales"],
+  MSO: ["/", "/mso", "/field-sales", "/deliveries", "/customers", "/orders", "/inventory/movements", "/api/customers", "/api/orders", "/api/deliveries", "/api/inventory/movements", "/api/field-sales"],
+  AUDITOR: ["/", "/auditor", "/reports", "/audit-logs", "/customers", "/orders", "/api/orders", "/api/customers", "/inventory", "/api/cylinders", "/api/inventory", "/retail-sales/refills", "/api/retail/refill-orders", "/api/retail/refill-stock", "/field-sales", "/api/field-sales", "/deliveries", "/api/deliveries"],
   CUSTOMER: ["/", "/customer"]
 };
 

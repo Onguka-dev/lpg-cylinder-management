@@ -1,6 +1,6 @@
 # LPG Cylinder Management App
 
-Stage 8 adds the Mobile Sales Officer field sales workflow on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, movement workflows, RSO refill sales, and order management. Offline sync remains a placeholder for Stage 15.
+Stage 9 adds delivery management and proof of delivery on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, movement workflows, RSO refill sales, order management, and MSO field sales.
 
 ## Stack
 
@@ -59,6 +59,21 @@ All seeded users use the same demo password: `password123`.
 ```bash
 npm test
 ```
+
+## Manual Stage 9 Checks
+
+- Visit `/login` and sign in as Admin, Warehouse Manager, or MSO.
+- Visit `/deliveries` and confirm delivery assignments list with route, zone, assigned MSO/driver, vehicle, order, customer, and status.
+- Create a delivery assignment from `/deliveries/new` for an eligible order and confirm it appears in the list and detail views.
+- Confirm the linked order moves to `Assigned` when the delivery is assigned.
+- On the delivery detail page, move a delivery through loading confirmation and customer arrival.
+- Mark a delivery as delivered with OTP, digital signature placeholder, photo upload placeholder, GPS latitude/longitude placeholder, and customer remarks.
+- Confirm the linked order moves to `Dispatched` after loading/customer-arrival steps and `Delivered` after proof of delivery.
+- Create or use another assignment and mark it failed, returned, or exception with one of: customer unavailable, damaged cylinder, wrong location, payment issue, or partial delivery.
+- Try invalid delivery input such as missing order, one-character driver name, delivered with no OTP, or failed with no reason and confirm clear validation messages.
+- Confirm Auditor can view delivery screens but cannot assign or update deliveries.
+- Confirm Customer and RSO cannot access delivery screens or APIs.
+- Confirm `/api/health` returns stage `9`.
 
 ## Manual Stage 8 Checks
 

@@ -7,6 +7,9 @@ export default async function MsoPage() {
   const vehicleStock = assignment.vehicle
     ? await prisma.cylinder.count({ where: { currentLocationId: assignment.vehicle.id, status: "FILLED" } })
     : 0;
+  const assignedDeliveries = await prisma.delivery.count({
+    where: { assignedUser: { email: "mso@example.com" }, status: { in: ["ASSIGNED", "LOADING_CONFIRMED", "CUSTOMER_ARRIVAL"] } }
+  });
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
@@ -22,14 +25,18 @@ export default async function MsoPage() {
         <Summary label="Assigned Vehicle" value={assignment.vehicle?.code ?? "None"} />
         <Summary label="Route" value={assignment.route?.code ?? "Placeholder"} />
         <Summary label="Filled Stock" value={String(vehicleStock)} />
+        <Summary label="Active Deliveries" value={String(assignedDeliveries)} />
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-2">
+      <section className="grid gap-3 sm:grid-cols-3">
         <Link className="rounded-lg bg-brand-600 px-4 py-3 text-center text-sm font-semibold text-white" href="/field-sales">
           Open field sales workspace
         </Link>
         <Link className="rounded-lg border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700" href="/field-sales/sales/new">
           New instant sale
+        </Link>
+        <Link className="rounded-lg border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700" href="/deliveries">
+          Delivery assignments
         </Link>
       </section>
     </div>

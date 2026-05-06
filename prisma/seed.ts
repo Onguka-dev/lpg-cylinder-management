@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import {
   CylinderStatus,
+  DeliveryStatus,
   InventoryMovementStatus,
   InventoryMovementType,
   LocationType,
@@ -358,6 +359,8 @@ async function main() {
 
   const maryCustomer = await prisma.customer.findFirst({ where: { phone: "+254700111222" } });
   const westlandsZone = await prisma.masterDataRecord.findFirst({ where: { type: MasterDataType.ZONE, code: "ZONE-WEST" } });
+  const westlandsRoute = await prisma.masterDataRecord.findFirst({ where: { type: MasterDataType.ROUTE, code: "ROUTE-WEST-01" } });
+  const msoUser = await prisma.user.findUnique({ where: { email: "mso@example.com" } });
 
   if (maryCustomer && sku6kg && sku13kg && westlandsZone && adminUser) {
     const order = await prisma.customerOrder.upsert({
@@ -368,8 +371,8 @@ async function main() {
         isPriority: true,
         deliveryZoneId: westlandsZone.id,
         expectedDeliveryDate: new Date("2026-05-10"),
-        notes: "Seed bulk order for Stage 7 order management",
-        deliveryPlaceholder: "Dispatch execution remains a placeholder in Stage 7.",
+        notes: "Seed bulk order for Stage 7 order and Stage 9 delivery testing",
+        deliveryPlaceholder: "Delivery assignment is active in Stage 9.",
         createdById: adminUser.id
       },
       create: {
@@ -379,8 +382,8 @@ async function main() {
         isPriority: true,
         deliveryZoneId: westlandsZone.id,
         expectedDeliveryDate: new Date("2026-05-10"),
-        notes: "Seed bulk order for Stage 7 order management",
-        deliveryPlaceholder: "Dispatch execution remains a placeholder in Stage 7.",
+        notes: "Seed bulk order for Stage 7 order and Stage 9 delivery testing",
+        deliveryPlaceholder: "Delivery assignment is active in Stage 9.",
         createdById: adminUser.id
       }
     });
@@ -406,6 +409,54 @@ async function main() {
           changedById: adminUser.id
         }
       });
+    }
+
+    if (vehicle && msoUser) {
+      const delivery = await prisma.delivery.upsert({
+        where: { deliveryNumber: "DLV-STAGE9-SEED" },
+        update: {
+          orderId: order.id,
+          routeId: westlandsRoute?.id ?? null,
+          zoneId: westlandsZone.id,
+          vehicleId: vehicle.id,
+          assignedUserId: msoUser.id,
+          driverName: "David Otieno",
+          status: DeliveryStatus.ASSIGNED
+        },
+        create: {
+          deliveryNumber: "DLV-STAGE9-SEED",
+          orderId: order.id,
+          routeId: westlandsRoute?.id ?? null,
+          zoneId: westlandsZone.id,
+          vehicleId: vehicle.id,
+          assignedUserId: msoUser.id,
+          driverName: "David Otieno",
+          status: DeliveryStatus.ASSIGNED,
+          createdById: adminUser.id
+        }
+      });
+
+      if (order.status !== "ASSIGNED") {
+        await prisma.customerOrder.update({
+          where: { id: order.id },
+          data: { status: "ASSIGNED" }
+        });
+      }
+
+      const existingDeliveryHistory = await prisma.deliveryHistory.findFirst({
+        where: { deliveryId: delivery.id, action: "Stage 9 seed delivery" }
+      });
+      if (!existingDeliveryHistory) {
+        await prisma.deliveryHistory.create({
+          data: {
+            deliveryId: delivery.id,
+            toStatus: delivery.status,
+            action: "Stage 9 seed delivery",
+            details: "Seeded delivery assignment for proof of delivery workflow checks.",
+            changedById: adminUser.id
+          }
+        });
+      }
     }
   }
 }

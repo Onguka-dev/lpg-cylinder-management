@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 export default async function OrderDetailPage({ params }: { params: { id: string } }) {
   const order = await prisma.customerOrder.findUnique({
     where: { id: params.id },
-    include: { customer: true, deliveryZone: true, createdBy: true, items: { include: { sku: true }, orderBy: { createdAt: "asc" } }, historyEntries: { include: { changedBy: true }, orderBy: { createdAt: "desc" } } }
+    include: { customer: true, deliveryZone: true, delivery: true, createdBy: true, items: { include: { sku: true }, orderBy: { createdAt: "asc" } }, historyEntries: { include: { changedBy: true }, orderBy: { createdAt: "desc" } } }
   });
   if (!order) notFound();
   return (
@@ -20,6 +20,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
         </div>
         <div className="flex flex-wrap gap-3">
           {canModifyOrderStatus(order.status) ? <Link className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700" href={`/orders/${order.id}/edit`}>Edit</Link> : null}
+          {order.delivery ? <Link className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700" href={`/deliveries/${order.delivery.id}`}>Delivery</Link> : null}
           <Link className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700" href="/orders">Back</Link>
         </div>
       </section>

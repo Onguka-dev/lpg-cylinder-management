@@ -53,6 +53,15 @@ describe("role-based access control", () => {
     expect(canAccessPath("RSO", "/api/field-sales/sales")).toBe(false);
   });
 
+  it("allows delivery management for operational roles and auditor viewing", () => {
+    expect(canAccessPath("MSO", "/deliveries")).toBe(true);
+    expect(canAccessPath("MSO", "/api/deliveries")).toBe(true);
+    expect(canAccessPath("WAREHOUSE_MANAGER", "/deliveries")).toBe(true);
+    expect(canAccessPath("AUDITOR", "/deliveries")).toBe(true);
+    expect(canAccessPath("CUSTOMER", "/deliveries")).toBe(false);
+    expect(canAccessPath("RSO", "/api/deliveries")).toBe(false);
+  });
+
   it("has a default dashboard for each role", () => {
     expect(defaultRouteByRole.RSO).toBe("/rso");
     expect(defaultRouteByRole.CUSTOMER).toBe("/customer");
