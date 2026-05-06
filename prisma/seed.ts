@@ -233,7 +233,7 @@ async function main() {
     });
   }
 
-  const [sku6kg, sku13kg, sku50kg, warehouse, retailOutlet, mombasaLocation, maintenanceLocation, damagedLocation] =
+  const [sku6kg, sku13kg, sku50kg, warehouse, retailOutlet, mombasaLocation, maintenanceLocation, damagedLocation, vehicle] =
     await Promise.all([
       prisma.masterDataRecord.findFirst({ where: { type: MasterDataType.SKU_MASTER, code: "LPG-6KG" } }),
       prisma.masterDataRecord.findFirst({ where: { type: MasterDataType.SKU_MASTER, code: "LPG-13KG" } }),
@@ -242,7 +242,8 @@ async function main() {
       prisma.masterDataRecord.findFirst({ where: { type: MasterDataType.RETAIL_OUTLET, code: "RO-KSM" } }),
       prisma.masterDataRecord.findFirst({ where: { type: MasterDataType.LOCATION, code: "DP-MBS" } }),
       prisma.masterDataRecord.findFirst({ where: { type: MasterDataType.MAINTENANCE_LOCATION, code: "MAINT-NBO" } }),
-      prisma.masterDataRecord.findFirst({ where: { type: MasterDataType.DAMAGED_QUARANTINE_LOCATION, code: "DMG-NBO" } })
+      prisma.masterDataRecord.findFirst({ where: { type: MasterDataType.DAMAGED_QUARANTINE_LOCATION, code: "DMG-NBO" } }),
+      prisma.masterDataRecord.findFirst({ where: { type: MasterDataType.VEHICLE, code: "TRK-001" } })
     ]);
 
   const seedCylinders = [
@@ -253,7 +254,15 @@ async function main() {
     { serialNumber: "CYL-13KG-0001", barcode: "RFID-13KG-0001", skuId: sku13kg?.id, currentLocationId: warehouse?.id, status: CylinderStatus.FILLED },
     { serialNumber: "CYL-13KG-0002", barcode: "RFID-13KG-0002", skuId: sku13kg?.id, currentLocationId: damagedLocation?.id, status: CylinderStatus.DAMAGED },
     { serialNumber: "CYL-13KG-RSO-0001", barcode: "RFID-13KG-RSO-0001", skuId: sku13kg?.id, currentLocationId: mombasaLocation?.id, status: CylinderStatus.FILLED },
-    { serialNumber: "CYL-50KG-0001", barcode: "RFID-50KG-0001", skuId: sku50kg?.id, currentLocationId: maintenanceLocation?.id, status: CylinderStatus.UNDER_MAINTENANCE }
+    { serialNumber: "CYL-50KG-0001", barcode: "RFID-50KG-0001", skuId: sku50kg?.id, currentLocationId: maintenanceLocation?.id, status: CylinderStatus.UNDER_MAINTENANCE },
+    { serialNumber: "CYL-6KG-VEH-0001", barcode: "RFID-6KG-VEH-0001", skuId: sku6kg?.id, currentLocationId: vehicle?.id, status: CylinderStatus.FILLED },
+    { serialNumber: "CYL-6KG-VEH-0002", barcode: "RFID-6KG-VEH-0002", skuId: sku6kg?.id, currentLocationId: vehicle?.id, status: CylinderStatus.FILLED },
+    { serialNumber: "CYL-6KG-VEH-0003", barcode: "RFID-6KG-VEH-0003", skuId: sku6kg?.id, currentLocationId: vehicle?.id, status: CylinderStatus.FILLED },
+    { serialNumber: "CYL-6KG-VEH-0004", barcode: "RFID-6KG-VEH-0004", skuId: sku6kg?.id, currentLocationId: vehicle?.id, status: CylinderStatus.FILLED },
+    { serialNumber: "CYL-13KG-VEH-0001", barcode: "RFID-13KG-VEH-0001", skuId: sku13kg?.id, currentLocationId: vehicle?.id, status: CylinderStatus.FILLED },
+    { serialNumber: "CYL-13KG-VEH-0002", barcode: "RFID-13KG-VEH-0002", skuId: sku13kg?.id, currentLocationId: vehicle?.id, status: CylinderStatus.FILLED },
+    { serialNumber: "CYL-13KG-VEH-0003", barcode: "RFID-13KG-VEH-0003", skuId: sku13kg?.id, currentLocationId: vehicle?.id, status: CylinderStatus.FILLED },
+    { serialNumber: "CYL-13KG-VEH-EMPTY-0001", barcode: "RFID-13KG-VEH-EMPTY-0001", skuId: sku13kg?.id, currentLocationId: vehicle?.id, status: CylinderStatus.EMPTY }
   ];
 
   for (const cylinder of seedCylinders) {

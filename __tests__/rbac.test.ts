@@ -44,6 +44,15 @@ describe("role-based access control", () => {
     expect(canAccessPath("CUSTOMER", "/orders")).toBe(false);
   });
 
+  it("allows MSO field sales while keeping write APIs away from unrelated roles", () => {
+    expect(canAccessPath("MSO", "/field-sales")).toBe(true);
+    expect(canAccessPath("MSO", "/api/field-sales/sales")).toBe(true);
+    expect(canAccessPath("AUDITOR", "/field-sales/sales")).toBe(true);
+    expect(canAccessPath("AUDITOR", "/api/field-sales/context")).toBe(true);
+    expect(canAccessPath("CUSTOMER", "/field-sales")).toBe(false);
+    expect(canAccessPath("RSO", "/api/field-sales/sales")).toBe(false);
+  });
+
   it("has a default dashboard for each role", () => {
     expect(defaultRouteByRole.RSO).toBe("/rso");
     expect(defaultRouteByRole.CUSTOMER).toBe("/customer");

@@ -13,8 +13,8 @@ export const routePermissions: Record<AppRole, string[]> = {
   ADMIN: ["*"],
   WAREHOUSE_MANAGER: ["/", "/warehouse", "/inventory", "/transfers", "/orders", "/api/orders", "/api/cylinders", "/api/inventory"],
   RSO: ["/", "/rso", "/retail-sales", "/retail-inventory", "/customers", "/orders", "/inventory/movements", "/api/customers", "/api/orders", "/api/inventory/movements", "/api/retail"],
-  MSO: ["/", "/mso", "/field-sales", "/deliveries", "/customers", "/orders", "/inventory/movements", "/api/customers", "/api/orders", "/api/inventory/movements"],
-  AUDITOR: ["/", "/auditor", "/reports", "/audit-logs", "/customers", "/orders", "/api/orders", "/api/customers", "/inventory", "/api/cylinders", "/api/inventory", "/retail-sales/refills", "/api/retail/refill-orders", "/api/retail/refill-stock"],
+  MSO: ["/", "/mso", "/field-sales", "/deliveries", "/customers", "/orders", "/inventory/movements", "/api/customers", "/api/orders", "/api/inventory/movements", "/api/field-sales"],
+  AUDITOR: ["/", "/auditor", "/reports", "/audit-logs", "/customers", "/orders", "/api/orders", "/api/customers", "/inventory", "/api/cylinders", "/api/inventory", "/retail-sales/refills", "/api/retail/refill-orders", "/api/retail/refill-stock", "/field-sales", "/api/field-sales"],
   CUSTOMER: ["/", "/customer"]
 };
 

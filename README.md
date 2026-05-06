@@ -1,6 +1,6 @@
 # LPG Cylinder Management App
 
-Stage 7 adds order management on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, movement workflows, and RSO refill sales. Dispatch execution and advanced delivery remain placeholders.
+Stage 8 adds the Mobile Sales Officer field sales workflow on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, movement workflows, RSO refill sales, and order management. Offline sync remains a placeholder for Stage 15.
 
 ## Stack
 
@@ -60,7 +60,20 @@ All seeded users use the same demo password: `password123`.
 npm test
 ```
 
-## Manual Stage 7 Checks
+## Manual Stage 8 Checks
+
+- Visit `/login` and sign in as MSO with `mso@example.com` / `password123`.
+- Visit `/mso` and `/field-sales` and confirm the assigned vehicle, route, zone, vehicle inventory, assigned customers, assigned orders, quick actions, and Stage 15 offline sync placeholder appear on mobile and desktop widths.
+- Open `/field-sales/sales/new`, create one instant sale with an existing customer, and confirm the detail page shows customer, SKU, payment method/reference, delivery status, vehicle, route, zone, issued filled cylinder, collected empty cylinder, and audit-facing discrepancy area.
+- Create a second instant sale while registering a new field customer and confirm it appears in `/field-sales/sales` and the customer appears in `/customers`.
+- Confirm each MSO sale reduces filled stock on the assigned vehicle and increases empty stock by one cylinder.
+- Try an invalid field sale, such as no selected customer or no SKU, and confirm a clear validation message appears.
+- Try a SKU with no filled vehicle stock and confirm the app blocks the sale with a clear stock message.
+- Log in as Auditor and confirm `/field-sales` and `/field-sales/sales` are view-only.
+- Log in as Customer or RSO and confirm restricted field-sales screens or APIs are blocked.
+- Confirm `/api/health` returns stage `8`.
+
+## Earlier Stage Checks
 
 - Visit `/login` and sign in with each seeded role.
 - Confirm Admin can access all pages.

@@ -1,16 +1,46 @@
-import { DashboardPlaceholder } from "@/components/dashboard-placeholder";
+import Link from "next/link";
+import { getFieldAssignment } from "@/lib/field-sales-access";
+import { prisma } from "@/lib/prisma";
 
-export default function MsoPage() {
+export default async function MsoPage() {
+  const assignment = await getFieldAssignment();
+  const vehicleStock = assignment.vehicle
+    ? await prisma.cylinder.count({ where: { currentLocationId: assignment.vehicle.id, status: "FILLED" } })
+    : 0;
+
   return (
-    <DashboardPlaceholder
-      eyebrow="Role Workspace"
-      title="MSO Dashboard"
-      description="Placeholder for market sales operations, customer follow-up, and outlet-level order tracking."
-      stats={[
-        { label: "Market view", value: "TBD" },
-        { label: "Orders", value: "Soon" },
-        { label: "Customers", value: "Soon" }
-      ]}
-    />
+    <div className="mx-auto max-w-5xl space-y-5">
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
+        <p className="text-sm font-semibold text-brand-700">Role Workspace</p>
+        <h1 className="mt-2 text-2xl font-semibold text-slate-950">MSO Dashboard</h1>
+        <p className="mt-3 text-sm leading-6 text-slate-600">
+          Field sales, assigned route visibility, vehicle stock, and mobile quick actions are active for Stage 8.
+        </p>
+      </section>
+
+      <section className="grid gap-3 sm:grid-cols-3">
+        <Summary label="Assigned Vehicle" value={assignment.vehicle?.code ?? "None"} />
+        <Summary label="Route" value={assignment.route?.code ?? "Placeholder"} />
+        <Summary label="Filled Stock" value={String(vehicleStock)} />
+      </section>
+
+      <section className="grid gap-3 sm:grid-cols-2">
+        <Link className="rounded-lg bg-brand-600 px-4 py-3 text-center text-sm font-semibold text-white" href="/field-sales">
+          Open field sales workspace
+        </Link>
+        <Link className="rounded-lg border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700" href="/field-sales/sales/new">
+          New instant sale
+        </Link>
+      </section>
+    </div>
+  );
+}
+
+function Summary({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-panel">
+      <p className="text-sm text-slate-500">{label}</p>
+      <p className="mt-2 text-xl font-semibold text-slate-950">{value}</p>
+    </div>
   );
 }
