@@ -17,6 +17,11 @@ type CylinderFormRecord = {
   skuId?: string;
   manufactureDate?: string | null;
   inspectionDueDate?: string | null;
+  expiryDate?: string | null;
+  hydroTestDueDate?: string | null;
+  unsafeStatus?: boolean;
+  quarantinedStatus?: boolean;
+  maintenanceStatus?: string;
   currentLocationId?: string;
   status?: string;
   notes?: string | null;
@@ -48,6 +53,11 @@ export function CylinderForm({
       skuId: formData.get("skuId"),
       manufactureDate: formData.get("manufactureDate") || undefined,
       inspectionDueDate: formData.get("inspectionDueDate") || undefined,
+      expiryDate: formData.get("expiryDate") || undefined,
+      hydroTestDueDate: formData.get("hydroTestDueDate") || undefined,
+      unsafeStatus: formData.get("unsafeStatus") === "on",
+      quarantinedStatus: formData.get("quarantinedStatus") === "on",
+      maintenanceStatus: formData.get("maintenanceStatus"),
       currentLocationId: formData.get("currentLocationId"),
       status: formData.get("status"),
       notes: formData.get("notes") || undefined
@@ -98,6 +108,29 @@ export function CylinderForm({
         </label>
         <TextInput label="Manufacture Date" name="manufactureDate" type="date" defaultValue={cylinder?.manufactureDate ?? undefined} />
         <TextInput label="Inspection Due Date" name="inspectionDueDate" type="date" defaultValue={cylinder?.inspectionDueDate ?? undefined} />
+        <TextInput label="Expiry Date" name="expiryDate" type="date" defaultValue={cylinder?.expiryDate ?? undefined} />
+        <TextInput label="Hydro-Test Due Date" name="hydroTestDueDate" type="date" defaultValue={cylinder?.hydroTestDueDate ?? undefined} />
+        <label className="block text-sm font-medium text-slate-700">
+          Maintenance Status
+          <select className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100" name="maintenanceStatus" defaultValue={cylinder?.maintenanceStatus ?? "NONE"}>
+            <option value="NONE">None</option>
+            <option value="OPEN">Open</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="CLEARED">Cleared</option>
+            <option value="SCRAP_PLACEHOLDER">Scrap Placeholder</option>
+          </select>
+        </label>
+      </div>
+
+      <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
+        <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+          <input name="unsafeStatus" type="checkbox" defaultChecked={cylinder?.unsafeStatus ?? false} />
+          Unsafe cylinder
+        </label>
+        <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+          <input name="quarantinedStatus" type="checkbox" defaultChecked={cylinder?.quarantinedStatus ?? false} />
+          Quarantined cylinder
+        </label>
       </div>
 
       <SelectInput

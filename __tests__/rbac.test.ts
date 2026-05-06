@@ -78,6 +78,13 @@ describe("role-based access control", () => {
     expect(canAccessPath("CUSTOMER", "/reconciliations")).toBe(false);
   });
 
+  it("allows safety compliance for warehouse/admin and auditor view only", () => {
+    expect(canAccessPath("WAREHOUSE_MANAGER", "/safety")).toBe(true);
+    expect(canAccessPath("WAREHOUSE_MANAGER", "/api/safety/maintenance-cases")).toBe(true);
+    expect(canAccessPath("AUDITOR", "/safety")).toBe(true);
+    expect(canAccessPath("CUSTOMER", "/safety")).toBe(false);
+  });
+
   it("has a default dashboard for each role", () => {
     expect(defaultRouteByRole.RSO).toBe("/rso");
     expect(defaultRouteByRole.CUSTOMER).toBe("/customer");

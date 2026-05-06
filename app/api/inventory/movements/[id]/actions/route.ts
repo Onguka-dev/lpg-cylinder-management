@@ -14,6 +14,7 @@ import {
   movementActionSchema
 } from "@/lib/inventory-movements";
 import { prisma } from "@/lib/prisma";
+import { saleEligibleCylinderWhere } from "@/lib/safety";
 
 export async function POST(
   request: Request,
@@ -107,7 +108,8 @@ export async function POST(
           where: {
             skuId: movement.skuId,
             currentLocationId: movement.sourceLocationId,
-            status: movement.sourceStatus
+            status: movement.sourceStatus,
+            ...(movement.sourceStatus === "FILLED" ? saleEligibleCylinderWhere() : {})
           },
           orderBy: { createdAt: "asc" },
           take: quantity

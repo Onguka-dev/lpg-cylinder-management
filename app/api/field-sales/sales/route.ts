@@ -5,6 +5,7 @@ import { normalizeCustomerInput } from "@/lib/customers";
 import { fieldSaleSchema, generateFieldSaleNumber } from "@/lib/field-sales";
 import { getFieldAssignment, requireFieldSalesManageSession, requireFieldSalesViewSession } from "@/lib/field-sales-access";
 import { prisma } from "@/lib/prisma";
+import { saleEligibleCylinderWhere } from "@/lib/safety";
 
 export async function GET(request: Request) {
   const session = await getCurrentSession();
@@ -101,9 +102,9 @@ export async function POST(request: Request) {
         tx.masterDataRecord.findUnique({ where: { id: parsed.data.skuId } }),
         tx.cylinder.findFirst({
           where: {
+            ...saleEligibleCylinderWhere(),
             skuId: parsed.data.skuId,
             currentLocationId: assignment.vehicle.id,
-            status: "FILLED"
           },
           orderBy: { createdAt: "asc" }
         })

@@ -51,6 +51,11 @@ export default async function EditCylinderPage({
               skuId: cylinder.skuId,
               manufactureDate: cylinder.manufactureDate?.toISOString().slice(0, 10),
               inspectionDueDate: cylinder.inspectionDueDate?.toISOString().slice(0, 10),
+              expiryDate: cylinder.expiryDate?.toISOString().slice(0, 10),
+              hydroTestDueDate: cylinder.hydroTestDueDate?.toISOString().slice(0, 10),
+              unsafeStatus: cylinder.unsafeStatus,
+              quarantinedStatus: cylinder.quarantinedStatus,
+              maintenanceStatus: cylinder.maintenanceStatus,
               currentLocationId: cylinder.currentLocationId,
               status: cylinder.status,
               notes: cylinder.notes

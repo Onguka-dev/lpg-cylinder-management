@@ -176,6 +176,37 @@ enum ReconciliationStatus {
   RETURNED
 }
 
+enum CylinderMaintenanceStatus {
+  NONE
+  OPEN
+  IN_PROGRESS
+  CLEARED
+  SCRAP_PLACEHOLDER
+}
+
+enum MaintenanceCaseStatus {
+  OPEN
+  INSPECTION_RECORDED
+  QUARANTINED
+  APPROVED_RETURN_TO_STOCK
+  SCRAP_PLACEHOLDER
+  CLOSED
+}
+
+enum InspectionResult {
+  PASSED
+  FAILED
+  NEEDS_HYDRO_TEST
+  UNSAFE
+}
+
+enum SafetyIncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
 model Role {
   id          String   @id @default(cuid())
   name        RoleName @unique
@@ -215,6 +246,10 @@ model User {
   reconciliations DailyReconciliation[] @relation("ReconciliationOwner")
   createdReconciliations DailyReconciliation[] @relation("ReconciliationCreatedBy")
   reviewedReconciliations DailyReconciliation[] @relation("ReconciliationReviewedBy")
+  createdMaintenanceCases MaintenanceCase[] @relation("MaintenanceCaseCreatedBy")
+  inspectedMaintenanceCases MaintenanceCase[] @relation("MaintenanceCaseInspectedBy")
+  approvedMaintenanceCases MaintenanceCase[] @relation("MaintenanceCaseApprovedBy")
+  createdSafetyIncidents SafetyIncident[] @relation("SafetyIncidentCreatedBy")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -447,12 +482,79 @@ model Cylinder {
   emptyReturnRefillOrders RefillOrder[] @relation("EmptyReturnCylinder")
   fieldFilledSales FieldSale[] @relation("FieldFilledCylinder")
   fieldEmptyReturns FieldSale[] @relation("FieldEmptyCylinder")
+  expiryDate        DateTime?
+  hydroTestDueDate  DateTime?
+  unsafeStatus      Boolean            @default(false)
+  quarantinedStatus Boolean            @default(false)
+  maintenanceStatus CylinderMaintenanceStatus @default(NONE)
+  maintenanceCases  MaintenanceCase[]
+  safetyIncidents   SafetyIncident[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
   @@index([skuId])
   @@index([currentLocationId])
   @@index([status])
+  @@index([unsafeStatus])
+  @@index([quarantinedStatus])
+  @@index([maintenanceStatus])
+  @@index([expiryDate])
+  @@index([hydroTestDueDate])
+}
+
+model MaintenanceCase {
+  id                         String                 @id @default(cuid())
+  caseNumber                 String                 @unique
+  cylinderId                 String
+  cylinder                   Cylinder               @relation(fields: [cylinderId], references: [id], onDelete: Cascade)
+  status                     MaintenanceCaseStatus  @default(OPEN)
+  reason                     String
+  inspectionResult           InspectionResult?
+  inspectionNotes            String?
+  quarantineMovementId       String?
+  returnApprovalNotes        String?
+  scrapWriteOffPlaceholder   String?
+  certificateUploadPlaceholder String?
+  documentUploadPlaceholder  String?
+  createdById                String?
+  createdBy                  User?                  @relation("MaintenanceCaseCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  inspectedById              String?
+  inspectedBy                User?                  @relation("MaintenanceCaseInspectedBy", fields: [inspectedById], references: [id], onDelete: SetNull)
+  approvedById               String?
+  approvedBy                 User?                  @relation("MaintenanceCaseApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  inspectedAt                DateTime?
+  quarantinedAt              DateTime?
+  approvedAt                 DateTime?
+  closedAt                   DateTime?
+  createdAt                  DateTime               @default(now())
+  updatedAt                  DateTime               @updatedAt
+
+  @@index([cylinderId])
+  @@index([status])
+  @@index([inspectionResult])
+}
+
+model SafetyIncident {
+  id                           String                 @id @default(cuid())
+  incidentNumber               String                 @unique
+  cylinderId                   String?
+  cylinder                     Cylinder?              @relation(fields: [cylinderId], references: [id], onDelete: SetNull)
+  title                        String
+  severity                     SafetyIncidentSeverity
+  incidentDate                 DateTime
+  locationId                   String?
+  description                  String
+  correctiveAction             String?
+  certificateUploadPlaceholder String?
+  photoUploadPlaceholder       String?
+  createdById                  String?
+  createdBy                    User?                  @relation("SafetyIncidentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt                    DateTime               @default(now())
+  updatedAt                    DateTime               @updatedAt
+
+  @@index([cylinderId])
+  @@index([severity])
+  @@index([incidentDate])
 }
 
 model FieldSale {

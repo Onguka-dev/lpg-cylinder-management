@@ -5,6 +5,7 @@ import { normalizeCustomerInput } from "@/lib/customers";
 import { prisma } from "@/lib/prisma";
 import { getSalesLocationForSession, requireRefillSalesManageSession, requireRefillSalesViewSession } from "@/lib/refill-sales-access";
 import { generateRetailReference, refillOrderSchema } from "@/lib/refill-sales";
+import { saleEligibleCylinderWhere } from "@/lib/safety";
 
 export async function GET(request: Request) {
   const session = await getCurrentSession();
@@ -100,9 +101,9 @@ export async function POST(request: Request) {
         tx.masterDataRecord.findUnique({ where: { id: parsed.data.skuId } }),
         tx.cylinder.findFirst({
           where: {
+            ...saleEligibleCylinderWhere(),
             skuId: parsed.data.skuId,
             currentLocationId: locationId,
-            status: "FILLED"
           },
           orderBy: { createdAt: "asc" }
         })

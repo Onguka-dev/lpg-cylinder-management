@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 export function GET() {
   return NextResponse.json({
     status: "ok",
-    stage: "11",
+    stage: "12",
     app: "lpg-cylinder-management"
   });
 }

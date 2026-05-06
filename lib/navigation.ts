@@ -10,6 +10,7 @@ import {
   PackageCheck,
   Settings,
   ShieldCheck,
+  ShieldAlert,
   ShoppingCart,
   Truck,
   UserCog,
@@ -40,6 +41,7 @@ export const moduleNavItems = [
   { href: "/deliveries", label: "Deliveries", icon: Truck },
   { href: "/payments", label: "Payments", icon: CreditCard },
   { href: "/reconciliations", label: "Reconciliation", icon: ClipboardCheck },
+  { href: "/safety", label: "Safety", icon: ShieldAlert },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/audit-logs", label: "Audit Logs", icon: FileClock },
   { href: "/settings", label: "Settings", icon: Settings }

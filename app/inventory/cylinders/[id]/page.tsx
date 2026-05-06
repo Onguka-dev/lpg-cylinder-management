@@ -53,6 +53,11 @@ export default async function CylinderDetailPage({
           <Detail label="Current Location" value={cylinder.currentLocation.name} />
           <Detail label="Manufacture Date" value={formatDate(cylinder.manufactureDate)} />
           <Detail label="Inspection Due" value={formatDate(cylinder.inspectionDueDate)} />
+          <Detail label="Expiry Date" value={formatDate(cylinder.expiryDate)} />
+          <Detail label="Hydro-Test Due" value={formatDate(cylinder.hydroTestDueDate)} />
+          <Detail label="Unsafe" value={cylinder.unsafeStatus ? "Yes" : "No"} />
+          <Detail label="Quarantined" value={cylinder.quarantinedStatus ? "Yes" : "No"} />
+          <Detail label="Maintenance" value={cylinder.maintenanceStatus.replaceAll("_", " ").toLowerCase()} />
           <Detail label="Notes" value={cylinder.notes ?? "None"} />
         </dl>
       </section>

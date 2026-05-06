@@ -29,6 +29,11 @@ export const cylinderSchema = z.object({
   skuId: z.string().min(1, "Select a SKU or cylinder size."),
   manufactureDate: z.string().optional().nullable(),
   inspectionDueDate: z.string().optional().nullable(),
+  expiryDate: z.string().optional().nullable(),
+  hydroTestDueDate: z.string().optional().nullable(),
+  unsafeStatus: z.coerce.boolean().optional(),
+  quarantinedStatus: z.coerce.boolean().optional(),
+  maintenanceStatus: z.enum(["NONE", "OPEN", "IN_PROGRESS", "CLEARED", "SCRAP_PLACEHOLDER"]).optional(),
   currentLocationId: z.string().min(1, "Select a current location."),
   status: z.enum(cylinderStatuses),
   notes: z.string().trim().max(400, "Notes must be 400 characters or fewer.").optional().nullable()
@@ -71,6 +76,11 @@ export function normalizeCylinderInput(input: CylinderFormValues) {
     skuId: input.skuId,
     manufactureDate: input.manufactureDate ? new Date(input.manufactureDate) : null,
     inspectionDueDate: input.inspectionDueDate ? new Date(input.inspectionDueDate) : null,
+    expiryDate: input.expiryDate ? new Date(input.expiryDate) : null,
+    hydroTestDueDate: input.hydroTestDueDate ? new Date(input.hydroTestDueDate) : null,
+    unsafeStatus: input.unsafeStatus ?? false,
+    quarantinedStatus: input.quarantinedStatus ?? false,
+    maintenanceStatus: input.maintenanceStatus ?? "NONE",
     currentLocationId: input.currentLocationId,
     status: input.status,
     notes: input.notes?.trim() || null

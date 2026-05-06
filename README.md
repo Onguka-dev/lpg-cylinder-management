@@ -1,6 +1,6 @@
 # LPG Cylinder Management App
 
-Stage 11 adds daily reconciliation and close-of-day accountability controls on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, movement workflows, RSO refill sales, order management, MSO field sales, delivery management, and billing.
+Stage 12 adds safety, maintenance, and compliance controls on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, movement workflows, RSO refill sales, order management, MSO field sales, delivery management, billing, and daily reconciliation.
 
 ## Stack
 
@@ -59,6 +59,20 @@ All seeded users use the same demo password: `password123`.
 ```bash
 npm test
 ```
+
+## Manual Stage 12 Checks
+
+- Visit `/login` and sign in as Admin or Warehouse Manager.
+- Visit `/safety` and confirm compliance alert counts, maintenance cases, and safety incident lists are visible.
+- Create at least two maintenance cases from `/safety/maintenance-cases/new` and confirm they appear in the safety list and detail pages.
+- On a maintenance case detail page, record an inspection result, move the cylinder to quarantine, approve return to stock, and try the scrap/write-off placeholder action.
+- Log a safety incident from `/safety/incidents/new` with certificate/document and photo upload placeholders.
+- Confirm cylinder records show expiry date, hydro-test due date, unsafe status, quarantine status, and maintenance status.
+- Confirm `/reports` includes compliance alert, open maintenance, and safety incident reporting.
+- Try invalid input such as a short maintenance reason, missing inspection notes, or missing incident description and confirm a clear validation message.
+- Confirm damaged, expired, quarantined, under-maintenance, or unsafe cylinders cannot be used for refill sales, field sales, or filled-stock dispatch.
+- Confirm Auditor can view safety/compliance pages but cannot create cases or incidents, and Customer cannot access safety screens or APIs.
+- Confirm `/api/health` returns stage `12`.
 
 ## Manual Stage 11 Checks
 

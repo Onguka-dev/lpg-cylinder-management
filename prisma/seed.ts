@@ -630,6 +630,81 @@ async function main() {
       }
     });
   }
+
+  if (adminUser && warehouse) {
+    const safetyCylinder = await prisma.cylinder.findUnique({ where: { serialNumber: "CYL-13KG-0002" } });
+    if (safetyCylinder) {
+      await prisma.cylinder.update({
+        where: { id: safetyCylinder.id },
+        data: {
+          expiryDate: new Date("2026-12-31"),
+          hydroTestDueDate: new Date("2026-06-30"),
+          unsafeStatus: true,
+          quarantinedStatus: true,
+          maintenanceStatus: "IN_PROGRESS",
+          status: "DAMAGED"
+        }
+      });
+
+      await prisma.maintenanceCase.upsert({
+        where: { caseNumber: "MNT-STAGE12-SEED" },
+        update: {
+          cylinderId: safetyCylinder.id,
+          status: "QUARANTINED",
+          reason: "Seed damaged cylinder case for Stage 12 safety checks",
+          inspectionResult: "FAILED",
+          inspectionNotes: "Valve damage observed during starter safety inspection.",
+          certificateUploadPlaceholder: "Certificate upload placeholder",
+          documentUploadPlaceholder: "Maintenance document upload placeholder",
+          createdById: adminUser.id,
+          inspectedById: adminUser.id,
+          quarantinedAt: new Date("2026-05-06T12:00:00.000Z")
+        },
+        create: {
+          caseNumber: "MNT-STAGE12-SEED",
+          cylinderId: safetyCylinder.id,
+          status: "QUARANTINED",
+          reason: "Seed damaged cylinder case for Stage 12 safety checks",
+          inspectionResult: "FAILED",
+          inspectionNotes: "Valve damage observed during starter safety inspection.",
+          certificateUploadPlaceholder: "Certificate upload placeholder",
+          documentUploadPlaceholder: "Maintenance document upload placeholder",
+          createdById: adminUser.id,
+          inspectedById: adminUser.id,
+          quarantinedAt: new Date("2026-05-06T12:00:00.000Z")
+        }
+      });
+
+      await prisma.safetyIncident.upsert({
+        where: { incidentNumber: "INC-STAGE12-SEED" },
+        update: {
+          cylinderId: safetyCylinder.id,
+          title: "Seed valve leak incident",
+          severity: "MEDIUM",
+          incidentDate: new Date("2026-05-06"),
+          locationId: warehouse.id,
+          description: "Seed incident used to verify safety incident logging and compliance reports.",
+          correctiveAction: "Cylinder quarantined and routed to maintenance review.",
+          certificateUploadPlaceholder: "Certificate/document upload placeholder",
+          photoUploadPlaceholder: "Photo upload placeholder",
+          createdById: adminUser.id
+        },
+        create: {
+          incidentNumber: "INC-STAGE12-SEED",
+          cylinderId: safetyCylinder.id,
+          title: "Seed valve leak incident",
+          severity: "MEDIUM",
+          incidentDate: new Date("2026-05-06"),
+          locationId: warehouse.id,
+          description: "Seed incident used to verify safety incident logging and compliance reports.",
+          correctiveAction: "Cylinder quarantined and routed to maintenance review.",
+          certificateUploadPlaceholder: "Certificate/document upload placeholder",
+          photoUploadPlaceholder: "Photo upload placeholder",
+          createdById: adminUser.id
+        }
+      });
+    }
+  }
 }
 
 main()
