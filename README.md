@@ -1,6 +1,6 @@
 # LPG Cylinder Management App
 
-Stage 6 adds the RSO walk-in refill workflow on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, and movement workflows. Delivery and advanced credit workflows remain placeholders.
+Stage 7 adds order management on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, movement workflows, and RSO refill sales. Dispatch execution and advanced delivery remain placeholders.
 
 ## Stack
 
@@ -60,10 +60,20 @@ All seeded users use the same demo password: `password123`.
 npm test
 ```
 
-## Manual Stage 6 Checks
+## Manual Stage 7 Checks
 
 - Visit `/login` and sign in with each seeded role.
 - Confirm Admin can access all pages.
+- As Admin, RSO, or MSO, visit `/orders`.
+- Create an order with one line item and confirm it appears in the order list and detail views.
+- Create a bulk/commercial order with multiple line items and confirm all lines appear on the detail page.
+- Confirm automatic order numbers, priority flag, channel, delivery zone, expected delivery date, and status are shown.
+- Move an order through Pending, Confirmed, Assigned, Dispatched, Delivered, and Closed.
+- Cancel an order before dispatch and confirm it cannot be edited afterward.
+- Confirm edit/cancel controls are not available once an order is Dispatched.
+- Try invalid order input such as no customer, no line items, or quantity above available stock and confirm a clear validation message appears.
+- Confirm Auditor and Warehouse Manager can view orders, but cannot create/edit order records.
+- Confirm Customer cannot access order management.
 - As RSO, visit `/retail-sales/refills`.
 - Create a walk-in refill for an existing customer.
 - Create another walk-in refill while registering a new customer.

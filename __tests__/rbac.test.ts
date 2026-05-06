@@ -36,6 +36,14 @@ describe("role-based access control", () => {
     expect(canAccessPath("AUDITOR", "/retail-sales/refills")).toBe(true);
   });
 
+  it("allows order management for operational roles", () => {
+    expect(canAccessPath("RSO", "/orders")).toBe(true);
+    expect(canAccessPath("MSO", "/api/orders")).toBe(true);
+    expect(canAccessPath("WAREHOUSE_MANAGER", "/orders")).toBe(true);
+    expect(canAccessPath("AUDITOR", "/orders")).toBe(true);
+    expect(canAccessPath("CUSTOMER", "/orders")).toBe(false);
+  });
+
   it("has a default dashboard for each role", () => {
     expect(defaultRouteByRole.RSO).toBe("/rso");
     expect(defaultRouteByRole.CUSTOMER).toBe("/customer");

@@ -346,6 +346,59 @@ async function main() {
       });
     }
   }
+
+  const maryCustomer = await prisma.customer.findFirst({ where: { phone: "+254700111222" } });
+  const westlandsZone = await prisma.masterDataRecord.findFirst({ where: { type: MasterDataType.ZONE, code: "ZONE-WEST" } });
+
+  if (maryCustomer && sku6kg && sku13kg && westlandsZone && adminUser) {
+    const order = await prisma.customerOrder.upsert({
+      where: { orderNumber: "ORD-STAGE7-SEED" },
+      update: {
+        customerId: maryCustomer.id,
+        channel: "CALL_CENTRE",
+        isPriority: true,
+        deliveryZoneId: westlandsZone.id,
+        expectedDeliveryDate: new Date("2026-05-10"),
+        notes: "Seed bulk order for Stage 7 order management",
+        deliveryPlaceholder: "Dispatch execution remains a placeholder in Stage 7.",
+        createdById: adminUser.id
+      },
+      create: {
+        orderNumber: "ORD-STAGE7-SEED",
+        customerId: maryCustomer.id,
+        channel: "CALL_CENTRE",
+        isPriority: true,
+        deliveryZoneId: westlandsZone.id,
+        expectedDeliveryDate: new Date("2026-05-10"),
+        notes: "Seed bulk order for Stage 7 order management",
+        deliveryPlaceholder: "Dispatch execution remains a placeholder in Stage 7.",
+        createdById: adminUser.id
+      }
+    });
+
+    await prisma.customerOrderItem.deleteMany({ where: { orderId: order.id } });
+    await prisma.customerOrderItem.createMany({
+      data: [
+        { orderId: order.id, skuId: sku6kg.id, quantity: 2, notes: "Seed 6kg line" },
+        { orderId: order.id, skuId: sku13kg.id, quantity: 1, notes: "Seed 13kg line" }
+      ]
+    });
+
+    const existingOrderHistory = await prisma.customerOrderHistory.findFirst({
+      where: { orderId: order.id, action: "Stage 7 seed order" }
+    });
+    if (!existingOrderHistory) {
+      await prisma.customerOrderHistory.create({
+        data: {
+          orderId: order.id,
+          toStatus: order.status,
+          action: "Stage 7 seed order",
+          details: "Seeded multi-line priority order.",
+          changedById: adminUser.id
+        }
+      });
+    }
+  }
 }
 
 main()

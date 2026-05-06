@@ -105,6 +105,24 @@ enum PaymentStatus {
   FAILED
 }
 
+enum OrderChannel {
+  MOBILE_APP
+  WEB
+  RSO
+  MSO
+  CALL_CENTRE
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  ASSIGNED
+  DISPATCHED
+  DELIVERED
+  CLOSED
+  CANCELLED
+}
+
 model Role {
   id          String   @id @default(cuid())
   name        RoleName @unique
@@ -133,6 +151,8 @@ model User {
   inventoryMovementHistoryEntries InventoryMovementHistory[]
   refillOrders RefillOrder[]
   refillPayments Payment[]
+  customerOrders CustomerOrder[]
+  customerOrderHistoryEntries CustomerOrderHistory[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -188,6 +208,8 @@ model MasterDataRecord {
   destinationMovements InventoryMovement[] @relation("MovementDestinationLocation")
   refillOrderSkus RefillOrder[] @relation("RefillOrderSku")
   refillOrderLocations RefillOrder[] @relation("RefillOrderLocation")
+  orderDeliveryZones CustomerOrder[] @relation("OrderDeliveryZone")
+  orderItemSkus CustomerOrderItem[] @relation("OrderItemSku")
   metadata    Json?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
@@ -209,12 +231,70 @@ model Customer {
   creditLimit    Decimal?         @db.Decimal(12, 2)
   notes          String?
   refillOrders   RefillOrder[]
+  customerOrders CustomerOrder[]
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
   @@index([name])
   @@index([status])
   @@index([category])
+}
+
+model CustomerOrder {
+  id                   String                @id @default(cuid())
+  orderNumber          String                @unique
+  customerId           String
+  customer             Customer              @relation(fields: [customerId], references: [id])
+  status               OrderStatus           @default(PENDING)
+  channel              OrderChannel
+  isPriority           Boolean               @default(false)
+  deliveryZoneId       String?
+  deliveryZone         MasterDataRecord?     @relation("OrderDeliveryZone", fields: [deliveryZoneId], references: [id], onDelete: SetNull)
+  expectedDeliveryDate DateTime?
+  notes                String?
+  deliveryPlaceholder  String?
+  createdById          String?
+  createdBy            User?                 @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  items                CustomerOrderItem[]
+  historyEntries       CustomerOrderHistory[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+
+  @@index([customerId])
+  @@index([status])
+  @@index([channel])
+  @@index([isPriority])
+  @@index([deliveryZoneId])
+}
+
+model CustomerOrderItem {
+  id        String           @id @default(cuid())
+  orderId   String
+  order     CustomerOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  skuId     String
+  sku       MasterDataRecord @relation("OrderItemSku", fields: [skuId], references: [id])
+  quantity  Int
+  notes     String?
+  createdAt DateTime         @default(now())
+
+  @@index([orderId])
+  @@index([skuId])
+}
+
+model CustomerOrderHistory {
+  id          String       @id @default(cuid())
+  orderId     String
+  order       CustomerOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fromStatus  OrderStatus?
+  toStatus    OrderStatus
+  action      String
+  details     String
+  changedById String?
+  changedBy   User?        @relation(fields: [changedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime     @default(now())
+
+  @@index([orderId])
+  @@index([createdAt])
 }
 
 model Cylinder {
