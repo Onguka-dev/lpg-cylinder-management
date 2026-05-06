@@ -1,6 +1,6 @@
 # LPG Cylinder Management App
 
-Stage 5 adds inventory movement and transfer workflows on top of authentication, role-based access control, admin master-data configuration, customer management, and the cylinder inventory foundation. Sales and delivery workflows remain placeholders.
+Stage 6 adds the RSO walk-in refill workflow on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, and movement workflows. Delivery and advanced credit workflows remain placeholders.
 
 ## Stack
 
@@ -60,10 +60,19 @@ All seeded users use the same demo password: `password123`.
 npm test
 ```
 
-## Manual Stage 5 Checks
+## Manual Stage 6 Checks
 
 - Visit `/login` and sign in with each seeded role.
 - Confirm Admin can access all pages.
+- As RSO, visit `/retail-sales/refills`.
+- Create a walk-in refill for an existing customer.
+- Create another walk-in refill while registering a new customer.
+- Confirm each refill appears in the list and detail views.
+- Confirm the detail view shows invoice number, receipt number, payment record, issued filled cylinder, received empty cylinder, and delivery/credit placeholders.
+- Confirm filled stock decreases and empty stock increases at the assigned RSO outlet after the transaction closes.
+- Try an invalid refill input such as no customer or no SKU and confirm a validation message appears.
+- Confirm Auditor can view refill records but cannot create them.
+- Confirm MSO, Warehouse Manager, and Customer cannot create RSO refill transactions.
 - As Admin or Warehouse Manager, visit `/inventory`.
 - Visit `/inventory/movements` and create movement requests for receipt, issue, transfer, damaged quarantine, or maintenance transfer.
 - As Warehouse Manager, approve a requested movement.

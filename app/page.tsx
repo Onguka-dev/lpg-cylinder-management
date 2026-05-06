@@ -4,12 +4,12 @@ export default function HomePage() {
   return (
     <DashboardPlaceholder
       title="Operations Dashboard"
-      eyebrow="Stage 5"
-      description="Authentication, master data, customer management, cylinder inventory, and movement workflows are active. Sales and delivery workflows remain placeholders for later stages."
+      eyebrow="Stage 6"
+      description="Authentication, master data, customer management, cylinder inventory, movement workflows, and RSO walk-in refill sales are active. Delivery and advanced credit remain placeholders."
       stats={[
         { label: "Role workspaces", value: "6" },
-        { label: "Movement types", value: "9" },
-        { label: "Workflow steps", value: "6" }
+        { label: "Payment methods", value: "3" },
+        { label: "Refill workflow", value: "Active" }
       ]}
     />
   );

@@ -87,6 +87,24 @@ enum InventoryMovementStatus {
   REJECTED
 }
 
+enum RefillOrderStatus {
+  DRAFT
+  CLOSED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  MPESA
+  CARD
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
 model Role {
   id          String   @id @default(cuid())
   name        RoleName @unique
@@ -113,6 +131,8 @@ model User {
   dispatchedInventoryMovements InventoryMovement[] @relation("MovementDispatchedBy")
   receivedInventoryMovements InventoryMovement[] @relation("MovementReceivedBy")
   inventoryMovementHistoryEntries InventoryMovementHistory[]
+  refillOrders RefillOrder[]
+  refillPayments Payment[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -166,6 +186,8 @@ model MasterDataRecord {
   movementSkus InventoryMovement[] @relation("MovementSku")
   sourceMovements InventoryMovement[] @relation("MovementSourceLocation")
   destinationMovements InventoryMovement[] @relation("MovementDestinationLocation")
+  refillOrderSkus RefillOrder[] @relation("RefillOrderSku")
+  refillOrderLocations RefillOrder[] @relation("RefillOrderLocation")
   metadata    Json?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
@@ -186,6 +208,7 @@ model Customer {
   status         CustomerStatus   @default(ACTIVE)
   creditLimit    Decimal?         @db.Decimal(12, 2)
   notes          String?
+  refillOrders   RefillOrder[]
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
@@ -208,11 +231,65 @@ model Cylinder {
   notes             String?
   historyEntries    CylinderHistory[]
   movementLines     InventoryMovementCylinder[]
+  filledRefillOrders RefillOrder[] @relation("FilledRefillCylinder")
+  emptyReturnRefillOrders RefillOrder[] @relation("EmptyReturnCylinder")
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
   @@index([skuId])
   @@index([currentLocationId])
+  @@index([status])
+}
+
+model RefillOrder {
+  id                    String            @id @default(cuid())
+  orderNumber           String            @unique
+  customerId            String
+  customer              Customer          @relation(fields: [customerId], references: [id])
+  skuId                 String
+  sku                   MasterDataRecord  @relation("RefillOrderSku", fields: [skuId], references: [id])
+  locationId            String
+  location              MasterDataRecord  @relation("RefillOrderLocation", fields: [locationId], references: [id])
+  filledCylinderId      String
+  filledCylinder        Cylinder          @relation("FilledRefillCylinder", fields: [filledCylinderId], references: [id])
+  emptyReturnCylinderId String
+  emptyReturnCylinder   Cylinder          @relation("EmptyReturnCylinder", fields: [emptyReturnCylinderId], references: [id])
+  status                RefillOrderStatus @default(DRAFT)
+  paymentMethod         PaymentMethod
+  subtotalAmount        Decimal           @db.Decimal(12, 2)
+  taxAmount             Decimal           @default(0) @db.Decimal(12, 2)
+  totalAmount           Decimal           @db.Decimal(12, 2)
+  invoiceNumber         String            @unique
+  receiptNumber         String            @unique
+  notes                 String?
+  deliveryPlaceholder   String?
+  creditPlaceholder     String?
+  createdById           String?
+  createdBy             User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  payment               Payment?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  @@index([customerId])
+  @@index([skuId])
+  @@index([locationId])
+  @@index([status])
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  paymentNumber String       @unique
+  orderId       String       @unique
+  order         RefillOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  method        PaymentMethod
+  status        PaymentStatus @default(PAID)
+  amount        Decimal       @db.Decimal(12, 2)
+  reference     String?
+  recordedById  String?
+  recordedBy    User?         @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+  createdAt     DateTime      @default(now())
+
+  @@index([method])
   @@index([status])
 }
 
