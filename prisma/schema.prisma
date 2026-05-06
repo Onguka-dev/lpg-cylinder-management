@@ -163,6 +163,19 @@ enum FailedDeliveryReason {
   PARTIAL_DELIVERY
 }
 
+enum ReconciliationScope {
+  RSO
+  MSO
+  WAREHOUSE
+}
+
+enum ReconciliationStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  RETURNED
+}
+
 model Role {
   id          String   @id @default(cuid())
   name        RoleName @unique
@@ -199,6 +212,9 @@ model User {
   deliveryHistoryEntries DeliveryHistory[]
   createdInvoices Invoice[] @relation("InvoiceCreatedBy")
   recordedBillingPayments BillingPayment[] @relation("BillingPaymentRecordedBy")
+  reconciliations DailyReconciliation[] @relation("ReconciliationOwner")
+  createdReconciliations DailyReconciliation[] @relation("ReconciliationCreatedBy")
+  reviewedReconciliations DailyReconciliation[] @relation("ReconciliationReviewedBy")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -263,6 +279,7 @@ model MasterDataRecord {
   deliveryRoutes Delivery[] @relation("DeliveryRoute")
   deliveryZones Delivery[] @relation("DeliveryZone")
   deliveryVehicles Delivery[] @relation("DeliveryVehicle")
+  reconciliationLocations DailyReconciliation[] @relation("ReconciliationLocation")
   metadata    Json?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
@@ -596,6 +613,53 @@ model BillingPayment {
   @@index([customerId])
   @@index([method])
   @@index([status])
+}
+
+model DailyReconciliation {
+  id                    String                @id @default(cuid())
+  reference             String                @unique
+  reconciliationDate    DateTime
+  scope                 ReconciliationScope
+  status                ReconciliationStatus  @default(DRAFT)
+  ownerId               String
+  owner                 User                  @relation("ReconciliationOwner", fields: [ownerId], references: [id])
+  locationId            String?
+  location              MasterDataRecord?     @relation("ReconciliationLocation", fields: [locationId], references: [id], onDelete: SetNull)
+  openingStock          Int                   @default(0)
+  goodsReceived         Int                   @default(0)
+  salesIssues           Int                   @default(0)
+  transfers             Int                   @default(0)
+  returns               Int                   @default(0)
+  damagedCylinders      Int                   @default(0)
+  expectedClosingStock  Int                   @default(0)
+  actualClosingStock    Int                   @default(0)
+  stockVariance         Int                   @default(0)
+  stockExplanation      String?
+  cashCollections       Decimal               @default(0) @db.Decimal(12, 2)
+  mpesaCollections      Decimal               @default(0) @db.Decimal(12, 2)
+  cardCollections       Decimal               @default(0) @db.Decimal(12, 2)
+  expectedCash          Decimal               @default(0) @db.Decimal(12, 2)
+  actualCash            Decimal               @default(0) @db.Decimal(12, 2)
+  paymentVariance       Decimal               @default(0) @db.Decimal(12, 2)
+  paymentExplanation    String?
+  supervisorNotes       String?
+  adminOverrideReason   String?
+  createdById           String?
+  createdBy             User?                 @relation("ReconciliationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  reviewedById          String?
+  reviewedBy            User?                 @relation("ReconciliationReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  submittedAt           DateTime?
+  approvedAt            DateTime?
+  returnedAt            DateTime?
+  lockedAt              DateTime?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+
+  @@unique([ownerId, reconciliationDate, scope])
+  @@index([status])
+  @@index([scope])
+  @@index([reconciliationDate])
+  @@index([locationId])
 }
 
 model InventoryMovement {

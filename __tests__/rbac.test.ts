@@ -70,6 +70,14 @@ describe("role-based access control", () => {
     expect(canAccessPath("CUSTOMER", "/payments")).toBe(false);
   });
 
+  it("allows close-of-day reconciliation for accountable roles and auditor viewing", () => {
+    expect(canAccessPath("RSO", "/reconciliations")).toBe(true);
+    expect(canAccessPath("MSO", "/api/reconciliations")).toBe(true);
+    expect(canAccessPath("WAREHOUSE_MANAGER", "/reconciliations/new")).toBe(true);
+    expect(canAccessPath("AUDITOR", "/reconciliations")).toBe(true);
+    expect(canAccessPath("CUSTOMER", "/reconciliations")).toBe(false);
+  });
+
   it("has a default dashboard for each role", () => {
     expect(defaultRouteByRole.RSO).toBe("/rso");
     expect(defaultRouteByRole.CUSTOMER).toBe("/customer");

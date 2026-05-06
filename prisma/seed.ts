@@ -569,6 +569,67 @@ async function main() {
       }
     });
   }
+
+  if (warehouseUser && warehouse && adminUser) {
+    await prisma.dailyReconciliation.upsert({
+      where: { reference: "REC-STAGE11-WH-SEED" },
+      update: {
+        reconciliationDate: new Date("2026-05-06"),
+        scope: "WAREHOUSE",
+        status: "SUBMITTED",
+        ownerId: warehouseUser.id,
+        locationId: warehouse.id,
+        openingStock: 25,
+        goodsReceived: 5,
+        salesIssues: 4,
+        transfers: 2,
+        returns: 1,
+        damagedCylinders: 1,
+        expectedClosingStock: 25,
+        actualClosingStock: 24,
+        stockVariance: -1,
+        stockExplanation: "One cylinder pending supervisor count confirmation.",
+        cashCollections: 1200,
+        mpesaCollections: 800,
+        cardCollections: 300,
+        expectedCash: 2300,
+        actualCash: 2250,
+        paymentVariance: -50,
+        paymentExplanation: "Cash counted short pending till recount.",
+        supervisorNotes: "Seeded Stage 11 reconciliation ready for review.",
+        createdById: adminUser.id,
+        submittedAt: new Date("2026-05-06T18:00:00.000Z")
+      },
+      create: {
+        reference: "REC-STAGE11-WH-SEED",
+        reconciliationDate: new Date("2026-05-06"),
+        scope: "WAREHOUSE",
+        status: "SUBMITTED",
+        ownerId: warehouseUser.id,
+        locationId: warehouse.id,
+        openingStock: 25,
+        goodsReceived: 5,
+        salesIssues: 4,
+        transfers: 2,
+        returns: 1,
+        damagedCylinders: 1,
+        expectedClosingStock: 25,
+        actualClosingStock: 24,
+        stockVariance: -1,
+        stockExplanation: "One cylinder pending supervisor count confirmation.",
+        cashCollections: 1200,
+        mpesaCollections: 800,
+        cardCollections: 300,
+        expectedCash: 2300,
+        actualCash: 2250,
+        paymentVariance: -50,
+        paymentExplanation: "Cash counted short pending till recount.",
+        supervisorNotes: "Seeded Stage 11 reconciliation ready for review.",
+        createdById: adminUser.id,
+        submittedAt: new Date("2026-05-06T18:00:00.000Z")
+      }
+    });
+  }
 }
 
 main()

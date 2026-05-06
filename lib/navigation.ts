@@ -39,6 +39,7 @@ export const moduleNavItems = [
   { href: "/orders", label: "Orders", icon: ShoppingCart },
   { href: "/deliveries", label: "Deliveries", icon: Truck },
   { href: "/payments", label: "Payments", icon: CreditCard },
+  { href: "/reconciliations", label: "Reconciliation", icon: ClipboardCheck },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/audit-logs", label: "Audit Logs", icon: FileClock },
   { href: "/settings", label: "Settings", icon: Settings }

@@ -1,6 +1,6 @@
 # LPG Cylinder Management App
 
-Stage 10 adds billing, invoices, partial payments, receipts, outstanding dues, and payment reports on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, movement workflows, RSO refill sales, order management, MSO field sales, and delivery management.
+Stage 11 adds daily reconciliation and close-of-day accountability controls on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, movement workflows, RSO refill sales, order management, MSO field sales, delivery management, and billing.
 
 ## Stack
 
@@ -59,6 +59,20 @@ All seeded users use the same demo password: `password123`.
 ```bash
 npm test
 ```
+
+## Manual Stage 11 Checks
+
+- Visit `/login` and sign in as Admin, Warehouse Manager, RSO, MSO, or Auditor.
+- Visit `/reconciliations` and confirm submitted, approved locked, stock variance, payment variance, and reconciliation list are visible.
+- Create a close-of-day reconciliation from `/reconciliations/new` for an RSO, MSO, or Warehouse Manager.
+- Confirm the detail page shows opening stock, goods received, sales/issues, transfers, returns, damaged cylinders, expected closing stock, actual closing stock, stock variance, cash/Mpesa/card collections, expected cash, actual cash, payment variance, and explanation fields.
+- Submit a draft reconciliation and confirm its status changes to `Submitted`.
+- As Admin or Warehouse Manager, approve or return a submitted reconciliation.
+- Confirm an approved reconciliation is locked against normal editing and that only Admin sees the override form.
+- Use Admin override on an approved reconciliation and confirm the override reason is recorded.
+- Try invalid input such as negative actual closing stock, negative actual cash, or a short override reason and confirm a clear validation message appears.
+- Confirm RSO/MSO can only submit their own reconciliations, Auditor can view but cannot create or review, and Customer cannot access reconciliation screens or APIs.
+- Confirm `/api/health` returns stage `11`.
 
 ## Manual Stage 10 Checks
 
