@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getSalesLocationForSession, requireRefillSalesManageSession, requireRefillSalesViewSession } from "@/lib/refill-sales-access";
 import { generateRetailReference, refillOrderSchema } from "@/lib/refill-sales";
 import { saleEligibleCylinderWhere } from "@/lib/safety";
+import { createMockNotification } from "@/lib/notifications";
 
 export async function GET(request: Request) {
   const session = await getCurrentSession();
@@ -210,6 +211,15 @@ export async function POST(request: Request) {
           details: `${orderNumber} closed for ${customer.name}; filled cylinder ${filledCylinder.serialNumber} issued and empty cylinder ${emptyCylinder.serialNumber} received.`,
           userId: auth.session.user.id
         }
+      });
+
+      await createMockNotification(tx, {
+        eventType: "RECEIPT_ISSUED",
+        channel: "SMS",
+        recipientName: customer.name,
+        recipientContact: customer.phone,
+        payload: { reference: receiptNumber, amount: total.toString() },
+        createdById: auth.session.user.id
       });
 
       return created;

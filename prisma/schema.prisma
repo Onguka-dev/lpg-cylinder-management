@@ -207,6 +207,29 @@ enum SafetyIncidentSeverity {
   CRITICAL
 }
 
+enum NotificationEventType {
+  CUSTOMER_ORDER_CONFIRMATION
+  DELIVERY_UPDATE
+  RECEIPT_ISSUED
+  LOW_STOCK_ALERT
+  PENDING_DELIVERY_ALERT
+  MAINTENANCE_ALERT
+  EMERGENCY_RECALL
+  SAFETY_WARNING
+}
+
+enum NotificationChannel {
+  SMS
+  EMAIL
+  PUSH
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
 model Role {
   id          String   @id @default(cuid())
   name        RoleName @unique
@@ -250,6 +273,7 @@ model User {
   inspectedMaintenanceCases MaintenanceCase[] @relation("MaintenanceCaseInspectedBy")
   approvedMaintenanceCases MaintenanceCase[] @relation("MaintenanceCaseApprovedBy")
   createdSafetyIncidents SafetyIncident[] @relation("SafetyIncidentCreatedBy")
+  createdNotifications Notification[] @relation("NotificationCreatedBy")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -555,6 +579,59 @@ model SafetyIncident {
   @@index([cylinderId])
   @@index([severity])
   @@index([incidentDate])
+}
+
+model NotificationTemplate {
+  id          String                @id @default(cuid())
+  eventType   NotificationEventType
+  channel     NotificationChannel
+  name        String
+  subject     String?
+  body        String
+  isEnabled   Boolean               @default(true)
+  notifications Notification[]
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  @@unique([eventType, channel])
+  @@index([eventType])
+  @@index([channel])
+  @@index([isEnabled])
+}
+
+model NotificationChannelSetting {
+  id                  String              @id @default(cuid())
+  channel             NotificationChannel @unique
+  isEnabled           Boolean             @default(true)
+  providerPlaceholder String?
+  senderPlaceholder   String?
+  updatedAt           DateTime            @updatedAt
+}
+
+model Notification {
+  id               String                @id @default(cuid())
+  reference        String                @unique
+  eventType        NotificationEventType
+  channel          NotificationChannel
+  status           NotificationStatus    @default(PENDING)
+  templateId       String?
+  template         NotificationTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  recipientName    String?
+  recipientContact String
+  subject          String?
+  message          String
+  payload          Json?
+  failureReason    String?
+  sentAt           DateTime?
+  createdById      String?
+  createdBy        User?                 @relation("NotificationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  @@index([eventType])
+  @@index([channel])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model FieldSale {

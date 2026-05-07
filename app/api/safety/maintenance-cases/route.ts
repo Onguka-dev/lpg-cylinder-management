@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { getCurrentSession } from "@/lib/auth";
 import { maintenanceCaseSchema, canManageSafety, canViewSafety, generateSafetyReference } from "@/lib/safety";
+import { createMockNotification } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
@@ -69,6 +70,15 @@ export async function POST(request: Request) {
       });
       await tx.auditLog.create({
         data: { action: "MAINTENANCE_CASE_CREATED", details: `${created.caseNumber} opened for cylinder ${cylinder.serialNumber}.`, userId: session.user.id }
+      });
+
+      await createMockNotification(tx, {
+        eventType: "MAINTENANCE_ALERT",
+        channel: "EMAIL",
+        recipientName: "Maintenance Supervisor",
+        recipientContact: "maintenance@example.com",
+        payload: { reference: created.caseNumber, cylinder: cylinder.serialNumber },
+        createdById: session.user.id
       });
 
       return created;

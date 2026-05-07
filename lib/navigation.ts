@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  BellRing,
   Boxes,
   ClipboardCheck,
   CreditCard,
@@ -43,6 +44,7 @@ export const moduleNavItems = [
   { href: "/reconciliations", label: "Reconciliation", icon: ClipboardCheck },
   { href: "/safety", label: "Safety", icon: ShieldAlert },
   { href: "/reports", label: "Reports", icon: BarChart3 },
+  { href: "/notifications", label: "Notifications", icon: BellRing },
   { href: "/audit-logs", label: "Audit Logs", icon: FileClock },
   { href: "/settings", label: "Settings", icon: Settings }
 ];

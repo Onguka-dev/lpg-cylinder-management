@@ -1,6 +1,6 @@
 # LPG Cylinder Management App
 
-Stage 13 adds reporting and analytics dashboards with filterable reports and CSV export on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, movement workflows, RSO refill sales, order management, MSO field sales, delivery management, billing, daily reconciliation, and safety compliance.
+Stage 14 adds notification and alert placeholders with templates, mock send records, channel settings, and event-triggered notification logs on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, movement workflows, RSO refill sales, order management, MSO field sales, delivery management, billing, daily reconciliation, safety compliance, and reporting.
 
 ## Stack
 
@@ -59,6 +59,18 @@ All seeded users use the same demo password: `password123`.
 ```bash
 npm test
 ```
+
+## Manual Stage 14 Checks
+
+- Visit `/login` and sign in as Admin.
+- Visit `/notifications` and confirm the notification log, Pending/Sent/Failed KPI cards, filters, and seeded low-stock notification appear.
+- Visit `/settings/notifications` and confirm SMS, email, and push placeholder channel settings plus notification templates for customer order confirmation, delivery updates, receipts, low stock, pending deliveries, maintenance alerts, emergency recalls, and safety warnings.
+- Use `/notifications/new` to create two mock notification records and confirm they appear in the notification log.
+- Try invalid input, such as a very short message or missing recipient contact, and confirm a clear validation message appears.
+- Create or update supported workflows such as an order, delivery status, payment, maintenance case, or safety incident and confirm a notification record is created.
+- Confirm Admin can manage templates/settings, Warehouse Manager can view/send notification placeholders, Auditor can view notification logs only, and Customer cannot access notification screens or APIs.
+- Confirm live SMS/email/push integrations are not connected and remain placeholders.
+- Confirm `/api/health` returns stage `14`.
 
 ## Manual Stage 13 Checks
 

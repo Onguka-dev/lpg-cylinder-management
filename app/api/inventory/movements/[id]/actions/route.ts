@@ -13,6 +13,7 @@ import {
   completesOnDispatch,
   movementActionSchema
 } from "@/lib/inventory-movements";
+import { createMockNotification } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 import { saleEligibleCylinderWhere } from "@/lib/safety";
 
@@ -154,6 +155,35 @@ export async function POST(
           }
         });
         await addHistory(tx, movement.id, movement.status, saved.status, "Movement dispatched", `${quantity} cylinder(s) dispatched.`, session?.user.id);
+        const remaining = await tx.cylinder.count({
+          where: {
+            skuId: movement.skuId,
+            currentLocationId: movement.sourceLocationId,
+            status: movement.sourceStatus
+          }
+        });
+        const threshold = await tx.masterDataRecord.findFirst({
+          where: { type: "STOCK_THRESHOLD", isActive: true, threshold: { not: null } },
+          orderBy: { updatedAt: "desc" }
+        });
+        if (threshold?.threshold !== null && threshold?.threshold !== undefined && remaining <= threshold.threshold) {
+          const [sku, location] = await Promise.all([
+            tx.masterDataRecord.findUnique({ where: { id: movement.skuId } }),
+            tx.masterDataRecord.findUnique({ where: { id: movement.sourceLocationId } })
+          ]);
+          await createMockNotification(tx, {
+            eventType: "LOW_STOCK_ALERT",
+            channel: "PUSH",
+            recipientName: "Warehouse Supervisor",
+            recipientContact: "warehouse-low-stock-placeholder",
+            payload: {
+              sku: sku?.name ?? "SKU",
+              location: location?.name ?? "source location",
+              quantity: remaining
+            },
+            createdById: session?.user.id
+          });
+        }
         return saved;
       }
 

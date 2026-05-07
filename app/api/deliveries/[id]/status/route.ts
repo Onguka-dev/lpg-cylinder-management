@@ -7,6 +7,7 @@ import {
   type DeliveryStatusKey
 } from "@/lib/deliveries";
 import { requireDeliveryStatusSession } from "@/lib/delivery-access";
+import { createMockNotification } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
@@ -93,6 +94,15 @@ export async function POST(request: Request, { params }: { params: { id: string 
         details: `${existing.deliveryNumber}: ${existing.status} to ${updated.status}.`,
         userId: session?.user.id
       }
+    });
+
+    await createMockNotification(tx, {
+      eventType: "DELIVERY_UPDATE",
+      channel: "SMS",
+      recipientName: updated.order.customer.name,
+      recipientContact: updated.order.customer.phone,
+      payload: { reference: updated.deliveryNumber, status: updated.status },
+      createdById: session?.user.id
     });
 
     return updated;

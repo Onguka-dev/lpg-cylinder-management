@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { getCurrentSession } from "@/lib/auth";
 import { requireOrderManageSession, requireOrderViewSession } from "@/lib/order-access";
 import { generateOrderNumber, orderSchema } from "@/lib/orders";
+import { createMockNotification } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
@@ -82,6 +83,15 @@ export async function POST(request: Request) {
           details: `${created.orderNumber} created for ${created.customer.name}.`,
           userId: session?.user.id
         }
+      });
+
+      await createMockNotification(tx, {
+        eventType: "CUSTOMER_ORDER_CONFIRMATION",
+        channel: "SMS",
+        recipientName: created.customer.name,
+        recipientContact: created.customer.phone,
+        payload: { reference: created.orderNumber },
+        createdById: session?.user.id
       });
 
       return created;

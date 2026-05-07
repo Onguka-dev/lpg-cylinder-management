@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { getCurrentSession } from "@/lib/auth";
 import { deliveryAssignmentSchema, generateDeliveryNumber } from "@/lib/deliveries";
 import { requireDeliveryManageSession, requireDeliveryViewSession } from "@/lib/delivery-access";
+import { createMockNotification } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 
 const includeDelivery = {
@@ -103,6 +104,18 @@ export async function POST(request: Request) {
           details: `${created.deliveryNumber} assigned for ${order.orderNumber}.`,
           userId: session?.user.id
         }
+      });
+
+      await createMockNotification(tx, {
+        eventType: "PENDING_DELIVERY_ALERT",
+        channel: "PUSH",
+        recipientName: created.assignedUser?.name ?? created.driverName ?? "Assigned delivery user",
+        recipientContact: created.assignedUser?.email ?? "driver-push-placeholder",
+        payload: {
+          reference: created.deliveryNumber,
+          zone: created.zone?.name ?? created.order.deliveryZone?.name ?? "delivery zone"
+        },
+        createdById: session?.user.id
       });
 
       return created;

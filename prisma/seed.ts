@@ -6,11 +6,13 @@ import {
   InventoryMovementType,
   LocationType,
   MasterDataType,
+  NotificationChannel,
   PrismaClient,
   RoleName
 } from "@prisma/client";
 import { seedMasterDataRecords } from "../lib/master-data";
 import { seedCustomers } from "../lib/customers";
+import { seedNotificationTemplates } from "../lib/notifications";
 
 const prisma = new PrismaClient();
 
@@ -702,6 +704,93 @@ async function main() {
           photoUploadPlaceholder: "Photo upload placeholder",
           createdById: adminUser.id
         }
+      });
+    }
+  }
+
+  for (const channel of [NotificationChannel.SMS, NotificationChannel.EMAIL, NotificationChannel.PUSH]) {
+    await prisma.notificationChannelSetting.upsert({
+      where: { channel },
+      update: {
+        isEnabled: true,
+        providerPlaceholder: `${channel} mock provider`,
+        senderPlaceholder: channel === "EMAIL" ? "no-reply@example.com" : "LPG Manager"
+      },
+      create: {
+        channel,
+        isEnabled: true,
+        providerPlaceholder: `${channel} mock provider`,
+        senderPlaceholder: channel === "EMAIL" ? "no-reply@example.com" : "LPG Manager"
+      }
+    });
+  }
+
+  for (const template of seedNotificationTemplates) {
+    await prisma.notificationTemplate.upsert({
+      where: {
+        eventType_channel: {
+          eventType: template.eventType,
+          channel: template.channel
+        }
+      },
+      update: {
+        name: template.name,
+        subject: template.subject,
+        body: template.body,
+        isEnabled: template.isEnabled
+      },
+      create: template
+    });
+  }
+
+  if (adminUser) {
+    const seedNotifications = [
+      {
+        reference: "NTF-STAGE14-SEED",
+        eventType: "LOW_STOCK_ALERT",
+        channel: "SMS",
+        status: "SENT",
+        recipientName: "Warehouse Supervisor",
+        recipientContact: "+254700000001",
+        subject: "Low stock alert",
+        message: "Low stock alert for 6kg LPG at Nairobi Main Warehouse. Current filled stock: 2.",
+        payload: { sku: "6kg LPG", location: "Nairobi Main Warehouse", quantity: 2 },
+        failureReason: null,
+        sentAt: new Date("2026-05-07T06:00:00.000Z")
+      },
+      {
+        reference: "NTF-STAGE14-PENDING",
+        eventType: "PENDING_DELIVERY_ALERT",
+        channel: "PUSH",
+        status: "PENDING",
+        recipientName: "MSO Driver",
+        recipientContact: "driver-push-placeholder",
+        subject: "Pending delivery alert",
+        message: "Pending delivery DLV-STAGE9-SEED requires follow-up in Westlands.",
+        payload: { reference: "DLV-STAGE9-SEED", zone: "Westlands" },
+        failureReason: null,
+        sentAt: null
+      },
+      {
+        reference: "NTF-STAGE14-FAILED",
+        eventType: "SAFETY_WARNING",
+        channel: "EMAIL",
+        status: "FAILED",
+        recipientName: "Safety Desk",
+        recipientContact: "fail-safety@example.com",
+        subject: "Safety warning",
+        message: "Safety warning INC-STAGE12-SEED could not be delivered by the mock sender.",
+        payload: { reference: "INC-STAGE12-SEED" },
+        failureReason: "Mock send failed because recipient contains 'fail'.",
+        sentAt: null
+      }
+    ] as const;
+
+    for (const notification of seedNotifications) {
+      await prisma.notification.upsert({
+        where: { reference: notification.reference },
+        update: { ...notification, createdById: adminUser.id },
+        create: { ...notification, createdById: adminUser.id }
       });
     }
   }

@@ -89,6 +89,14 @@ describe("role-based access control", () => {
     expect(canAccessPath("CUSTOMER", "/safety")).toBe(false);
   });
 
+  it("allows notification logs for accountable roles while keeping customer blocked", () => {
+    expect(canAccessPath("ADMIN", "/settings/notifications")).toBe(true);
+    expect(canAccessPath("WAREHOUSE_MANAGER", "/notifications")).toBe(true);
+    expect(canAccessPath("WAREHOUSE_MANAGER", "/api/notifications")).toBe(true);
+    expect(canAccessPath("AUDITOR", "/notifications")).toBe(true);
+    expect(canAccessPath("CUSTOMER", "/notifications")).toBe(false);
+  });
+
   it("has a default dashboard for each role", () => {
     expect(defaultRouteByRole.RSO).toBe("/rso");
     expect(defaultRouteByRole.CUSTOMER).toBe("/customer");

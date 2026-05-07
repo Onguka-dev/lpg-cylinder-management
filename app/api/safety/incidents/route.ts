@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { getCurrentSession } from "@/lib/auth";
 import { canManageSafety, canViewSafety, generateSafetyReference, safetyIncidentSchema } from "@/lib/safety";
+import { createMockNotification } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -41,6 +42,14 @@ export async function POST(request: Request) {
         await tx.cylinder.update({ where: { id: parsed.data.cylinderId }, data: { unsafeStatus: true } });
       }
       await tx.auditLog.create({ data: { action: "SAFETY_INCIDENT_LOGGED", details: `${created.incidentNumber} logged: ${created.title}.`, userId: session.user.id } });
+      await createMockNotification(tx, {
+        eventType: "SAFETY_WARNING",
+        channel: "PUSH",
+        recipientName: "Safety Team",
+        recipientContact: "safety-push-placeholder",
+        payload: { reference: created.incidentNumber },
+        createdById: session.user.id
+      });
       return created;
     });
     return NextResponse.json({ incident }, { status: 201 });

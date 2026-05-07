@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { getCurrentSession } from "@/lib/auth";
 import { billingPaymentSchema, generateReceiptNumber, invoiceStatusForAmounts } from "@/lib/billing";
 import { requireBillingManageSession } from "@/lib/billing-access";
+import { createMockNotification } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
@@ -28,7 +29,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
       const balance = existing.totalAmount.minus(amountPaid).toDecimalPlaces(2);
       const status = invoiceStatusForAmounts(existing.totalAmount, amountPaid);
 
-      await tx.billingPayment.create({
+      const payment = await tx.billingPayment.create({
         data: {
           receiptNumber: generateReceiptNumber(),
           invoiceId: existing.id,
@@ -54,6 +55,18 @@ export async function POST(request: Request, { params }: { params: { id: string 
           details: `${updated.invoiceNumber} payment recorded; balance ${updated.balanceAmount.toString()}.`,
           userId: session?.user.id
         }
+      });
+
+      await createMockNotification(tx, {
+        eventType: "RECEIPT_ISSUED",
+        channel: "SMS",
+        recipientName: updated.customer.name,
+        recipientContact: updated.customer.phone,
+        payload: {
+          reference: payment.receiptNumber,
+          amount: payment.amount.toString()
+        },
+        createdById: session?.user.id
       });
 
       return updated;
