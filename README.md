@@ -1,6 +1,6 @@
 # LPG Cylinder Management App
 
-Stage 12 adds safety, maintenance, and compliance controls on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, movement workflows, RSO refill sales, order management, MSO field sales, delivery management, billing, and daily reconciliation.
+Stage 13 adds reporting and analytics dashboards with filterable reports and CSV export on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, movement workflows, RSO refill sales, order management, MSO field sales, delivery management, billing, daily reconciliation, and safety compliance.
 
 ## Stack
 
@@ -59,6 +59,18 @@ All seeded users use the same demo password: `password123`.
 ```bash
 npm test
 ```
+
+## Manual Stage 13 Checks
+
+- Visit `/login` and sign in as Admin, Warehouse Manager, RSO, MSO, or Auditor.
+- Visit `/reports` and confirm KPI cards for inventory levels, sales revenue, outstanding payments, compliance alerts, maintenance cases, damaged cylinders, deliveries, and user activity.
+- Use filters for date range, region placeholder, location/dealer, role, customer category, SKU, and status; confirm the dashboard reloads and keeps selected filter values.
+- Confirm dashboards/tables are visible for inventory levels, cylinder status, cylinder location, cylinder circulation, sales revenue, outstanding payments, customer credit limits, delivery performance, reconciliation variances, safety compliance, maintenance due, damaged cylinders, and user activity logs.
+- Use at least two CSV export links, such as Inventory Levels CSV and User Activity CSV, and confirm each returns CSV content.
+- Confirm Excel, PDF, and scheduled reporting are shown as placeholders only.
+- Try an invalid export type at `/api/reports/export?type=bad-report` and confirm a clear validation message.
+- Confirm Auditor can view reports and export CSV, while Customer cannot access `/reports` or `/api/reports/export`.
+- Confirm `/api/health` returns stage `13`.
 
 ## Manual Stage 12 Checks
 

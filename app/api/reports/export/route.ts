@@ -1,0 +1,120 @@
+import { NextResponse } from "next/server";
+import { getCurrentSession } from "@/lib/auth";
+import { formatMoney } from "@/lib/billing";
+import { prisma } from "@/lib/prisma";
+import { canViewReports, dateRange, normalizeReportFilters, reportTypes, toCsv, type ReportType } from "@/lib/reports";
+
+export async function GET(request: Request) {
+  const session = await getCurrentSession();
+  if (!session) return NextResponse.json({ error: "Sign in to export reports." }, { status: 401 });
+  if (!canViewReports(session.user.role)) return NextResponse.json({ error: "Your role cannot export reports." }, { status: 403 });
+
+  const url = new URL(request.url);
+  const type = url.searchParams.get("type") as ReportType | null;
+  if (!type || !reportTypes.includes(type)) {
+    return NextResponse.json({ error: "Select a valid report type." }, { status: 400 });
+  }
+
+  const filters = normalizeReportFilters(Object.fromEntries(url.searchParams.entries()));
+  const rows = await reportRows(type, filters);
+  const csv = toCsv(rows);
+
+  return new NextResponse(csv, {
+    headers: {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": `attachment; filename="${type}-${new Date().toISOString().slice(0, 10)}.csv"`
+    }
+  });
+}
+
+async function reportRows(type: ReportType, filters: ReturnType<typeof normalizeReportFilters>) {
+  const createdAt = dateRange(filters);
+
+  if (type === "inventory-levels" || type === "cylinder-status" || type === "cylinder-location") {
+    const cylinders = await prisma.cylinder.findMany({
+      where: {
+        ...(filters.skuId ? { skuId: filters.skuId } : {}),
+        ...(filters.locationId ? { currentLocationId: filters.locationId } : {}),
+        ...(cylinderStatuses.includes(filters.status ?? "") ? { status: filters.status as never } : {})
+      },
+      include: { sku: true, currentLocation: true },
+      orderBy: { updatedAt: "desc" },
+      take: 500
+    });
+    return cylinders.map((cylinder) => ({
+      serialNumber: cylinder.serialNumber,
+      sku: cylinder.sku.name,
+      location: cylinder.currentLocation.name,
+      status: cylinder.status,
+      expiryDate: cylinder.expiryDate?.toISOString().slice(0, 10) ?? "",
+      hydroTestDueDate: cylinder.hydroTestDueDate?.toISOString().slice(0, 10) ?? "",
+      unsafe: cylinder.unsafeStatus,
+      quarantined: cylinder.quarantinedStatus
+    }));
+  }
+
+  if (type === "sales-revenue") {
+    const [refills, fieldSales, payments] = await Promise.all([
+      prisma.refillOrder.findMany({ where: { ...(createdAt ? { createdAt } : {}), ...(filters.skuId ? { skuId: filters.skuId } : {}), ...(filters.locationId ? { locationId: filters.locationId } : {}) }, include: { customer: true, sku: true, location: true }, take: 500 }),
+      prisma.fieldSale.findMany({ where: { ...(createdAt ? { createdAt } : {}), ...(filters.skuId ? { skuId: filters.skuId } : {}), ...(filters.locationId ? { vehicleId: filters.locationId } : {}) }, include: { customer: true, sku: true, vehicle: true }, take: 500 }),
+      prisma.billingPayment.findMany({ where: { ...(createdAt ? { createdAt } : {}) }, include: { customer: true, invoice: true }, take: 500 })
+    ]);
+    return [
+      ...refills.map((sale) => ({ source: "Retail refill", reference: sale.orderNumber, customer: sale.customer.name, sku: sale.sku.name, location: sale.location.name, amount: formatMoney(sale.totalAmount), date: sale.createdAt.toISOString().slice(0, 10) })),
+      ...fieldSales.map((sale) => ({ source: "Field sale", reference: sale.saleNumber, customer: sale.customer.name, sku: sale.sku.name, location: sale.vehicle.name, amount: formatMoney(sale.amount), date: sale.createdAt.toISOString().slice(0, 10) })),
+      ...payments.map((payment) => ({ source: "Invoice payment", reference: payment.receiptNumber, customer: payment.customer.name, sku: "", location: "", amount: formatMoney(payment.amount), date: payment.createdAt.toISOString().slice(0, 10) }))
+    ];
+  }
+
+  if (type === "outstanding-payments" || type === "customer-credit-limits") {
+    const invoices = await prisma.invoice.findMany({ where: { ...(createdAt ? { createdAt } : {}), ...(invoiceStatuses.includes(filters.status ?? "") ? { status: filters.status as never } : {}) }, include: { customer: true }, orderBy: { balanceAmount: "desc" }, take: 500 });
+    return invoices.map((invoice) => ({
+      invoice: invoice.invoiceNumber,
+      customer: invoice.customer.name,
+      category: invoice.customer.category,
+      creditLimit: formatMoney(invoice.customer.creditLimit),
+      total: formatMoney(invoice.totalAmount),
+      paid: formatMoney(invoice.amountPaid),
+      balance: formatMoney(invoice.balanceAmount),
+      status: invoice.status
+    }));
+  }
+
+  if (type === "delivery-performance") {
+    const deliveries = await prisma.delivery.findMany({ where: { ...(createdAt ? { createdAt } : {}), ...(deliveryStatuses.includes(filters.status ?? "") ? { status: filters.status as never } : {}), ...(filters.locationId ? { OR: [{ zoneId: filters.locationId }, { routeId: filters.locationId }, { vehicleId: filters.locationId }] } : {}) }, include: { order: { include: { customer: true } }, assignedUser: true, route: true, zone: true, vehicle: true }, take: 500 });
+    return deliveries.map((delivery) => ({
+      delivery: delivery.deliveryNumber,
+      order: delivery.order.orderNumber,
+      customer: delivery.order.customer.name,
+      status: delivery.status,
+      route: delivery.route?.name ?? "",
+      zone: delivery.zone?.name ?? "",
+      vehicle: delivery.vehicle?.name ?? "",
+      assignedUser: delivery.assignedUser?.name ?? ""
+    }));
+  }
+
+  if (type === "reconciliation-variances") {
+    const records = await prisma.dailyReconciliation.findMany({ where: { ...(createdAt ? { reconciliationDate: createdAt } : {}), ...(reconciliationStatuses.includes(filters.status ?? "") ? { status: filters.status as never } : {}) }, include: { owner: { include: { role: true } }, location: true }, take: 500 });
+    return records.map((record) => ({ reference: record.reference, owner: record.owner.name, role: record.owner.role.name, location: record.location?.name ?? "", stockVariance: record.stockVariance, paymentVariance: record.paymentVariance.toString(), status: record.status, date: record.reconciliationDate.toISOString().slice(0, 10) }));
+  }
+
+  if (type === "safety-compliance" || type === "maintenance-due" || type === "damaged-cylinders") {
+    const cases = await prisma.maintenanceCase.findMany({ where: { ...(createdAt ? { createdAt } : {}), ...(maintenanceStatuses.includes(filters.status ?? "") ? { status: filters.status as never } : {}) }, include: { cylinder: { include: { sku: true, currentLocation: true } } }, take: 500 });
+    return cases.map((item) => ({ caseNumber: item.caseNumber, cylinder: item.cylinder.serialNumber, sku: item.cylinder.sku.name, location: item.cylinder.currentLocation.name, caseStatus: item.status, inspectionResult: item.inspectionResult ?? "", unsafe: item.cylinder.unsafeStatus, quarantined: item.cylinder.quarantinedStatus, expiryDate: item.cylinder.expiryDate?.toISOString().slice(0, 10) ?? "", hydroTestDueDate: item.cylinder.hydroTestDueDate?.toISOString().slice(0, 10) ?? "" }));
+  }
+
+  if (type === "user-activity") {
+    const logs = await prisma.auditLog.findMany({ where: { ...(createdAt ? { createdAt } : {}), ...(filters.role ? { user: { role: { name: filters.role as never } } } : {}) }, include: { user: { include: { role: true } } }, orderBy: { createdAt: "desc" }, take: 500 });
+    return logs.map((log) => ({ date: log.createdAt.toISOString(), user: log.user?.name ?? "System", role: log.user?.role.name ?? "", action: log.action, details: log.details }));
+  }
+
+  const history = await prisma.cylinderHistory.findMany({ where: { ...(createdAt ? { createdAt } : {}) }, include: { cylinder: true, changedBy: true }, orderBy: { createdAt: "desc" }, take: 500 });
+  return history.map((entry) => ({ date: entry.createdAt.toISOString(), cylinder: entry.cylinder.serialNumber, fromStatus: entry.previousStatus ?? "", toStatus: entry.newStatus, reason: entry.reason, changedBy: entry.changedBy?.name ?? "System" }));
+}
+
+const cylinderStatuses = ["FILLED", "EMPTY", "DAMAGED", "IN_TRANSIT", "RESERVED", "UNDER_MAINTENANCE", "WITH_CUSTOMER"];
+const deliveryStatuses = ["ASSIGNED", "LOADING_CONFIRMED", "CUSTOMER_ARRIVAL", "DELIVERED", "FAILED", "RETURNED", "EXCEPTION"];
+const invoiceStatuses = ["DRAFT", "ISSUED", "PARTIALLY_PAID", "PAID", "OVERDUE", "CANCELLED"];
+const reconciliationStatuses = ["DRAFT", "SUBMITTED", "APPROVED", "RETURNED"];
+const maintenanceStatuses = ["OPEN", "INSPECTION_RECORDED", "QUARANTINED", "APPROVED_RETURN_TO_STOCK", "SCRAP_PLACEHOLDER", "CLOSED"];

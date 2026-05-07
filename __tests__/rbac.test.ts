@@ -64,10 +64,14 @@ describe("role-based access control", () => {
 
   it("allows billing and reports for operational roles and auditor viewing", () => {
     expect(canAccessPath("RSO", "/payments")).toBe(true);
+    expect(canAccessPath("RSO", "/reports")).toBe(true);
+    expect(canAccessPath("MSO", "/api/reports/export")).toBe(true);
     expect(canAccessPath("MSO", "/api/billing/invoices")).toBe(true);
     expect(canAccessPath("WAREHOUSE_MANAGER", "/reports")).toBe(true);
     expect(canAccessPath("AUDITOR", "/payments")).toBe(true);
+    expect(canAccessPath("AUDITOR", "/api/reports/export")).toBe(true);
     expect(canAccessPath("CUSTOMER", "/payments")).toBe(false);
+    expect(canAccessPath("CUSTOMER", "/reports")).toBe(false);
   });
 
   it("allows close-of-day reconciliation for accountable roles and auditor viewing", () => {
