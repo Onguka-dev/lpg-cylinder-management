@@ -4,12 +4,12 @@ export default function HomePage() {
   return (
     <DashboardPlaceholder
       title="Operations Dashboard"
-      eyebrow="Stage 14"
-      description="Authentication, master data, customers, inventory, movements, sales, deliveries, billing, reconciliation, safety compliance, analytics, and notification placeholders are active."
+      eyebrow="Stage 15"
+      description="Authentication, master data, customers, inventory, movements, sales, deliveries, billing, reconciliation, safety, analytics, notifications, and offline sync placeholders are active."
       stats={[
         { label: "Role workspaces", value: "6" },
-        { label: "Notification events", value: "8" },
-        { label: "Mock channels", value: "3" }
+        { label: "Offline draft types", value: "6" },
+        { label: "Sync statuses", value: "4" }
       ]}
     />
   );

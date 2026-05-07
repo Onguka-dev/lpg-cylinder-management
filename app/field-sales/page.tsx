@@ -57,9 +57,14 @@ export default async function FieldSalesPage() {
             </p>
           </div>
           {canCreate ? (
-            <Link className="rounded-lg bg-brand-600 px-4 py-3 text-center text-sm font-semibold text-white" href="/field-sales/sales/new">
-              Instant sale
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Link className="rounded-lg bg-brand-600 px-4 py-3 text-center text-sm font-semibold text-white" href="/field-sales/sales/new">
+                Instant sale
+              </Link>
+              <Link className="rounded-lg border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700" href="/offline">
+                Offline mode
+              </Link>
+            </div>
           ) : null}
         </div>
       </section>
@@ -98,7 +103,7 @@ export default async function FieldSalesPage() {
             <Action href="/field-sales/sales/new" label="Empty cylinder collection" />
             <Action href="/field-sales/sales/new" label="Discrepancy reporting" />
             <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
-              Offline queue and sync hooks are reserved for Stage 15.
+              Offline queue and sync hooks are active in Stage 15.
             </div>
           </div>
         </div>

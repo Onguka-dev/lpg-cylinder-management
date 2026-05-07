@@ -97,6 +97,16 @@ describe("role-based access control", () => {
     expect(canAccessPath("CUSTOMER", "/notifications")).toBe(false);
   });
 
+  it("allows offline mode for MSO and delivery users", () => {
+    expect(canAccessPath("ADMIN", "/offline")).toBe(true);
+    expect(canAccessPath("WAREHOUSE_MANAGER", "/offline")).toBe(true);
+    expect(canAccessPath("WAREHOUSE_MANAGER", "/api/offline/sync")).toBe(true);
+    expect(canAccessPath("MSO", "/offline")).toBe(true);
+    expect(canAccessPath("MSO", "/api/offline/context")).toBe(true);
+    expect(canAccessPath("AUDITOR", "/offline")).toBe(false);
+    expect(canAccessPath("CUSTOMER", "/offline")).toBe(false);
+  });
+
   it("has a default dashboard for each role", () => {
     expect(defaultRouteByRole.RSO).toBe("/rso");
     expect(defaultRouteByRole.CUSTOMER).toBe("/customer");

@@ -66,7 +66,7 @@ export function AppShell({
                   LPG Cylinder Management
                 </p>
                 <p className="truncate text-xs text-slate-500">
-                  Stage 14 notifications and alerts
+                  Stage 15 offline mode and sync queue
                 </p>
               </div>
             </div>

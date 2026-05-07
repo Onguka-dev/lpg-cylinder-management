@@ -230,6 +230,22 @@ enum NotificationStatus {
   FAILED
 }
 
+enum OfflineSyncItemType {
+  ASSIGNED_DELIVERY_SNAPSHOT
+  VEHICLE_STOCK_SNAPSHOT
+  CUSTOMER_DRAFT
+  DELIVERY_STATUS_DRAFT
+  PROOF_OF_DELIVERY_DRAFT
+  FIELD_SALE_DRAFT
+}
+
+enum OfflineSyncItemStatus {
+  QUEUED
+  SYNCED
+  FAILED
+  CONFLICT
+}
+
 model Role {
   id          String   @id @default(cuid())
   name        RoleName @unique
@@ -274,6 +290,7 @@ model User {
   approvedMaintenanceCases MaintenanceCase[] @relation("MaintenanceCaseApprovedBy")
   createdSafetyIncidents SafetyIncident[] @relation("SafetyIncidentCreatedBy")
   createdNotifications Notification[] @relation("NotificationCreatedBy")
+  offlineSyncItems OfflineSyncItem[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -631,6 +648,28 @@ model Notification {
   @@index([eventType])
   @@index([channel])
   @@index([status])
+  @@index([createdAt])
+}
+
+model OfflineSyncItem {
+  id             String                @id @default(cuid())
+  clientId       String                @unique
+  type           OfflineSyncItemType
+  status         OfflineSyncItemStatus @default(QUEUED)
+  payload        Json
+  serverRecordId String?
+  conflictReason String?
+  failedReason   String?
+  createdById    String?
+  createdBy      User?                 @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  clientCreatedAt DateTime?
+  syncedAt       DateTime?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@index([type])
+  @@index([status])
+  @@index([createdById])
   @@index([createdAt])
 }
 

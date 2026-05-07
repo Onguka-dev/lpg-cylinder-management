@@ -1,6 +1,6 @@
 # LPG Cylinder Management App
 
-Stage 14 adds notification and alert placeholders with templates, mock send records, channel settings, and event-triggered notification logs on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, movement workflows, RSO refill sales, order management, MSO field sales, delivery management, billing, daily reconciliation, safety compliance, and reporting.
+Stage 15 adds browser-friendly offline mode for MSO and delivery users with local draft storage, assigned delivery and vehicle stock snapshots, a sync queue, and conflict-safe server review records on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, movement workflows, RSO refill sales, order management, MSO field sales, delivery management, billing, daily reconciliation, safety compliance, reporting, and notifications.
 
 ## Stack
 
@@ -59,6 +59,18 @@ All seeded users use the same demo password: `password123`.
 ```bash
 npm test
 ```
+
+## Manual Stage 15 Checks
+
+- Visit `/login` and sign in as Admin, Warehouse Manager, or MSO.
+- Visit `/offline` and confirm online/offline status, sync status cards, assigned deliveries, vehicle stock snapshot, draft forms, and sync queue are visible.
+- Click Refresh snapshot and confirm assigned delivery and vehicle stock snapshot items are saved in the queue.
+- Create at least two offline drafts, such as one customer registration draft and one delivery proof/status draft, and confirm they appear in the queue.
+- Click Sync queue while online and confirm the queue updates to Synced, Failed, or Conflict with clear review messages.
+- Try invalid input, such as syncing a proof-of-delivery draft with an invalid OTP, and confirm the API returns a clear validation message.
+- Confirm field sale drafts are flagged for review/conflict rather than silently updating vehicle stock.
+- Confirm Admin and Warehouse Manager can use/review offline sync records, MSO can use offline mode for assigned work, and Auditor/Customer cannot access `/offline` or `/api/offline`.
+- Confirm `/api/health` returns stage `15`.
 
 ## Manual Stage 14 Checks
 

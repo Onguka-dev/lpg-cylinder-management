@@ -17,11 +17,11 @@ export default async function MsoPage() {
         <p className="text-sm font-semibold text-brand-700">Role Workspace</p>
         <h1 className="mt-2 text-2xl font-semibold text-slate-950">MSO Dashboard</h1>
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          Field sales, assigned route visibility, vehicle stock, and mobile quick actions are active for Stage 8.
+          Field sales, assigned route visibility, vehicle stock, mobile quick actions, and offline queue support are active.
         </p>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-3">
+      <section className="grid gap-3 sm:grid-cols-4">
         <Summary label="Assigned Vehicle" value={assignment.vehicle?.code ?? "None"} />
         <Summary label="Route" value={assignment.route?.code ?? "Placeholder"} />
         <Summary label="Filled Stock" value={String(vehicleStock)} />
@@ -37,6 +37,9 @@ export default async function MsoPage() {
         </Link>
         <Link className="rounded-lg border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700" href="/deliveries">
           Delivery assignments
+        </Link>
+        <Link className="rounded-lg border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700" href="/offline">
+          Offline mode
         </Link>
       </section>
     </div>

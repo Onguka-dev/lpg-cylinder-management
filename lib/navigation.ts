@@ -16,7 +16,8 @@ import {
   Truck,
   UserCog,
   Users,
-  Warehouse
+  Warehouse,
+  Wifi
 } from "lucide-react";
 
 export const roleNavItems = [
@@ -38,6 +39,7 @@ export const moduleNavItems = [
   { href: "/retail-sales", label: "Retail Sales", icon: ShoppingCart },
   { href: "/retail-inventory", label: "Retail Inventory", icon: Boxes },
   { href: "/field-sales", label: "Field Sales", icon: MapPinned },
+  { href: "/offline", label: "Offline Mode", icon: Wifi },
   { href: "/orders", label: "Orders", icon: ShoppingCart },
   { href: "/deliveries", label: "Deliveries", icon: Truck },
   { href: "/payments", label: "Payments", icon: CreditCard },

@@ -794,6 +794,39 @@ async function main() {
       });
     }
   }
+
+  if (adminUser) {
+    await prisma.offlineSyncItem.upsert({
+      where: { clientId: "offline-stage15-seed-conflict" },
+      update: {
+        type: "DELIVERY_STATUS_DRAFT",
+        status: "CONFLICT",
+        payload: {
+          deliveryId: "seed-delivery-placeholder",
+          serverUpdatedAt: "2026-05-07T07:00:00.000Z",
+          data: { status: "DELIVERED", otp: "1234" }
+        },
+        conflictReason: "Seed conflict: delivery changed on the server after the offline snapshot.",
+        failedReason: null,
+        createdById: adminUser.id,
+        syncedAt: new Date("2026-05-07T07:00:00.000Z")
+      },
+      create: {
+        clientId: "offline-stage15-seed-conflict",
+        type: "DELIVERY_STATUS_DRAFT",
+        status: "CONFLICT",
+        payload: {
+          deliveryId: "seed-delivery-placeholder",
+          serverUpdatedAt: "2026-05-07T07:00:00.000Z",
+          data: { status: "DELIVERED", otp: "1234" }
+        },
+        conflictReason: "Seed conflict: delivery changed on the server after the offline snapshot.",
+        createdById: adminUser.id,
+        clientCreatedAt: new Date("2026-05-07T06:55:00.000Z"),
+        syncedAt: new Date("2026-05-07T07:00:00.000Z")
+      }
+    });
+  }
 }
 
 main()
