@@ -107,6 +107,16 @@ describe("role-based access control", () => {
     expect(canAccessPath("CUSTOMER", "/offline")).toBe(false);
   });
 
+  it("allows integration logs for accountable roles and admin settings", () => {
+    expect(canAccessPath("ADMIN", "/settings/integrations")).toBe(true);
+    expect(canAccessPath("WAREHOUSE_MANAGER", "/integrations")).toBe(true);
+    expect(canAccessPath("WAREHOUSE_MANAGER", "/api/integrations/logs")).toBe(true);
+    expect(canAccessPath("AUDITOR", "/integrations")).toBe(true);
+    expect(canAccessPath("AUDITOR", "/api/integrations/logs")).toBe(true);
+    expect(canAccessPath("AUDITOR", "/settings/integrations")).toBe(false);
+    expect(canAccessPath("CUSTOMER", "/integrations")).toBe(false);
+  });
+
   it("has a default dashboard for each role", () => {
     expect(defaultRouteByRole.RSO).toBe("/rso");
     expect(defaultRouteByRole.CUSTOMER).toBe("/customer");

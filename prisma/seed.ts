@@ -13,6 +13,7 @@ import {
 import { seedMasterDataRecords } from "../lib/master-data";
 import { seedCustomers } from "../lib/customers";
 import { seedNotificationTemplates } from "../lib/notifications";
+import { seedIntegrationSettings } from "../lib/integrations";
 
 const prisma = new PrismaClient();
 
@@ -826,6 +827,70 @@ async function main() {
         syncedAt: new Date("2026-05-07T07:00:00.000Z")
       }
     });
+  }
+
+  for (const setting of seedIntegrationSettings) {
+    await prisma.integrationSetting.upsert({
+      where: { providerType: setting.providerType },
+      update: setting,
+      create: setting
+    });
+  }
+
+  if (adminUser) {
+    const sapSetting = await prisma.integrationSetting.findUnique({ where: { providerType: "SAP_ACCOUNTING" } });
+    const paymentSetting = await prisma.integrationSetting.findUnique({ where: { providerType: "PAYMENT_GATEWAY" } });
+    const scannerSetting = await prisma.integrationSetting.findUnique({ where: { providerType: "BARCODE_RFID" } });
+
+    const seedLogs = [
+      {
+        reference: "INT-STAGE16-SUCCESS",
+        providerType: "SAP_ACCOUNTING",
+        settingId: sapSetting?.id,
+        action: "POST_ACCOUNTING_DOCUMENT",
+        requestStatus: "SUCCESS",
+        responseStatus: "SUCCESS",
+        errorMessage: null,
+        retryCount: 0,
+        relatedRecord: "INV-STAGE10-SEED",
+        payload: { invoice: "INV-STAGE10-SEED", amount: 1592 },
+        responsePayload: { mock: true, accountingDocument: "SAP-MOCK-001" }
+      },
+      {
+        reference: "INT-STAGE16-RETRY",
+        providerType: "PAYMENT_GATEWAY",
+        settingId: paymentSetting?.id,
+        action: "PAYMENT_CALLBACK",
+        requestStatus: "RETRY_QUEUED",
+        responseStatus: "FAILED",
+        errorMessage: "Seed mock callback failure queued for retry.",
+        retryCount: 1,
+        relatedRecord: "RCT-STAGE10-SEED",
+        payload: { provider: "MPESA", transactionReference: "MPESA-STAGE10-SEED", amount: 800 },
+        responsePayload: { queuedForRetry: true }
+      },
+      {
+        reference: "INT-STAGE16-SCAN",
+        providerType: "BARCODE_RFID",
+        settingId: scannerSetting?.id,
+        action: "SCAN_BARCODE_RFID",
+        requestStatus: "SUCCESS",
+        responseStatus: "SUCCESS",
+        errorMessage: null,
+        retryCount: 0,
+        relatedRecord: "CYL-6KG-0001",
+        payload: { scanValue: "RFID-6KG-0001" },
+        responsePayload: { mock: true, matched: "CYL-6KG-0001" }
+      }
+    ] as const;
+
+    for (const log of seedLogs) {
+      await prisma.integrationLog.upsert({
+        where: { reference: log.reference },
+        update: { ...log, createdById: adminUser.id },
+        create: { ...log, createdById: adminUser.id }
+      });
+    }
   }
 }
 

@@ -246,6 +246,21 @@ enum OfflineSyncItemStatus {
   CONFLICT
 }
 
+enum IntegrationProviderType {
+  SAP_ACCOUNTING
+  PAYMENT_GATEWAY
+  SMS_EMAIL
+  BARCODE_RFID
+  MAPS_GPS
+}
+
+enum IntegrationLogStatus {
+  QUEUED
+  SUCCESS
+  FAILED
+  RETRY_QUEUED
+}
+
 model Role {
   id          String   @id @default(cuid())
   name        RoleName @unique
@@ -291,6 +306,7 @@ model User {
   createdSafetyIncidents SafetyIncident[] @relation("SafetyIncidentCreatedBy")
   createdNotifications Notification[] @relation("NotificationCreatedBy")
   offlineSyncItems OfflineSyncItem[]
+  integrationLogs IntegrationLog[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -670,6 +686,46 @@ model OfflineSyncItem {
   @@index([type])
   @@index([status])
   @@index([createdById])
+  @@index([createdAt])
+}
+
+model IntegrationSetting {
+  id                    String                  @id @default(cuid())
+  providerType          IntegrationProviderType @unique
+  name                  String
+  isEnabled             Boolean                 @default(true)
+  endpointPlaceholder   String?
+  credentialPlaceholder String?
+  mockFailureRate       Int                     @default(0)
+  notes                 String?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  logs                  IntegrationLog[]
+}
+
+model IntegrationLog {
+  id             String                  @id @default(cuid())
+  reference      String                  @unique
+  providerType   IntegrationProviderType
+  settingId      String?
+  setting        IntegrationSetting?     @relation(fields: [settingId], references: [id], onDelete: SetNull)
+  action         String
+  requestStatus  IntegrationLogStatus    @default(QUEUED)
+  responseStatus IntegrationLogStatus?
+  errorMessage   String?
+  retryCount     Int                     @default(0)
+  relatedRecord  String?
+  payload        Json?
+  responsePayload Json?
+  createdById    String?
+  createdBy      User?                   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  @@index([providerType])
+  @@index([requestStatus])
+  @@index([responseStatus])
+  @@index([relatedRecord])
   @@index([createdAt])
 }
 

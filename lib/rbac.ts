@@ -11,10 +11,10 @@ export const defaultRouteByRole: Record<AppRole, string> = {
 
 export const routePermissions: Record<AppRole, string[]> = {
   ADMIN: ["*"],
-  WAREHOUSE_MANAGER: ["/", "/warehouse", "/inventory", "/transfers", "/orders", "/deliveries", "/offline", "/payments", "/reports", "/notifications", "/reconciliations", "/safety", "/api/orders", "/api/deliveries", "/api/offline", "/api/billing", "/api/reports", "/api/notifications", "/api/reconciliations", "/api/safety", "/api/cylinders", "/api/inventory"],
+  WAREHOUSE_MANAGER: ["/", "/warehouse", "/inventory", "/transfers", "/orders", "/deliveries", "/offline", "/payments", "/reports", "/integrations", "/notifications", "/reconciliations", "/safety", "/api/orders", "/api/deliveries", "/api/offline", "/api/billing", "/api/reports", "/api/integrations", "/api/notifications", "/api/reconciliations", "/api/safety", "/api/cylinders", "/api/inventory"],
   RSO: ["/", "/rso", "/retail-sales", "/retail-inventory", "/customers", "/orders", "/payments", "/reports", "/reconciliations", "/inventory/movements", "/api/customers", "/api/orders", "/api/billing", "/api/reports", "/api/reconciliations", "/api/inventory/movements", "/api/retail"],
   MSO: ["/", "/mso", "/field-sales", "/deliveries", "/offline", "/customers", "/orders", "/payments", "/reports", "/reconciliations", "/inventory/movements", "/api/customers", "/api/orders", "/api/deliveries", "/api/offline", "/api/billing", "/api/reports", "/api/reconciliations", "/api/inventory/movements", "/api/field-sales"],
-  AUDITOR: ["/", "/auditor", "/reports", "/notifications", "/audit-logs", "/customers", "/orders", "/payments", "/reconciliations", "/safety", "/api/orders", "/api/customers", "/api/billing", "/api/reports", "/api/notifications", "/api/reconciliations", "/api/safety", "/inventory", "/api/cylinders", "/api/inventory", "/retail-sales/refills", "/api/retail/refill-orders", "/api/retail/refill-stock", "/field-sales", "/api/field-sales", "/deliveries", "/api/deliveries"],
+  AUDITOR: ["/", "/auditor", "/reports", "/integrations", "/notifications", "/audit-logs", "/customers", "/orders", "/payments", "/reconciliations", "/safety", "/api/orders", "/api/customers", "/api/billing", "/api/reports", "/api/integrations/logs", "/api/integrations/settings", "/api/notifications", "/api/reconciliations", "/api/safety", "/inventory", "/api/cylinders", "/api/inventory", "/retail-sales/refills", "/api/retail/refill-orders", "/api/retail/refill-stock", "/field-sales", "/api/field-sales", "/deliveries", "/api/deliveries"],
   CUSTOMER: ["/", "/customer"]
 };
 

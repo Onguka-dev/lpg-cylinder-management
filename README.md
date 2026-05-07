@@ -1,6 +1,6 @@
 # LPG Cylinder Management App
 
-Stage 15 adds browser-friendly offline mode for MSO and delivery users with local draft storage, assigned delivery and vehicle stock snapshots, a sync queue, and conflict-safe server review records on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, movement workflows, RSO refill sales, order management, MSO field sales, delivery management, billing, daily reconciliation, safety compliance, reporting, and notifications.
+Stage 16 adds a mock integrations layer with settings, logs, retries, SAP/accounting posting placeholders, payment callbacks, SMS/email provider placeholders, barcode/RFID input, and maps/GPS placeholders on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, movement workflows, RSO refill sales, order management, MSO field sales, delivery management, billing, daily reconciliation, safety compliance, reporting, notifications, and offline mode.
 
 ## Stack
 
@@ -59,6 +59,20 @@ All seeded users use the same demo password: `password123`.
 ```bash
 npm test
 ```
+
+## Manual Stage 16 Checks
+
+- Visit `/login` and sign in as Admin or Warehouse Manager.
+- Visit `/integrations` and confirm KPI cards, filters, mock integration attempt form, retry buttons, and seeded logs are visible.
+- Visit `/settings/integrations` as Admin and confirm settings exist for SAP/accounting, payment gateway, SMS/email, barcode/RFID, and maps/GPS placeholders.
+- Create at least two mock integration records: one successful attempt and one forced failure; confirm both appear in the integration log.
+- Retry a failed integration log and confirm retry count/status updates.
+- Test `/api/integrations/payment-callback` with Mpesa/card/online placeholder payload and confirm it creates an integration log without needing credentials.
+- Test barcode/RFID and GPS placeholders from `/api/integrations/scan` and `/api/integrations/gps`.
+- Try invalid input, such as GPS latitude outside -90 to 90 or a blank barcode/RFID value, and confirm a clear validation message.
+- Confirm failed integrations are queued for retry and do not block core transaction records.
+- Confirm Admin can manage settings, Warehouse Manager can view/trigger logs, Auditor can view logs only, and Customer cannot access integration screens or APIs.
+- Confirm `/api/health` returns stage `16`.
 
 ## Manual Stage 15 Checks
 

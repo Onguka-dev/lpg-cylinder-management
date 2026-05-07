@@ -9,6 +9,7 @@ import {
   ListChecks,
   MapPinned,
   PackageCheck,
+  PlugZap,
   Settings,
   ShieldCheck,
   ShieldAlert,
@@ -46,6 +47,7 @@ export const moduleNavItems = [
   { href: "/reconciliations", label: "Reconciliation", icon: ClipboardCheck },
   { href: "/safety", label: "Safety", icon: ShieldAlert },
   { href: "/reports", label: "Reports", icon: BarChart3 },
+  { href: "/integrations", label: "Integrations", icon: PlugZap },
   { href: "/notifications", label: "Notifications", icon: BellRing },
   { href: "/audit-logs", label: "Audit Logs", icon: FileClock },
   { href: "/settings", label: "Settings", icon: Settings }

@@ -7,13 +7,13 @@ export default function SettingsPage() {
         <p className="text-sm font-semibold text-brand-700">Core Module</p>
         <h1 className="mt-2 text-2xl font-semibold text-slate-950">Settings</h1>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-          Application configuration, account preferences, and notification controls. Stage 14 activates notification channel and template settings for Admin users.
+          Application configuration, account preferences, notification controls, and mock integration settings for Admin users.
         </p>
       </section>
       <section className="grid gap-4 md:grid-cols-3">
         <SettingsCard title="Notification Configuration" description="Manage SMS, email, and push placeholders plus event templates." href="/settings/notifications" />
+        <SettingsCard title="Integration Settings" description="Manage mock SAP, payment, messaging, scanner, and GPS adapters." href="/settings/integrations" />
         <SettingsCard title="Access Settings" description="Role and permission administration remains a later-stage placeholder." />
-        <SettingsCard title="System Preferences" description="Organization defaults and branding controls remain placeholders." />
       </section>
     </div>
   );
