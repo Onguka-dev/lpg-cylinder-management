@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { FieldSaleForm } from "@/components/field-sale-form";
+import { PageHeader } from "@/components/page-header";
+import { SectionCard } from "@/components/section-card";
 import { getCurrentSession } from "@/lib/auth";
 import { canManageFieldSales } from "@/lib/field-sales";
 import { getFieldAssignment } from "@/lib/field-sales-access";
@@ -11,7 +13,7 @@ export default async function NewFieldSalePage() {
 
   const assignment = await getFieldAssignment();
   const vehicleId = assignment.vehicle?.id;
-  const [customers, skus, groupedStock] = await Promise.all([
+  const [customers, skus, groupedStock, prices] = await Promise.all([
     prisma.customer.findMany({ where: { status: "ACTIVE" }, orderBy: { name: "asc" }, take: 100 }),
     prisma.masterDataRecord.findMany({ where: { type: "SKU_MASTER", isActive: true }, orderBy: { name: "asc" } }),
     vehicleId
@@ -20,7 +22,8 @@ export default async function NewFieldSalePage() {
           where: { currentLocationId: vehicleId, status: { in: ["FILLED", "EMPTY"] } },
           _count: { id: true }
         })
-      : []
+      : [],
+    prisma.masterDataRecord.findMany({ where: { type: "PRICE", isActive: true }, orderBy: { updatedAt: "desc" } })
   ]);
 
   const stock = skus.map((sku) => ({
@@ -31,17 +34,14 @@ export default async function NewFieldSalePage() {
   }));
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5">
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
-        <p className="text-sm font-semibold text-brand-700">Stage 8</p>
-        <h1 className="mt-2 text-2xl font-semibold text-slate-950">New MSO Instant Sale</h1>
-        <p className="mt-3 text-sm leading-6 text-slate-600">
-          Select or register a field customer, issue a filled cylinder from vehicle stock,
-          collect an empty cylinder, capture payment, and close the transaction.
-        </p>
-      </section>
+    <div className="mx-auto max-w-4xl space-y-5 pb-24 sm:pb-0">
+      <PageHeader
+        eyebrow="MSO mobile workflow"
+        title="New Field Order / Sale"
+        description="Search a customer, select route/zone stock, capture payment and close the delivery sale using existing vehicle stock logic."
+      />
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
+      <SectionCard title="Order, payment and delivery details" description="Current model supports one cylinder exchange per field sale. Multi-line orders remain in Order Management.">
         <FieldSaleForm
           customers={customers}
           skus={skus}
@@ -51,8 +51,12 @@ export default async function NewFieldSalePage() {
             routeName: assignment.route?.name ?? "Route placeholder",
             zoneName: assignment.zone?.name ?? "Zone placeholder"
           }}
+          prices={skus.map((sku) => ({
+            skuId: sku.id,
+            amount: Number(prices.find((price) => price.parentId === sku.id || price.code === `PRICE-${sku.code.replace(/^LPG-/, "")}`)?.amount ?? 0)
+          }))}
         />
-      </section>
+      </SectionCard>
     </div>
   );
 }
