@@ -357,6 +357,7 @@ function buildNavigationSections(role: AppRole) {
           icon: Warehouse,
           children: [
             { key: "warehouse-overview", href: "/warehouse", label: "Warehouse Overview", icon: LayoutDashboard },
+            { key: "warehouse-mobile", href: "/warehouse/mobile", label: "Mobile Workspace", icon: Warehouse },
             { key: "zone-a-incoming", href: "/warehouse/incoming", label: "Zone A Incoming", icon: Circle },
             { key: "zone-b-storage", href: "/warehouse", label: "Zone B Storage", icon: Boxes },
             { key: "zone-c-dispatch", href: "/warehouse", label: "Zone C Dispatch / Loading Bay", icon: Truck },

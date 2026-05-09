@@ -158,9 +158,14 @@ export default async function WarehousePage({
         title="Wells Gas Warehouse Overview"
         description="Live operational view for receiving, storage, loading, transfer control, safety holds and stock health."
         actions={
-          <Link className="rounded-brand bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-700" href="/warehouse/incoming">
-            Open Zone A
-          </Link>
+          <>
+            <Link className="rounded-brand border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:border-brand-200" href="/warehouse/mobile">
+              Mobile workspace
+            </Link>
+            <Link className="rounded-brand bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-700" href="/warehouse/incoming">
+              Open Zone A
+            </Link>
+          </>
         }
       />
 
