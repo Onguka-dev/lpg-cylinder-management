@@ -4,12 +4,12 @@ export default function HomePage() {
   return (
     <DashboardPlaceholder
       title="Operations Dashboard"
-      eyebrow="Stage 16"
-      description="Authentication, master data, customers, inventory, movements, sales, deliveries, billing, reconciliation, safety, analytics, notifications, offline sync, and mock integrations are active."
+      eyebrow="Stage 17"
+      description="Security hardening, session/device tracking, stronger password policy, MFA readiness placeholders, RBAC checks, and audit review controls are active."
       stats={[
         { label: "Role workspaces", value: "6" },
-        { label: "Integration adapters", value: "5" },
-        { label: "Retry statuses", value: "4" }
+        { label: "Audit categories", value: "16" },
+        { label: "Session timeout", value: "2h" }
       ]}
     />
   );

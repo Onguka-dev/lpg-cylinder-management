@@ -14,6 +14,8 @@ export type SessionUser = {
 };
 
 export type AppSession = {
+  sessionId: string;
   user: SessionUser;
+  issuedAt: number;
   expiresAt: number;
 };

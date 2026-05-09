@@ -1,7 +1,8 @@
 import type { AppSession } from "@/lib/auth-types";
 
 export const SESSION_COOKIE_NAME = "lpg_session";
-export const SESSION_DURATION_SECONDS = 60 * 60 * 8;
+export const SESSION_DURATION_SECONDS = 60 * 60 * 2;
+export const SESSION_TIMEOUT_MINUTES = SESSION_DURATION_SECONDS / 60;
 
 function getSecret() {
   return process.env.AUTH_SECRET ?? "stage-1-dev-session-secret-change-me";

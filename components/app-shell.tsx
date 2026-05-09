@@ -66,7 +66,7 @@ export function AppShell({
                   LPG Cylinder Management
                 </p>
                 <p className="truncate text-xs text-slate-500">
-                  Stage 16 mock integrations layer
+                  Stage 17 security, audit, and controls
                 </p>
               </div>
             </div>

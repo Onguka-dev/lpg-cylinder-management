@@ -6,7 +6,7 @@ import { getCurrentSession } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "LPG Cylinder Management",
-  description: "Stage 0 skeleton for an LPG cylinder management app"
+  description: "Stage 17 LPG cylinder management app with security, audit, and system controls"
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {

@@ -13,6 +13,7 @@ import {
 import { seedMasterDataRecords } from "../lib/master-data";
 import { seedCustomers } from "../lib/customers";
 import { seedNotificationTemplates } from "../lib/notifications";
+import { securityControlSeed } from "../lib/security";
 import { seedIntegrationSettings } from "../lib/integrations";
 
 const prisma = new PrismaClient();
@@ -837,6 +838,14 @@ async function main() {
     });
   }
 
+  for (const setting of securityControlSeed) {
+    await prisma.securityControlSetting.upsert({
+      where: { key: setting.key },
+      update: setting,
+      create: setting
+    });
+  }
+
   if (adminUser) {
     const sapSetting = await prisma.integrationSetting.findUnique({ where: { providerType: "SAP_ACCOUNTING" } });
     const paymentSetting = await prisma.integrationSetting.findUnique({ where: { providerType: "PAYMENT_GATEWAY" } });
@@ -890,6 +899,33 @@ async function main() {
         update: { ...log, createdById: adminUser.id },
         create: { ...log, createdById: adminUser.id }
       });
+    }
+
+    const auditSeed = [
+      { action: "MASTER_DATA_CHANGE_SEEDED", category: "MASTER_DATA", details: "Seed audit marker for master data change review.", entityType: "MasterDataRecord", entityId: "STAGE17-MASTER" },
+      { action: "CUSTOMER_CHANGE_SEEDED", category: "CUSTOMER", details: "Seed audit marker for customer change review.", entityType: "Customer", entityId: "STAGE17-CUSTOMER" },
+      { action: "INVENTORY_MOVEMENT_SEEDED", category: "INVENTORY", details: "Seed audit marker for inventory movement review.", entityType: "InventoryMovement", entityId: "STAGE17-INVENTORY" },
+      { action: "APPROVAL_SEEDED", category: "APPROVAL", details: "Seed audit marker for approval review.", entityType: "Approval", entityId: "STAGE17-APPROVAL" },
+      { action: "ORDER_CHANGE_SEEDED", category: "ORDER", details: "Seed audit marker for order change review.", entityType: "CustomerOrder", entityId: "STAGE17-ORDER" },
+      { action: "DELIVERY_UPDATE_SEEDED", category: "DELIVERY", details: "Seed audit marker for delivery update review.", entityType: "Delivery", entityId: "STAGE17-DELIVERY" },
+      { action: "INVOICE_ISSUED_SEEDED", category: "BILLING", details: "Seed audit marker for invoice review.", entityType: "Invoice", entityId: "STAGE17-INVOICE" },
+      { action: "PAYMENT_RECORDED_SEEDED", category: "PAYMENT", details: "Seed audit marker for payment review.", entityType: "BillingPayment", entityId: "STAGE17-PAYMENT" },
+      { action: "RECONCILIATION_REVIEW_SEEDED", category: "RECONCILIATION", details: "Seed audit marker for reconciliation review.", entityType: "DailyReconciliation", entityId: "STAGE17-RECON" },
+      { action: "COMPLIANCE_CASE_SEEDED", category: "COMPLIANCE", details: "Seed audit marker for compliance case review.", entityType: "MaintenanceCase", entityId: "STAGE17-COMPLIANCE" }
+    ] as const;
+
+    for (const log of auditSeed) {
+      const existing = await prisma.auditLog.findFirst({ where: { action: log.action, entityId: log.entityId } });
+      if (!existing) {
+        await prisma.auditLog.create({
+          data: {
+            ...log,
+            severity: log.category === "COMPLIANCE" ? "WARNING" : "INFO",
+            userId: adminUser.id,
+            metadata: { seededForStage: 17 }
+          }
+        });
+      }
     }
   }
 }

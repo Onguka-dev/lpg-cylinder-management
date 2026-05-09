@@ -1,6 +1,6 @@
 # LPG Cylinder Management App
 
-Stage 16 adds a mock integrations layer with settings, logs, retries, SAP/accounting posting placeholders, payment callbacks, SMS/email provider placeholders, barcode/RFID input, and maps/GPS placeholders on top of authentication, role-based access control, admin master-data configuration, customer management, cylinder inventory, movement workflows, RSO refill sales, order management, MSO field sales, delivery management, billing, daily reconciliation, safety compliance, reporting, notifications, and offline mode.
+Stage 17 hardens security, audit, and system controls with strong password policy helpers, OTP/MFA readiness placeholders, two-hour session timeout, device/session tracking, security settings, richer audit logs, and an Auditor review dashboard on top of all prior modules.
 
 ## Stack
 
@@ -59,6 +59,19 @@ All seeded users use the same demo password: `password123`.
 ```bash
 npm test
 ```
+
+## Manual Stage 17 Checks
+
+- Visit `/login` and sign in as Admin.
+- Confirm `/api/health` returns stage `17`.
+- Visit `/settings/security` and confirm password policy, MFA readiness, session timeout, API permission enforcement, and device/session list are visible.
+- Update one security setting as Admin and confirm it saves.
+- Visit `/audit-logs` and confirm filters for category, severity, and search work.
+- Visit `/auditor` as Auditor and confirm log, exception, compliance, reconciliation, and report review cards are visible.
+- Try invalid security setting input, such as a blank value through `/api/security/settings`, and confirm a clear validation message.
+- Confirm Auditor can view audit/security review screens but cannot update security settings.
+- Confirm Warehouse, RSO, MSO, and Customer cannot access `/settings/security`, `/audit-logs`, or the protected security/audit APIs.
+- Sign out and confirm logout creates a session/audit event.
 
 ## Manual Stage 16 Checks
 

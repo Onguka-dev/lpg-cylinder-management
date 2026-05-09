@@ -6,15 +6,55 @@ import {
   SESSION_DURATION_SECONDS,
   verifySessionToken
 } from "@/lib/session-core";
+import { prisma } from "@/lib/prisma";
 
 export async function getCurrentSession() {
-  return verifySessionToken(cookies().get(SESSION_COOKIE_NAME)?.value);
+  const session = await verifySessionToken(cookies().get(SESSION_COOKIE_NAME)?.value);
+
+  if (!session?.sessionId) {
+    return session;
+  }
+
+  const stored = await prisma.userSession.findUnique({
+    where: { sessionTokenId: session.sessionId }
+  });
+
+  if (!stored || stored.status !== "ACTIVE" || stored.expiresAt.getTime() < Date.now()) {
+    if (stored?.status === "ACTIVE") {
+      await prisma.userSession.update({
+        where: { sessionTokenId: session.sessionId },
+        data: { status: "EXPIRED" }
+      });
+    }
+    return null;
+  }
+
+  await prisma.userSession.update({
+    where: { sessionTokenId: session.sessionId },
+    data: { lastSeenAt: new Date() }
+  });
+
+  return session;
 }
 
 export async function createSessionCookie(user: SessionUser) {
   const session: AppSession = {
+    sessionId: crypto.randomUUID(),
     user,
+    issuedAt: Date.now(),
     expiresAt: Date.now() + SESSION_DURATION_SECONDS * 1000
+  };
+
+  return createSessionToken(session);
+}
+
+export async function createSessionCookieForSession(user: SessionUser, sessionId: string) {
+  const now = Date.now();
+  const session: AppSession = {
+    sessionId,
+    user,
+    issuedAt: now,
+    expiresAt: now + SESSION_DURATION_SECONDS * 1000
   };
 
   return createSessionToken(session);

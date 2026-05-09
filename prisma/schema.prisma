@@ -261,6 +261,38 @@ enum IntegrationLogStatus {
   RETRY_QUEUED
 }
 
+enum UserSessionStatus {
+  ACTIVE
+  LOGGED_OUT
+  EXPIRED
+  REVOKED
+}
+
+enum AuditEventCategory {
+  AUTH
+  MASTER_DATA
+  CUSTOMER
+  INVENTORY
+  APPROVAL
+  ORDER
+  DELIVERY
+  BILLING
+  PAYMENT
+  RECONCILIATION
+  COMPLIANCE
+  INTEGRATION
+  NOTIFICATION
+  OFFLINE_SYNC
+  SECURITY
+  SYSTEM
+}
+
+enum AuditSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
 model Role {
   id          String   @id @default(cuid())
   name        RoleName @unique
@@ -307,6 +339,7 @@ model User {
   createdNotifications Notification[] @relation("NotificationCreatedBy")
   offlineSyncItems OfflineSyncItem[]
   integrationLogs IntegrationLog[]
+  sessions     UserSession[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -331,12 +364,58 @@ model LpgSku {
 }
 
 model AuditLog {
-  id        String   @id @default(cuid())
-  action    String
-  details   String
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  createdAt DateTime @default(now())
+  id         String             @id @default(cuid())
+  action     String
+  category   AuditEventCategory @default(SYSTEM)
+  severity   AuditSeverity      @default(INFO)
+  details    String
+  entityType String?
+  entityId   String?
+  ipAddress  String?
+  userAgent  String?
+  metadata   Json?
+  userId     String?
+  user       User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt  DateTime           @default(now())
+
+  @@index([category])
+  @@index([severity])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model UserSession {
+  id             String            @id @default(cuid())
+  sessionTokenId String            @unique
+  userId         String
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status         UserSessionStatus @default(ACTIVE)
+  ipAddress      String?
+  userAgent      String?
+  deviceLabel    String?
+  mfaVerified    Boolean           @default(false)
+  mfaPlaceholder String?
+  lastSeenAt     DateTime          @default(now())
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([lastSeenAt])
+}
+
+model SecurityControlSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  label       String
+  value       String
+  description String
+  isEnabled   Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
 }
 
 model MasterDataRecord {

@@ -117,6 +117,16 @@ describe("role-based access control", () => {
     expect(canAccessPath("CUSTOMER", "/integrations")).toBe(false);
   });
 
+  it("keeps security controls limited to admin management and auditor review", () => {
+    expect(canAccessPath("ADMIN", "/settings/security")).toBe(true);
+    expect(canAccessPath("ADMIN", "/api/security/settings")).toBe(true);
+    expect(canAccessPath("AUDITOR", "/settings/security")).toBe(true);
+    expect(canAccessPath("AUDITOR", "/api/audit-logs")).toBe(true);
+    expect(canAccessPath("WAREHOUSE_MANAGER", "/settings/security")).toBe(false);
+    expect(canAccessPath("RSO", "/api/security/settings")).toBe(false);
+    expect(canAccessPath("CUSTOMER", "/audit-logs")).toBe(false);
+  });
+
   it("has a default dashboard for each role", () => {
     expect(defaultRouteByRole.RSO).toBe("/rso");
     expect(defaultRouteByRole.CUSTOMER).toBe("/customer");

@@ -82,6 +82,8 @@ export function LoginForm() {
 
       <div className="rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-600">
         Demo password for all seeded users: <span className="font-semibold">password123</span>
+        <br />
+        New production passwords must use 12+ characters with uppercase, lowercase, number, and symbol.
       </div>
     </form>
   );
