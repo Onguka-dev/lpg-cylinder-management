@@ -22,7 +22,9 @@ export function DashboardPlaceholder({
 }: DashboardPlaceholderProps) {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel sm:p-6">
+      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft">
+        <div className="h-1.5 bg-gradient-to-r from-brand-600 via-fuel-500 to-ink-900" />
+        <div className="p-5 sm:p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-3xl">
             <p className="text-sm font-semibold text-brand-700">{eyebrow}</p>
@@ -33,9 +35,10 @@ export function DashboardPlaceholder({
               {description}
             </p>
           </div>
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-fuel-500 text-white">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-fuel-500 text-white shadow-panel">
             <ClipboardList size={28} aria-hidden="true" />
           </div>
+        </div>
         </div>
       </section>
 
@@ -57,9 +60,9 @@ export function DashboardPlaceholder({
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
           <h2 className="text-base font-semibold text-slate-950">Workflow Placeholder</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Stage 7 adds order creation, multi-line commercial orders, stock
-            availability checks, priority flags, channels, and status workflow.
-            Dispatch execution remains a placeholder until later stages.
+            Wells Gas operational workflows are available from the sidebar based
+            on each user role. Advanced actions that are not yet connected to
+            live providers remain clearly marked as placeholders.
           </p>
           <div className="mt-5 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-500">
             No workflow data yet.

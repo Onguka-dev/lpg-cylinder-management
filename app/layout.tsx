@@ -3,10 +3,11 @@ import type { ReactNode } from "react";
 import "./globals.css";
 import { AppShell } from "@/components/app-shell";
 import { getCurrentSession } from "@/lib/auth";
+import { brand } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: "LPG Cylinder Management",
-  description: "Stage 17 LPG cylinder management app with security, audit, and system controls"
+  title: `${brand.name} | LPG Cylinder Management`,
+  description: "Professional Wells Gas LPG cylinder management, sales, delivery, inventory, audit, and reporting platform"
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {

@@ -1,6 +1,10 @@
-# LPG Cylinder Management App
+# Wells Gas LPG Cylinder Management App
 
-Stage 18 prepares the app for testing, deployment, training, and UAT with readiness tests, demo reset scripts, deployment documentation, UAT checklist, role-based user guide, known limitations, and production readiness guidance on top of all prior modules.
+The Wells Gas LPG Cylinder Management App is a branded, client-ready operations platform for cylinder inventory, customer management, refill sales, orders, deliveries, payments, reconciliation, safety, audit, reporting, integrations, offline readiness, and UAT preparation.
+
+## Wells Gas Working Branch Note
+
+The `feature/wells-gas-client-ready-branding` branch is reserved for Wells Gas branding, screenshot-based UI polish, feature adoption, and deployment preparation while preserving the original LPG Cylinder Management App on the backup branch.
 
 ## Stack
 

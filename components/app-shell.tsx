@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { Bell, Flame, LogOut, Menu, Search } from "lucide-react";
+import { Bell, LogOut, Menu, Search } from "lucide-react";
+import { BrandMark } from "@/components/brand-mark";
 import type { AppSession } from "@/lib/auth-types";
+import { brand } from "@/lib/brand";
 import { moduleNavItems, roleNavItems } from "@/lib/navigation";
 import { canAccessPath, roleLabel } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
@@ -32,16 +34,10 @@ export function AppShell({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-950">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-slate-200 bg-white lg:block">
+    <div className="min-h-screen text-slate-950">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-slate-200 bg-white/95 shadow-soft backdrop-blur lg:block">
         <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-fuel-500 text-white">
-            <Flame size={22} aria-hidden="true" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold">LPG Manager</p>
-            <p className="text-xs text-slate-500">Cylinder operations</p>
-          </div>
+          <BrandMark />
         </div>
 
         <nav className="space-y-6 overflow-y-auto px-3 py-5">
@@ -63,24 +59,24 @@ export function AppShell({
               </button>
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-slate-900">
-                  LPG Cylinder Management
+                  {brand.productName}
                 </p>
                 <p className="truncate text-xs text-slate-500">
-                  Stage 18 testing, deployment, training, and UAT
+                  {brand.stageLabel}
                 </p>
               </div>
             </div>
 
             <div className="hidden min-w-0 flex-1 justify-center px-6 md:flex">
-              <div className="flex w-full max-w-md items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
+              <div className="flex w-full max-w-md items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 shadow-panel">
                 <Search size={16} aria-hidden="true" />
-                <span className="truncate">Search placeholder</span>
+                <span className="truncate">Search customers, cylinders, orders</span>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
               <button
-                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-600"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:border-brand-100 hover:bg-brand-50 hover:text-brand-700"
                 type="button"
                 aria-label="Notifications"
               >
@@ -159,7 +155,7 @@ function NavGroup({
           return (
             <Link
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium",
+                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 isActive
                   ? "bg-brand-50 text-brand-700"
                   : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
