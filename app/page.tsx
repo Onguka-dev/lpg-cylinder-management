@@ -17,12 +17,14 @@ import {
 } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { MetricCard } from "@/components/metric-card";
+import { ClientReadyEmptyStates, FeaturePlaceholderPanel, RecentActivityFeed, TaskAlertPanel } from "@/components/operations-insight-panels";
 import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { TrendChip } from "@/components/trend-chip";
 import { getCurrentSession } from "@/lib/auth";
 import { DEFAULT_CURRENCY, DEFAULT_CURRENCY_LOCALE } from "@/lib/currency";
+import { getOperationsActivityFeed, getOperationsTaskAlerts } from "@/lib/operations-experience";
 import { roleLabel } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 
@@ -62,7 +64,9 @@ export default async function HomePage({
     damagedOrBlocked,
     movementTypeGroups,
     refillSalesByLocation,
-    fieldSalesByVehicle
+    fieldSalesByVehicle,
+    taskAlerts,
+    recentActivity
   ] = await Promise.all([
     prisma.cylinder.count().catch(() => 0),
     prisma.cylinder.groupBy({ by: ["status"], _count: { id: true } }).catch(() => []),
@@ -91,7 +95,9 @@ export default async function HomePage({
     prisma.fieldSale.groupBy({
       by: ["vehicleId", "status"],
       _count: { id: true }
-    }).catch(() => [])
+    }).catch(() => []),
+    getOperationsTaskAlerts(),
+    getOperationsActivityFeed(8)
   ]);
 
   const totalAssets = totalCylinders;
@@ -177,6 +183,8 @@ export default async function HomePage({
         <MetricCard icon={ArrowUpFromLine} label="Assets In Transit" value={formatNumber(inTransitCylinders)} detail="Cylinder status: in transit" tone={inTransitCylinders ? "warning" : "neutral"} />
         <MetricCard icon={Wrench} label="Maintenance Queue" value={formatNumber(maintenanceQueue)} detail={`${formatNumber(damagedOrBlocked)} blocked or damaged`} tone={maintenanceQueue || damagedOrBlocked ? "danger" : "neutral"} />
       </section>
+
+      <TaskAlertPanel alerts={taskAlerts} />
 
       <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <SectionCard title="Assets Overview By Type" description="Uses live cylinder records; meter assets are hidden until that module is enabled.">
@@ -310,6 +318,14 @@ export default async function HomePage({
       <SectionCard title="Cylinder Status Mix" description="Live distribution by cylinder status.">
         {statusRows.length ? <RankedBars rows={statusRows} /> : <EmptyState icon={CircleDot} title="No cylinder status records yet" />}
       </SectionCard>
+
+      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+        <RecentActivityFeed activities={recentActivity} />
+        <div className="space-y-4">
+          <ClientReadyEmptyStates />
+          <FeaturePlaceholderPanel />
+        </div>
+      </section>
     </div>
   );
 }
@@ -377,8 +393,8 @@ function RankedBars({ rows }: { rows: Array<{ label: string; value: number }> })
 
   return (
     <div className="space-y-3">
-      {rows.map((row) => (
-        <div key={row.label}>
+        {rows.map((row, index) => (
+          <div key={`${row.label}-${index}`}>
           <div className="mb-1 flex items-center justify-between gap-3 text-sm">
             <span className="truncate font-medium text-slate-700">{row.label}</span>
             <span className="font-semibold text-slate-950">{formatNumber(row.value)}</span>

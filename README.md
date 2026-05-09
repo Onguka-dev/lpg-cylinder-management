@@ -6,6 +6,16 @@ The Wells Gas LPG Cylinder Management App is a branded, client-ready operations 
 
 The `feature/wells-gas-client-ready-branding` branch is reserved for Wells Gas branding, screenshot-based UI polish, feature adoption, and deployment preparation while preserving the original LPG Cylinder Management App on the backup branch.
 
+## Wells Gas Client-Ready UI Additions
+
+- The main dashboard now surfaces screenshot-inspired task and alert panels for pending verification, low stock review, vehicle loading, maintenance tasks, delayed deliveries, failed inspection items, and pending offline sync.
+- A recent activity feed reuses existing inventory movement, delivery, payment, customer, maintenance, and complaint records without adding duplicate calculations.
+- Notifications use existing notification records and support web/mobile-friendly filters for search, date, status, channel, event type, and user.
+- The top notification bell reads pending notification records where the signed-in role is permitted and falls back safely if notification data is unavailable.
+- `/profile` provides a role-aware staff/customer profile summary with assigned location/route context, active sessions, pending sync, and permitted settings links.
+- Client-ready placeholders are documented in-app for delivery proof, complaint attachments, GRN/supporting documents, asset photos, receipt print/share, and future PDF/Excel/scheduled exports.
+- No new database tables are required for these additions; existing notification, audit, offline sync, payment, order, delivery, inventory, safety, and complaint models remain the source of truth.
+
 ## Stack
 
 - Next.js App Router

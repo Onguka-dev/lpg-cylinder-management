@@ -53,6 +53,7 @@ export function AppShell({
   const pathname = usePathname();
   const [isOnline, setIsOnline] = useState(true);
   const [dateLabel, setDateLabel] = useState("");
+  const [notificationCount, setNotificationCount] = useState(0);
   const allNavItems = [...moduleNavItems, ...roleNavItems].filter((item) =>
     session ? canAccessPath(session.user.role, item.href) : false
   );
@@ -71,7 +72,7 @@ export function AppShell({
   const pageTitle = activeItem?.label ?? brand.productName;
   const breadcrumbs = buildBreadcrumbs(pathname, pageTitle);
   const assignedLocation = session ? assignedLocationByRole[session.user.role] : "";
-  const notificationCount = session ? notificationFallbackByRole[session.user.role] : 0;
+  const notificationFallback = session ? notificationFallbackByRole[session.user.role] : 0;
 
   useEffect(() => {
     setIsOnline(navigator.onLine);
@@ -96,6 +97,32 @@ export function AppShell({
       window.removeEventListener("offline", updateOnlineStatus);
     };
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    setNotificationCount(notificationFallback);
+
+    if (!session || !canAccessPath(session.user.role, "/notifications")) {
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    fetch("/api/notifications?status=PENDING", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { notifications?: unknown[] } | null) => {
+        if (isMounted && Array.isArray(data?.notifications)) {
+          setNotificationCount(data.notifications.length);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setNotificationCount(notificationFallback);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [notificationFallback, session]);
 
   if (pathname === "/login") {
     return <>{children}</>;
@@ -203,6 +230,13 @@ export function AppShell({
                           {assignedLocation}
                         </p>
                       </div>
+                      <Link
+                        className="mt-3 flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700"
+                        href="/profile"
+                      >
+                        Profile and settings
+                        <UserCog size={15} aria-hidden="true" />
+                      </Link>
                     </div>
                   </details>
                   <form action="/api/auth/logout" method="post">

@@ -16,11 +16,13 @@ export function LoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState(demoAccounts[0].email);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    setSuccess("");
     setIsSubmitting(true);
 
     const formData = new FormData(event.currentTarget);
@@ -45,6 +47,7 @@ export function LoginForm() {
         return;
       }
 
+      setSuccess("Sign-in successful. Opening your role-based workspace...");
       router.push(result.redirectTo ?? "/");
       router.refresh();
     } catch {
@@ -92,8 +95,14 @@ export function LoginForm() {
       </label>
 
       {error ? (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-lg border border-danger-100 bg-danger-50 px-3 py-2 text-sm text-danger-700" role="alert">
           {error}
+        </p>
+      ) : null}
+
+      {success ? (
+        <p className="rounded-lg border border-success-100 bg-success-50 px-3 py-2 text-sm text-success-700" role="status">
+          {success}
         </p>
       ) : null}
 

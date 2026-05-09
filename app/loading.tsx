@@ -4,8 +4,9 @@ function SkeletonBlock({ className = "" }: { className?: string }) {
 
 export default function Loading() {
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6" role="status" aria-live="polite" aria-label="Loading page content">
       <section className="space-y-3">
+        <p className="text-sm font-semibold text-brand-700">Loading Wells Gas workspace</p>
         <SkeletonBlock className="h-4 w-24" />
         <SkeletonBlock className="h-9 w-full max-w-xl" />
         <SkeletonBlock className="h-5 w-full max-w-3xl" />

@@ -31,12 +31,12 @@ export function MetricCard({
   className?: string;
 }) {
   return (
-    <div className={cn("rounded-brand border border-slate-200 bg-white p-5 shadow-panel", className)}>
+    <div className={cn("min-h-36 rounded-brand border border-slate-200 bg-white p-5 shadow-panel", className)}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-slate-600">{label}</p>
-          <p className="mt-2 text-3xl font-bold tracking-normal text-slate-950">{value}</p>
-          {detail ? <p className="mt-1 text-sm text-slate-500">{detail}</p> : null}
+          <p className="mt-2 break-words text-2xl font-bold tracking-normal text-slate-950 sm:text-3xl">{value}</p>
+          {detail ? <p className="mt-1 text-sm leading-5 text-slate-500">{detail}</p> : null}
         </div>
         {Icon ? (
           <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-brand", iconTone[tone])}>
