@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import type { AppRole } from "@/lib/auth-types";
+import { DEFAULT_CURRENCY, DEFAULT_CURRENCY_LOCALE } from "@/lib/currency";
 
 export const invoiceSourceTypes = ["CUSTOMER_ORDER", "RETAIL_REFILL"] as const;
 export const invoiceStatuses = ["DRAFT", "ISSUED", "PARTIALLY_PAID", "PAID", "OVERDUE", "CANCELLED"] as const;
@@ -40,7 +41,7 @@ export function canManageBilling(role: AppRole) {
 
 export function formatMoney(value: unknown) {
   const numeric = value instanceof Prisma.Decimal ? value.toNumber() : Number(value ?? 0);
-  return new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 2 }).format(numeric);
+  return new Intl.NumberFormat(DEFAULT_CURRENCY_LOCALE, { style: "currency", currency: DEFAULT_CURRENCY, maximumFractionDigits: 2 }).format(numeric);
 }
 
 export function formatBillingLabel(value: string) {

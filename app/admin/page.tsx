@@ -7,8 +7,8 @@ export default function AdminPage() {
       title="Admin Dashboard"
       description="Placeholder for organization setup, user access, configuration, and cross-module oversight."
       stats={[
-        { label: "Seed roles", value: "5" },
-        { label: "Sample users", value: "5" },
+        { label: "Seed roles", value: "6" },
+        { label: "Sample users", value: "6" },
         { label: "Locations", value: "4" }
       ]}
     />

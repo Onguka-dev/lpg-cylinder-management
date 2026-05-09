@@ -6,8 +6,13 @@ import { getCurrentSession } from "@/lib/auth";
 import { brand } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: `${brand.name} | LPG Cylinder Management`,
-  description: "Professional Wells Gas LPG cylinder management, sales, delivery, inventory, audit, and reporting platform"
+  title: `${brand.appName} | LPG Cylinder Management`,
+  description: `${brand.companyName} ${brand.appName} LPG cylinder management, sales, delivery, inventory, audit, and reporting platform`,
+  icons: {
+    icon: brand.logo.favicon,
+    shortcut: brand.logo.favicon,
+    apple: brand.logo.icon
+  }
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {

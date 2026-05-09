@@ -3,8 +3,18 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
+const demoAccounts = [
+  { role: "Admin", email: "admin@example.com" },
+  { role: "Warehouse Manager", email: "warehouse@example.com" },
+  { role: "RSO", email: "rso@example.com" },
+  { role: "MSO", email: "mso@example.com" },
+  { role: "Auditor", email: "auditor@example.com" },
+  { role: "Customer", email: "customer@example.com" }
+];
+
 export function LoginForm() {
   const router = useRouter();
+  const [email, setEmail] = useState(demoAccounts[0].email);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -46,12 +56,27 @@ export function LoginForm() {
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       <label className="block text-sm font-medium text-slate-700">
+        Demo role
+        <select
+          className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+        >
+          {demoAccounts.map((account) => (
+            <option key={account.email} value={account.email}>
+              {account.role}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="block text-sm font-medium text-slate-700">
         Email
         <input
           className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
           name="email"
           type="email"
-          defaultValue="admin@example.com"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
           required
         />
       </label>

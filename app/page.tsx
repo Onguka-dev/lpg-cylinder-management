@@ -62,7 +62,7 @@ export default async function HomePage() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard icon={Boxes} tone="green" label="Total cylinder assets" value={totalAssets.toLocaleString()} detail={`${customers.toLocaleString()} registered customers`} />
+        <KpiCard icon={Boxes} tone="green" label="Total cylinder assets" value={totalAssets.toLocaleString()} detail={`${activeCustomers.toLocaleString()} registered customers`} />
         <KpiCard icon={Warehouse} tone="blue" label="Warehouse capacity" value={`${capacityUtilization}%`} detail={`${warehouseCount} active warehouses`} progress={capacityUtilization} />
         <KpiCard icon={Truck} tone="orange" label="Fleet and deliveries" value={vehicleCount.toLocaleString()} detail={`${activeDeliveries} delivery records`} />
         <KpiCard icon={AlertTriangle} tone="red" label="Safety exceptions" value={exceptionCount.toLocaleString()} detail={`${lowStockThresholds} threshold controls`} />

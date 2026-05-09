@@ -1,4 +1,9 @@
 import { ClipboardList } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
+import { MetricCard } from "@/components/metric-card";
+import { PageHeader } from "@/components/page-header";
+import { SectionCard } from "@/components/section-card";
+import { StatusBadge } from "@/components/status-badge";
 import { skuPreviewItems } from "@/lib/navigation";
 import { StageFormPlaceholder } from "@/components/stage-form-placeholder";
 
@@ -22,75 +27,68 @@ export function DashboardPlaceholder({
 }: DashboardPlaceholderProps) {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft">
-        <div className="h-1.5 bg-gradient-to-r from-brand-600 via-fuel-500 to-ink-900" />
+      <section className="overflow-hidden rounded-brand border border-slate-200 bg-white shadow-soft">
+        <div className="h-1.5 bg-gradient-to-r from-primary-700 via-brand-600 to-info-600" />
         <div className="p-5 sm:p-6">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="max-w-3xl">
-            <p className="text-sm font-semibold text-brand-700">{eyebrow}</p>
-            <h1 className="mt-2 text-2xl font-semibold tracking-normal text-slate-950 sm:text-3xl">
-              {title}
-            </h1>
-            <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
-              {description}
-            </p>
-          </div>
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-fuel-500 text-white shadow-panel">
-            <ClipboardList size={28} aria-hidden="true" />
-          </div>
-        </div>
+          <PageHeader
+            eyebrow={eyebrow}
+            title={title}
+            description={description}
+            actions={
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-brand bg-fuel-500 text-white shadow-panel">
+                <ClipboardList size={28} aria-hidden="true" />
+              </div>
+            }
+          />
         </div>
       </section>
 
       {stats.length > 0 ? (
         <section className="grid gap-4 sm:grid-cols-3">
           {stats.map((stat) => (
-            <div
-              className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel"
+            <MetricCard
               key={stat.label}
-            >
-              <p className="text-sm text-slate-500">{stat.label}</p>
-              <p className="mt-2 text-3xl font-semibold text-slate-950">{stat.value}</p>
-            </div>
+              label={stat.label}
+              value={stat.value}
+              tone="brand"
+            />
           ))}
         </section>
       ) : null}
 
       <section className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
-          <h2 className="text-base font-semibold text-slate-950">Workflow Placeholder</h2>
+        <SectionCard title="Workflow Placeholder">
           <p className="mt-2 text-sm leading-6 text-slate-600">
             Wells Gas operational workflows are available from the sidebar based
             on each user role. Advanced actions that are not yet connected to
             live providers remain clearly marked as placeholders.
           </p>
-          <div className="mt-5 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-500">
-            No workflow data yet.
-          </div>
+          <EmptyState
+            className="mt-5"
+            title="No workflow data yet."
+            description="This screen is ready for client walkthroughs while future detailed workflow data is added in the relevant module."
+          />
           <div className="mt-4">
             <StageFormPlaceholder title="Future Form Placeholder" />
           </div>
-        </div>
+        </SectionCard>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
-          <h2 className="text-base font-semibold text-slate-950">Seed SKU Types</h2>
+        <SectionCard title="Seed SKU Types">
           <div className="mt-4 space-y-3">
             {skuPreviewItems.map((sku) => (
               <div
-                className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-3"
+                className="flex items-center justify-between gap-3 rounded-brand border border-slate-100 bg-slate-50 px-3 py-3"
                 key={sku.name}
               >
                 <div>
                   <p className="text-sm font-semibold text-slate-900">{sku.name}</p>
                   <p className="text-xs text-slate-500">{sku.detail}</p>
                 </div>
-                <span className="rounded-md bg-white px-2 py-1 text-xs font-medium text-slate-600">
-                  LPG
-                </span>
+                <StatusBadge tone="brand">LPG</StatusBadge>
               </div>
             ))}
           </div>
-        </div>
+        </SectionCard>
       </section>
     </div>
   );
