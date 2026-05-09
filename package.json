@@ -11,7 +11,10 @@
     "test:watch": "vitest",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "tsx prisma/seed.ts"
+    "prisma:seed": "tsx prisma/seed.ts",
+    "demo:prepare": "prisma generate && prisma migrate dev && npm run prisma:seed",
+    "demo:reset": "prisma migrate reset --force",
+    "uat:check": "npm run lint && npm test && npm run build"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

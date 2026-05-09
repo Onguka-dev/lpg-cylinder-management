@@ -4,12 +4,12 @@ export default function HomePage() {
   return (
     <DashboardPlaceholder
       title="Operations Dashboard"
-      eyebrow="Stage 17"
-      description="Security hardening, session/device tracking, stronger password policy, MFA readiness placeholders, RBAC checks, and audit review controls are active."
+      eyebrow="Stage 18"
+      description="Testing, deployment, training, UAT readiness, reset scripts, role guides, production checklists, and end-to-end demo data are prepared."
       stats={[
         { label: "Role workspaces", value: "6" },
-        { label: "Audit categories", value: "16" },
-        { label: "Session timeout", value: "2h" }
+        { label: "Readiness docs", value: "6" },
+        { label: "Test files", value: "18" }
       ]}
     />
   );

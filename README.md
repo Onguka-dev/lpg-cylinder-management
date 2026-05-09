@@ -1,6 +1,6 @@
 # LPG Cylinder Management App
 
-Stage 17 hardens security, audit, and system controls with strong password policy helpers, OTP/MFA readiness placeholders, two-hour session timeout, device/session tracking, security settings, richer audit logs, and an Auditor review dashboard on top of all prior modules.
+Stage 18 prepares the app for testing, deployment, training, and UAT with readiness tests, demo reset scripts, deployment documentation, UAT checklist, role-based user guide, known limitations, and production readiness guidance on top of all prior modules.
 
 ## Stack
 
@@ -41,6 +41,18 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+For a full demo/UAT setup, run:
+
+```bash
+npm run demo:prepare
+```
+
+To reset local/UAT demo data, run:
+
+```bash
+npm run demo:reset
+```
+
 ## Demo Users
 
 All seeded users use the same demo password: `password123`.
@@ -59,6 +71,31 @@ All seeded users use the same demo password: `password123`.
 ```bash
 npm test
 ```
+
+Full UAT readiness check:
+
+```bash
+npm run uat:check
+```
+
+## Stage 18 Readiness Docs
+
+- [Deployment Guide](docs/deployment.md)
+- [UAT Checklist](docs/uat-checklist.md)
+- [Role-Based User Guide](docs/role-based-user-guide.md)
+- [Known Limitations](docs/known-limitations.md)
+- [Production Readiness Checklist](docs/production-readiness-checklist.md)
+- [End-to-End Demo Script](docs/demo-script.md)
+
+## Manual Stage 18 Checks
+
+- Run `npm run uat:check` and confirm lint, tests, and build pass.
+- Run `npm run demo:prepare` against a local/UAT database and confirm migrations plus seed data complete.
+- Visit `/login` and sign in as Admin, Warehouse Manager, RSO, MSO, and Auditor.
+- Follow `docs/demo-script.md` to demonstrate customer registration, stock review/movement, refill sale, order, delivery proof, invoice/payment, reconciliation, safety compliance, audit, and reports.
+- Try one invalid input in each major area and confirm a clear validation message.
+- Confirm restricted roles cannot access Admin/security/audit write actions or operational APIs outside their permissions.
+- Review `docs/uat-checklist.md`, `docs/known-limitations.md`, and `docs/production-readiness-checklist.md` with stakeholders before sign-off.
 
 ## Manual Stage 17 Checks
 

@@ -66,7 +66,7 @@ export function AppShell({
                   LPG Cylinder Management
                 </p>
                 <p className="truncate text-xs text-slate-500">
-                  Stage 17 security, audit, and controls
+                  Stage 18 testing, deployment, training, and UAT
                 </p>
               </div>
             </div>
