@@ -92,6 +92,56 @@ Full UAT readiness check:
 npm run uat:check
 ```
 
+## Deployment Readiness
+
+Use Node.js 20 LTS or newer and PostgreSQL 14 or newer. Install with the lockfile, configure environment variables from `.env.example`, run production migrations, then build and start:
+
+```bash
+npm ci
+npm run db:migrate
+npm run db:seed
+npm run build
+npm run start
+```
+
+For local/UAT demo reset only, use:
+
+```bash
+npm run db:reset-demo
+```
+
+Required environment variables:
+
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | PostgreSQL connection string. |
+| `AUTH_SECRET` | Long random secret for the custom signed session cookie. |
+| `APP_URL` / `NEXTAUTH_URL` | Public application URL for deployment context. |
+| `APP_BRAND_NAME` | Wells Gas brand name. |
+| `APP_COMPANY_NAME` | Green Wells Energies company name. |
+| `APP_ENV` / `NEXT_PUBLIC_APP_ENV` | Deployment environment, such as `production`, `staging`, or `uat`. |
+| `FILE_UPLOAD_PROVIDER` | Use `local-placeholder` until object storage is approved. |
+| `SMS_PROVIDER` / `EMAIL_PROVIDER` | Use `mock` until live messaging providers are approved. |
+| `PAYMENT_PROVIDER` | Use `mock` until live Mpesa/card/online providers are approved. |
+
+Production migration command:
+
+```bash
+npm run db:migrate
+```
+
+Seed command for UAT/demo environments:
+
+```bash
+npm run db:seed
+```
+
+Demo accounts are safe for local/UAT demonstrations only. Replace or disable seeded demo users before production launch.
+
+Deployment checklist:
+
+- [Deployment Checklist](docs/deployment-checklist.md)
+
 ## Stage 18 Readiness Docs
 
 - [Deployment Guide](docs/deployment.md)

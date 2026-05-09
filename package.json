@@ -7,14 +7,18 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset-demo": "prisma migrate reset --force",
     "demo:prepare": "prisma generate && prisma migrate dev && npm run prisma:seed",
     "demo:reset": "prisma migrate reset --force",
-    "uat:check": "npm run lint && npm test && npm run build"
+    "uat:check": "npm run lint && npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
