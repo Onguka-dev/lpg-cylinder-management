@@ -51,13 +51,25 @@ The reset command reapplies migrations and runs the Prisma seed configured in `p
 ## Deployment Steps
 
 1. Provision PostgreSQL and set `DATABASE_URL`.
-2. Set a strong `AUTH_SECRET`.
-3. Install dependencies with `npm ci`.
-4. Generate Prisma Client with `npm run prisma:generate`.
-5. Apply production-safe migrations with `npm run db:migrate`.
-6. Seed UAT/demo data only where appropriate with `npm run db:seed`.
-7. Build with `npm run build`.
-8. Start with `npm run start`.
+2. For free initial hosting, use Vercel Hobby and connect the GitHub branch `feature/wells-gas-client-ready-branding`.
+3. Use Neon Free Postgres by default because the app mainly needs Prisma/PostgreSQL. Use Supabase Free only if you later adopt Supabase Auth, Storage, or platform-specific features.
+4. Set a strong `AUTH_SECRET`.
+5. Install dependencies with `npm ci`.
+6. Generate Prisma Client with `npm run prisma:generate`.
+7. Apply production-safe migrations with `npm run db:migrate`.
+8. Seed UAT/demo data only where appropriate with `npm run db:seed`.
+9. Build with `npm run build`.
+10. Start with `npm run start`, or use Vercel's Next.js runtime.
+
+## Vercel Configuration
+
+- Framework preset: Next.js
+- Repository branch: `feature/wells-gas-client-ready-branding`
+- Install command: `npm ci`
+- Build command: `npm run build`
+- Output directory: leave unset/default
+- Runtime environment variables: configure in Vercel Project Settings, never in Git
+- Public URL: set `APP_URL` and `NEXTAUTH_URL` to the Vercel preview/production URL, then redeploy
 
 ## Production-Safe Prisma Notes
 

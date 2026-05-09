@@ -4,7 +4,7 @@ Use this checklist before deploying the Wells Gas LPG Cylinder Management App to
 
 ## Source Control
 
-- [ ] Confirm branch `feature/wells-gas-client-ready-branding` is current and pushed to GitHub.
+- [x] Confirm branch `feature/wells-gas-client-ready-branding` is current and pushed to GitHub.
 - [ ] Confirm no local uncommitted work remains before deployment tagging.
 - [ ] Confirm `.env` and `.env.local` are ignored and not committed.
 - [ ] Confirm deployment notes and known limitations have been reviewed.
@@ -36,6 +36,13 @@ Use this checklist before deploying the Wells Gas LPG Cylinder Management App to
 ## Build And Release
 
 - [ ] Install dependencies with `npm ci`.
+- [ ] In Vercel, use Hosting: Vercel Hobby.
+- [ ] In Vercel, select GitHub branch `feature/wells-gas-client-ready-branding`.
+- [ ] In Vercel, keep Framework Preset: Next.js.
+- [ ] In Vercel, use Install Command: `npm ci`.
+- [ ] In Vercel, use Build Command: `npm run build`.
+- [ ] In Vercel, leave Output Directory unset/default.
+- [ ] Use Neon Free Postgres unless Supabase Auth/Storage is later adopted.
 - [ ] Run `npm run lint`.
 - [ ] Run `npm run typecheck`.
 - [ ] Run `npm test`.
