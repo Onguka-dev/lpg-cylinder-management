@@ -293,6 +293,30 @@ enum AuditSeverity {
   CRITICAL
 }
 
+enum CustomerComplaintType {
+  GAS_LEAK
+  DELIVERY_DELAY
+  DAMAGED_CYLINDER
+  PAYMENT_QUERY
+  SERVICE_QUALITY
+  OTHER
+}
+
+enum CustomerComplaintPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum CustomerComplaintStatus {
+  SUBMITTED
+  IN_REVIEW
+  ESCALATED
+  RESOLVED
+  CLOSED
+}
+
 model Role {
   id          String   @id @default(cuid())
   name        RoleName @unique
@@ -337,6 +361,7 @@ model User {
   approvedMaintenanceCases MaintenanceCase[] @relation("MaintenanceCaseApprovedBy")
   createdSafetyIncidents SafetyIncident[] @relation("SafetyIncidentCreatedBy")
   createdNotifications Notification[] @relation("NotificationCreatedBy")
+  createdCustomerComplaints CustomerComplaint[] @relation("CustomerComplaintCreatedBy")
   offlineSyncItems OfflineSyncItem[]
   integrationLogs IntegrationLog[]
   sessions     UserSession[]
@@ -451,6 +476,7 @@ model MasterDataRecord {
   deliveryZones Delivery[] @relation("DeliveryZone")
   deliveryVehicles Delivery[] @relation("DeliveryVehicle")
   reconciliationLocations DailyReconciliation[] @relation("ReconciliationLocation")
+  complaintLocations CustomerComplaint[] @relation("CustomerComplaintLocation")
   metadata    Json?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
@@ -476,12 +502,39 @@ model Customer {
   fieldSales FieldSale[]
   invoices       Invoice[]
   billingPayments BillingPayment[]
+  complaints     CustomerComplaint[]
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
   @@index([name])
   @@index([status])
   @@index([category])
+}
+
+model CustomerComplaint {
+  id                    String                    @id @default(cuid())
+  complaintNumber       String                    @unique
+  customerId            String?
+  customer              Customer?                 @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  locationId            String?
+  location              MasterDataRecord?         @relation("CustomerComplaintLocation", fields: [locationId], references: [id], onDelete: SetNull)
+  type                  CustomerComplaintType
+  priority              CustomerComplaintPriority @default(MEDIUM)
+  status                CustomerComplaintStatus   @default(SUBMITTED)
+  description           String
+  attachmentPlaceholder String?
+  escalationNotes       String?
+  createdById           String?
+  createdBy             User?                     @relation("CustomerComplaintCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+
+  @@index([customerId])
+  @@index([locationId])
+  @@index([type])
+  @@index([priority])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model CustomerOrder {

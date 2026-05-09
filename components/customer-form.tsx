@@ -30,6 +30,8 @@ export function CustomerForm({ customer }: { customer?: CustomerFormRecord }) {
     setIsSubmitting(true);
 
     const formData = new FormData(event.currentTarget);
+    const idType = formData.get("idType");
+    const notes = formData.get("notes");
     const payload = {
       name: formData.get("name"),
       phone: formData.get("phone"),
@@ -40,7 +42,7 @@ export function CustomerForm({ customer }: { customer?: CustomerFormRecord }) {
       longitude: valueOrNull(formData.get("longitude")),
       status: formData.get("status"),
       creditLimit: valueOrNull(formData.get("creditLimit")),
-      notes: formData.get("notes") || undefined
+      notes: [idType ? `ID type: ${idType}` : "", notes || ""].filter(Boolean).join(" | ") || undefined
     };
 
     const response = await fetch(
@@ -68,11 +70,36 @@ export function CustomerForm({ customer }: { customer?: CustomerFormRecord }) {
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4">
+        <div className="flex items-center gap-4">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white text-sm font-bold text-brand-700 shadow-sm">
+            Photo
+          </div>
+          <div>
+            <p className="text-sm font-bold text-slate-950">Customer photo placeholder</p>
+            <p className="mt-1 text-sm leading-5 text-slate-500">Capture/upload can be connected later; registration continues with the existing customer API.</p>
+          </div>
+        </div>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2">
-        <TextInput label="Name" name="name" defaultValue={customer?.name} required />
+        <TextInput label="Full Name" name="name" defaultValue={customer?.name} required />
         <TextInput label="Phone" name="phone" defaultValue={customer?.phone} required />
+        <label className="block text-sm font-medium text-slate-700">
+          ID Type
+          <select
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-3 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
+            name="idType"
+            defaultValue="NIDA"
+          >
+            <option value="NIDA">NIDA</option>
+            <option value="PASSPORT">Passport</option>
+            <option value="DRIVING_LICENSE">Driving license</option>
+            <option value="BUSINESS_REGISTRATION">Business registration</option>
+          </select>
+        </label>
         <TextInput
-          label="ID/Passport/Proof Reference"
+          label="ID/NIDA/Passport Reference"
           name="proofReference"
           defaultValue={customer?.proofReference}
           required
@@ -96,7 +123,7 @@ export function CustomerForm({ customer }: { customer?: CustomerFormRecord }) {
       <label className="block text-sm font-medium text-slate-700">
         Address
         <textarea
-          className="mt-1 min-h-24 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
+          className="mt-1 min-h-24 w-full rounded-lg border border-slate-300 px-3 py-3 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
           name="address"
           defaultValue={customer?.address ?? ""}
           required
@@ -138,16 +165,16 @@ export function CustomerForm({ customer }: { customer?: CustomerFormRecord }) {
         </p>
       ) : null}
 
-      <div className="flex flex-wrap gap-3">
+      <div className="sticky bottom-20 z-10 flex flex-wrap gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-panel backdrop-blur sm:static sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
         <button
-          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-full rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
           type="submit"
           disabled={isSubmitting}
         >
           {isSubmitting ? "Saving..." : isEditing ? "Save changes" : "Register customer"}
         </button>
         <button
-          className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
+          className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-bold text-slate-700 sm:w-auto"
           type="button"
           onClick={() => router.back()}
         >
@@ -172,7 +199,7 @@ function TextInput({
     <label className="block text-sm font-medium text-slate-700">
       {label}
       <input
-        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
+        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-3 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
         name={name}
         defaultValue={defaultValue ?? ""}
         {...props}

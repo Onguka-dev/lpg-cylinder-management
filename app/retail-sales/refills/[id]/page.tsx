@@ -88,6 +88,14 @@ export default async function RefillOrderDetailPage({ params }: { params: { id: 
           Payment status: {order.payment?.status ?? "Pending"} via {formatPaymentMethod(order.payment?.method ?? order.paymentMethod)}.
           Reference: {order.payment?.reference ?? "Placeholder only"}.
         </p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <button className="rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white" type="button">
+            Print receipt placeholder
+          </button>
+          <button className="rounded-xl border border-slate-300 px-4 py-3 text-sm font-bold text-slate-700" type="button">
+            Share receipt placeholder
+          </button>
+        </div>
       </section>
     </div>
   );

@@ -14,7 +14,7 @@ export default async function NewRefillOrderPage() {
   }
 
   const assignedLocationId = session.user.role === "RSO" ? await getSalesLocationForSession(session) : null;
-  const [customers, skus, locations, groupedStock] = await Promise.all([
+  const [customers, skus, locations, groupedStock, prices] = await Promise.all([
     prisma.customer.findMany({ where: { status: "ACTIVE" }, orderBy: { name: "asc" }, take: 100 }),
     prisma.masterDataRecord.findMany({ where: { type: "SKU_MASTER", isActive: true }, orderBy: { name: "asc" } }),
     prisma.masterDataRecord.findMany({ where: { type: { in: [...locationMasterTypes] }, isActive: true }, orderBy: { name: "asc" } }),
@@ -25,7 +25,8 @@ export default async function NewRefillOrderPage() {
         ...(assignedLocationId ? { currentLocationId: assignedLocationId } : {})
       },
       _count: { id: true }
-    })
+    }),
+    prisma.masterDataRecord.findMany({ where: { type: "PRICE", isActive: true }, orderBy: { updatedAt: "desc" } })
   ]);
 
   return (
@@ -49,6 +50,10 @@ export default async function NewRefillOrderPage() {
             skuId: row.skuId,
             skuName: skus.find((sku) => sku.id === row.skuId)?.name ?? "Unknown SKU",
             filledQuantity: row._count.id
+          }))}
+          prices={skus.map((sku) => ({
+            skuId: sku.id,
+            amount: Number(prices.find((price) => price.parentId === sku.id || price.code === `PRICE-${sku.code.replace(/^LPG-/, "")}`)?.amount ?? 0)
           }))}
         />
       </section>

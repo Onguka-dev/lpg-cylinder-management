@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CustomerForm } from "@/components/customer-form";
+import { PageHeader } from "@/components/page-header";
+import { SectionCard } from "@/components/section-card";
 import { getCurrentSession } from "@/lib/auth";
 import { canManageCustomers } from "@/lib/customers";
 
@@ -12,17 +14,16 @@ export default async function NewCustomerPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <Link className="text-sm font-medium text-brand-700" href="/customers">
-        Back to customers
-      </Link>
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-panel">
-        <p className="text-sm font-semibold text-brand-700">Customer Registration</p>
-        <h1 className="mt-2 text-2xl font-semibold text-slate-950">Register Customer</h1>
-        <div className="mt-6">
-          <CustomerForm />
-        </div>
-      </section>
+    <div className="mx-auto max-w-4xl space-y-6 pb-24 sm:pb-0">
+      <PageHeader
+        eyebrow="Retail Point Sales"
+        title="Register Customer"
+        description="Mobile-friendly customer onboarding with duplicate checks by phone and ID/passport/proof reference."
+        actions={<Link className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700" href="/customers">Back</Link>}
+      />
+      <SectionCard title="Customer details" description="Use the existing customer API and validation rules.">
+        <CustomerForm />
+      </SectionCard>
     </div>
   );
 }

@@ -357,7 +357,7 @@ function buildNavigationSections(role: AppRole) {
           icon: Warehouse,
           children: [
             { key: "warehouse-overview", href: "/warehouse", label: "Warehouse Overview", icon: LayoutDashboard },
-            { key: "zone-a-incoming", href: "/warehouse", label: "Zone A Incoming", icon: Circle },
+            { key: "zone-a-incoming", href: "/warehouse/incoming", label: "Zone A Incoming", icon: Circle },
             { key: "zone-b-storage", href: "/warehouse", label: "Zone B Storage", icon: Boxes },
             { key: "zone-c-dispatch", href: "/warehouse", label: "Zone C Dispatch / Loading Bay", icon: Truck },
             { key: "zone-d-maintenance", href: "/safety", label: "Zone D Maintenance", icon: Wrench },
@@ -375,6 +375,7 @@ function buildNavigationSections(role: AppRole) {
       items: [
         { key: "retail-sales", href: "/retail-sales", label: "Retail Sales", icon: ShoppingCart },
         { key: "retail-inventory", href: "/retail-inventory", label: "Retail Inventory", icon: Boxes },
+        { key: "retail-complaints", href: "/retail-sales/complaints", label: "Complaints", icon: Bell },
         { key: "rso", href: "/rso", label: "RSO Workspace", icon: MapPinned }
       ]
     },
