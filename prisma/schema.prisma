@@ -61,6 +61,9 @@ enum CustomerStatus {
 enum CylinderStatus {
   FILLED
   EMPTY
+  EMPTY_IN_TRANSIT
+  FILLED_IN_TRANSIT
+  FILLED_AT_WAREHOUSE
   DAMAGED
   IN_TRANSIT
   RESERVED
@@ -104,6 +107,49 @@ enum SupplierReceiptCondition {
   EMPTY
   DAMAGED
   QUARANTINED
+}
+
+enum PlantTransferStatus {
+  DRAFT
+  DISPATCHED_TO_PLANT
+  RECEIVED_AT_PLANT
+  VARIANCE_LOGGED
+  REFILLED
+  RETURN_DISPATCHED
+  COMPLETED
+}
+
+enum PlantTransferLineStatus {
+  EXPECTED
+  RECEIVED_AT_PLANT
+  MISSING
+  EXTRA
+  DAMAGED
+  REFILLED
+  RETURNED_TO_WAREHOUSE
+}
+
+enum RefillBatchStatus {
+  DRAFT
+  QUALITY_CHECKED
+  FILLED
+}
+
+enum QualityInspectionStatus {
+  PENDING
+  PASSED
+  FAILED
+}
+
+enum PlantVarianceType {
+  MISSING
+  EXTRA
+  DAMAGED
+}
+
+enum PlantVarianceStatus {
+  OPEN
+  RESOLVED
 }
 
 enum RefillOrderStatus {
@@ -387,6 +433,14 @@ model User {
   createdSupplierReceipts          SupplierReceipt[]          @relation("SupplierReceiptCreatedBy")
   reviewedSupplierReceipts         SupplierReceipt[]          @relation("SupplierReceiptReviewedBy")
   postedSupplierReceipts           SupplierReceipt[]          @relation("SupplierReceiptPostedBy")
+  createdPlantTransfers            PlantTransfer[]            @relation("PlantTransferCreatedBy")
+  dispatchedPlantTransfers         PlantTransfer[]            @relation("PlantTransferDispatchedBy")
+  plantReceivedTransfers           PlantTransfer[]            @relation("PlantTransferReceivedBy")
+  plantReturnDispatchedTransfers   PlantTransfer[]            @relation("PlantTransferReturnDispatchedBy")
+  plantReturnReceivedTransfers     PlantTransfer[]            @relation("PlantTransferReturnReceivedBy")
+  createdRefillBatches             RefillBatch[]              @relation("RefillBatchCreatedBy")
+  checkedRefillBatches             RefillBatch[]              @relation("RefillBatchQualityCheckedBy")
+  createdPlantVarianceCases        PlantVarianceCase[]        @relation("PlantVarianceCreatedBy")
   refillOrders                     RefillOrder[]
   refillPayments                   Payment[]
   customerOrders                   CustomerOrder[]
@@ -526,6 +580,10 @@ model MasterDataRecord {
   reconciliationLocations     DailyReconciliation[]     @relation("ReconciliationLocation")
   complaintLocations          CustomerComplaint[]       @relation("CustomerComplaintLocation")
   supplierReceipts            SupplierReceipt[]         @relation("SupplierReceiptWarehouse")
+  sourcePlantTransfers        PlantTransfer[]           @relation("PlantTransferSourceLocation")
+  plantTransferDestinations   PlantTransfer[]           @relation("PlantTransferPlantLocation")
+  returnPlantDestinations     PlantTransfer[]           @relation("PlantTransferReturnDestination")
+  refillBatches               RefillBatch[]             @relation("RefillBatchPlantLocation")
   custodyIssueLocations       CustomerCylinderCustody[] @relation("CustodyIssueLocation")
   custodyReturnLocations      CustomerCylinderCustody[] @relation("CustodyReturnLocation")
   metadata                    Json?
@@ -727,6 +785,9 @@ model Cylinder {
   historyEntries          CylinderHistory[]
   movementLines           InventoryMovementCylinder[]
   supplierReceiptLines    SupplierReceiptLine[]
+  plantTransferLines      PlantTransferLine[]
+  plantVarianceCases      PlantVarianceCase[]
+  refillBatchLines        RefillBatchLine[]
   customerCustodies       CustomerCylinderCustody[]
   scanEvents              ScanEvent[]
   filledRefillOrders      RefillOrder[]               @relation("FilledRefillCylinder")
@@ -1225,6 +1286,7 @@ model InventoryMovement {
   cylinders             InventoryMovementCylinder[]
   historyEntries        InventoryMovementHistory[]
   supplierReceiptLines  SupplierReceiptLine[]
+  plantTransfers        PlantTransfer[]
   createdAt             DateTime                    @default(now())
   updatedAt             DateTime                    @updatedAt
 
@@ -1318,6 +1380,139 @@ model SupplierReceiptLine {
   @@index([condition])
   @@index([cylinderId])
   @@index([inventoryMovementId])
+}
+
+model PlantTransfer {
+  id                   String              @id @default(cuid())
+  reference            String              @unique
+  status               PlantTransferStatus @default(DRAFT)
+  sourceLocationId     String
+  sourceLocation       MasterDataRecord    @relation("PlantTransferSourceLocation", fields: [sourceLocationId], references: [id])
+  plantLocationId      String
+  plantLocation        MasterDataRecord    @relation("PlantTransferPlantLocation", fields: [plantLocationId], references: [id])
+  returnDestinationId  String
+  returnDestination    MasterDataRecord    @relation("PlantTransferReturnDestination", fields: [returnDestinationId], references: [id])
+  vehicle              String
+  driver               String
+  sealNumber           String
+  dispatchNote         String?
+  expectedReceiptTime  DateTime?
+  remarks              String?
+  dispatchMovementId   String?
+  dispatchMovement     InventoryMovement?  @relation(fields: [dispatchMovementId], references: [id], onDelete: SetNull)
+  returnMovementId     String?
+  createdById          String?
+  createdBy            User?               @relation("PlantTransferCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  dispatchedById       String?
+  dispatchedBy         User?               @relation("PlantTransferDispatchedBy", fields: [dispatchedById], references: [id], onDelete: SetNull)
+  plantReceivedById    String?
+  plantReceivedBy      User?               @relation("PlantTransferReceivedBy", fields: [plantReceivedById], references: [id], onDelete: SetNull)
+  returnDispatchedById String?
+  returnDispatchedBy   User?               @relation("PlantTransferReturnDispatchedBy", fields: [returnDispatchedById], references: [id], onDelete: SetNull)
+  returnReceivedById   String?
+  returnReceivedBy     User?               @relation("PlantTransferReturnReceivedBy", fields: [returnReceivedById], references: [id], onDelete: SetNull)
+  dispatchedAt         DateTime?
+  plantReceivedAt      DateTime?
+  returnDispatchedAt   DateTime?
+  returnReceivedAt     DateTime?
+  lines                PlantTransferLine[]
+  refillBatches        RefillBatch[]
+  varianceCases        PlantVarianceCase[]
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  @@index([status])
+  @@index([sourceLocationId])
+  @@index([plantLocationId])
+  @@index([returnDestinationId])
+  @@index([dispatchMovementId])
+  @@index([createdAt])
+}
+
+model PlantTransferLine {
+  id               String                  @id @default(cuid())
+  transferId       String
+  transfer         PlantTransfer           @relation(fields: [transferId], references: [id], onDelete: Cascade)
+  cylinderId       String
+  cylinder         Cylinder                @relation(fields: [cylinderId], references: [id], onDelete: Cascade)
+  status           PlantTransferLineStatus @default(EXPECTED)
+  receivedAt       DateTime?
+  returnReceivedAt DateTime?
+  remarks          String?
+  refillBatchLines RefillBatchLine[]
+  varianceCases    PlantVarianceCase[]
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  @@unique([transferId, cylinderId])
+  @@index([cylinderId])
+  @@index([status])
+}
+
+model RefillBatch {
+  id                      String                  @id @default(cuid())
+  reference               String                  @unique
+  transferId              String
+  transfer                PlantTransfer           @relation(fields: [transferId], references: [id], onDelete: Cascade)
+  plantLocationId         String
+  plantLocation           MasterDataRecord        @relation("RefillBatchPlantLocation", fields: [plantLocationId], references: [id])
+  status                  RefillBatchStatus       @default(DRAFT)
+  qualityInspectionStatus QualityInspectionStatus @default(PENDING)
+  qualityNotes            String?
+  createdById             String?
+  createdBy               User?                   @relation("RefillBatchCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  qualityCheckedById      String?
+  qualityCheckedBy        User?                   @relation("RefillBatchQualityCheckedBy", fields: [qualityCheckedById], references: [id], onDelete: SetNull)
+  qualityCheckedAt        DateTime?
+  filledAt                DateTime?
+  lines                   RefillBatchLine[]
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+
+  @@index([transferId])
+  @@index([plantLocationId])
+  @@index([status])
+  @@index([qualityInspectionStatus])
+}
+
+model RefillBatchLine {
+  id             String            @id @default(cuid())
+  batchId        String
+  batch          RefillBatch       @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  transferLineId String
+  transferLine   PlantTransferLine @relation(fields: [transferLineId], references: [id], onDelete: Cascade)
+  cylinderId     String
+  cylinder       Cylinder          @relation(fields: [cylinderId], references: [id], onDelete: Cascade)
+  createdAt      DateTime          @default(now())
+
+  @@unique([batchId, cylinderId])
+  @@unique([transferLineId])
+  @@index([cylinderId])
+}
+
+model PlantVarianceCase {
+  id             String              @id @default(cuid())
+  reference      String              @unique
+  transferId     String
+  transfer       PlantTransfer       @relation(fields: [transferId], references: [id], onDelete: Cascade)
+  transferLineId String?
+  transferLine   PlantTransferLine?  @relation(fields: [transferLineId], references: [id], onDelete: SetNull)
+  cylinderId     String?
+  cylinder       Cylinder?           @relation(fields: [cylinderId], references: [id], onDelete: SetNull)
+  type           PlantVarianceType
+  status         PlantVarianceStatus @default(OPEN)
+  details        String
+  createdById    String?
+  createdBy      User?               @relation("PlantVarianceCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  resolvedAt     DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([transferId])
+  @@index([transferLineId])
+  @@index([cylinderId])
+  @@index([type])
+  @@index([status])
 }
 
 model CylinderHistory {

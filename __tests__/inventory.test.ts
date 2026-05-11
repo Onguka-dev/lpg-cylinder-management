@@ -23,6 +23,9 @@ describe("inventory foundation", () => {
     expect(cylinderStatuses).toEqual([
       "FILLED",
       "EMPTY",
+      "EMPTY_IN_TRANSIT",
+      "FILLED_IN_TRANSIT",
+      "FILLED_AT_WAREHOUSE",
       "DAMAGED",
       "IN_TRANSIT",
       "RESERVED",

@@ -4,6 +4,9 @@ import type { AppRole } from "@/lib/auth-types";
 export const cylinderStatuses = [
   "FILLED",
   "EMPTY",
+  "EMPTY_IN_TRANSIT",
+  "FILLED_IN_TRANSIT",
+  "FILLED_AT_WAREHOUSE",
   "DAMAGED",
   "IN_TRANSIT",
   "RESERVED",

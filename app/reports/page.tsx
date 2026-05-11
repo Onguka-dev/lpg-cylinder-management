@@ -38,6 +38,7 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Rec
     creditCustomers,
     deliveryByStatus,
     reconciliationRecords,
+    plantVarianceCases,
     safetyCounts,
     maintenanceCases,
     damagedCylinders,
@@ -57,6 +58,7 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Rec
     prisma.customer.findMany({ where: { ...(filters.customerCategory ? { category: filters.customerCategory as never } : {}) }, orderBy: { creditLimit: "desc" }, take: 10 }),
     prisma.delivery.groupBy({ by: ["status"], where: { ...(createdAt ? { createdAt } : {}), ...(deliveryStatuses.includes(filters.status ?? "") ? { status: filters.status as never } : {}) }, _count: { _all: true } }),
     prisma.dailyReconciliation.findMany({ where: { ...(createdAt ? { reconciliationDate: createdAt } : {}), ...(reconciliationStatuses.includes(filters.status ?? "") ? { status: filters.status as never } : {}), OR: [{ stockVariance: { not: 0 } }, { paymentVariance: { not: 0 } }] }, include: { owner: true, location: true }, orderBy: { updatedAt: "desc" }, take: 10 }),
+    prisma.plantVarianceCase.findMany({ where: { ...(createdAt ? { createdAt } : {}), ...(plantVarianceStatuses.includes(filters.status ?? "") ? { status: filters.status as never } : {}) }, include: { transfer: true, cylinder: true }, orderBy: { createdAt: "desc" }, take: 10 }),
     Promise.all([
       prisma.cylinder.count({ where: { OR: [{ unsafeStatus: true }, { quarantinedStatus: true }] } }),
       prisma.cylinder.count({ where: { expiryDate: { lt: now } } }),
@@ -96,6 +98,7 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Rec
         <Summary label="Damaged Cylinders" value={String(damagedCylinders.length)} />
         <Summary label="Delivery Records" value={String(deliveryByStatus.reduce((sum, row) => sum + row._count._all, 0))} />
         <Summary label="Activity Logs" value={String(userActivity.length)} />
+        <Summary label="Plant Variances" value={String(plantVarianceCases.length)} />
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
@@ -136,6 +139,12 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Rec
         <ReportPanel title="Reconciliation Variances">
           <SimpleTable headers={["Reference", "Owner", "Location", "Stock Var", "Payment Var"]} rows={reconciliationRecords.map((record) => [record.reference, record.owner.name, record.location?.name ?? "No location", String(record.stockVariance), formatMoney(record.paymentVariance)])} />
         </ReportPanel>
+        <ReportPanel title="Plant Transfer Variance Cases">
+          <SimpleTable headers={["Reference", "Transfer", "Type", "Status", "Cylinder"]} rows={plantVarianceCases.map((variance) => [variance.reference, variance.transfer.reference, formatReportLabel(variance.type), formatReportLabel(variance.status), variance.cylinder?.serialNumber ?? "No cylinder"])} />
+        </ReportPanel>
+      </section>
+
+      <section className="grid gap-5 lg:grid-cols-2">
         <ReportPanel title="Safety Compliance">
           <BarList rows={[
             { label: "Unsafe / Quarantined", value: safetyCounts[0] },
@@ -170,11 +179,12 @@ function cylinderWhere(filters: ReportFilters) {
   };
 }
 
-const cylinderStatuses = ["FILLED", "EMPTY", "DAMAGED", "IN_TRANSIT", "RESERVED", "UNDER_MAINTENANCE", "WITH_CUSTOMER"];
+const cylinderStatuses = ["FILLED", "EMPTY", "EMPTY_IN_TRANSIT", "FILLED_IN_TRANSIT", "FILLED_AT_WAREHOUSE", "DAMAGED", "IN_TRANSIT", "RESERVED", "UNDER_MAINTENANCE", "WITH_CUSTOMER"];
 const deliveryStatuses = ["ASSIGNED", "LOADING_CONFIRMED", "CUSTOMER_ARRIVAL", "DELIVERED", "FAILED", "RETURNED", "EXCEPTION"];
 const invoiceStatuses = ["DRAFT", "ISSUED", "PARTIALLY_PAID", "PAID", "OVERDUE", "CANCELLED"];
 const reconciliationStatuses = ["DRAFT", "SUBMITTED", "APPROVED", "RETURNED"];
 const maintenanceStatuses = ["OPEN", "INSPECTION_RECORDED", "QUARANTINED", "APPROVED_RETURN_TO_STOCK", "SCRAP_PLACEHOLDER", "CLOSED"];
+const plantVarianceStatuses = ["OPEN", "RESOLVED"];
 
 function cleanFilterParams(filters: ReportFilters): Record<string, string> {
   return Object.fromEntries(Object.entries(filters).filter((entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].length > 0));
@@ -199,7 +209,7 @@ function Filters({ filters, skus, locations, regions }: { filters: ReportFilters
         <Select name="skuId" value={filters.skuId ?? ""} label="All SKUs" options={skus} />
         <select className="rounded-lg border border-slate-300 px-3 py-2 text-sm" name="status" defaultValue={filters.status ?? ""}>
           <option value="">All statuses</option>
-          {["FILLED", "EMPTY", "DAMAGED", "IN_TRANSIT", "RESERVED", "UNDER_MAINTENANCE", "WITH_CUSTOMER", "DELIVERED", "FAILED", "APPROVED", "SUBMITTED", "OPEN", "QUARANTINED"].map((status) => <option value={status} key={status}>{formatReportLabel(status)}</option>)}
+          {["FILLED", "EMPTY", "EMPTY_IN_TRANSIT", "FILLED_IN_TRANSIT", "FILLED_AT_WAREHOUSE", "DAMAGED", "IN_TRANSIT", "RESERVED", "UNDER_MAINTENANCE", "WITH_CUSTOMER", "DELIVERED", "FAILED", "APPROVED", "SUBMITTED", "OPEN", "QUARANTINED"].map((status) => <option value={status} key={status}>{formatReportLabel(status)}</option>)}
         </select>
       </div>
       <div className="mt-3 flex flex-wrap gap-3">
