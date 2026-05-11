@@ -260,6 +260,28 @@ enum IntegrationProviderType {
   MAPS_GPS
 }
 
+enum ScanActionType {
+  RECEIPT
+  TRANSFER_DISPATCH
+  TRANSFER_RECEIVE
+  SALE
+  CUSTOMER_RETURN
+  NON_CODED_INTAKE
+  REPORT_LOOKUP
+  MOBILE_VERIFY
+}
+
+enum ScanResultStatus {
+  PERMITTED
+  CYLINDER_NOT_FOUND
+  WRONG_LOCATION
+  WRONG_STATUS
+  BLOCKED_DAMAGED
+  ALREADY_SCANNED
+  INACTIVE
+  FAILED
+}
+
 enum IntegrationLogStatus {
   QUEUED
   SUCCESS
@@ -369,6 +391,7 @@ model User {
   createdNotifications             Notification[]             @relation("NotificationCreatedBy")
   createdCustomerComplaints        CustomerComplaint[]        @relation("CustomerComplaintCreatedBy")
   createdCustomerCylinderCustodies CustomerCylinderCustody[]  @relation("CustomerCylinderCustodyCreatedBy")
+  scanEvents                       ScanEvent[]
   offlineSyncItems                 OfflineSyncItem[]
   integrationLogs                  IntegrationLog[]
   sessions                         UserSession[]
@@ -466,6 +489,8 @@ model MasterDataRecord {
   children                    MasterDataRecord[]        @relation("MasterDataHierarchy")
   skuCylinders                Cylinder[]                @relation("CylinderSku")
   locationCylinders           Cylinder[]                @relation("CylinderLocation")
+  expectedScanEvents          ScanEvent[]               @relation("ScanEventExpectedLocation")
+  scannedScanEvents           ScanEvent[]               @relation("ScanEventScannedLocation")
   openingBalanceSkuLines      OpeningBalanceLine[]      @relation("OpeningBalanceSku")
   openingBalanceLocationLines OpeningBalanceLine[]      @relation("OpeningBalanceLocation")
   movementSkus                InventoryMovement[]       @relation("MovementSku")
@@ -685,6 +710,7 @@ model Cylinder {
   historyEntries          CylinderHistory[]
   movementLines           InventoryMovementCylinder[]
   customerCustodies       CustomerCylinderCustody[]
+  scanEvents              ScanEvent[]
   filledRefillOrders      RefillOrder[]               @relation("FilledRefillCylinder")
   emptyReturnRefillOrders RefillOrder[]               @relation("EmptyReturnCylinder")
   fieldFilledSales        FieldSale[]                 @relation("FieldFilledCylinder")
@@ -736,6 +762,37 @@ model CustomerCylinderCustody {
   @@index([returnDate])
   @@index([saleReference])
   @@index([refillReference])
+}
+
+model ScanEvent {
+  id                 String            @id @default(cuid())
+  barcode            String
+  action             ScanActionType
+  result             ScanResultStatus
+  failureReason      String?
+  batchId            String?
+  expectedStatus     CylinderStatus?
+  scannedStatus      CylinderStatus?
+  expectedLocationId String?
+  expectedLocation   MasterDataRecord? @relation("ScanEventExpectedLocation", fields: [expectedLocationId], references: [id], onDelete: SetNull)
+  scannedLocationId  String?
+  scannedLocation    MasterDataRecord? @relation("ScanEventScannedLocation", fields: [scannedLocationId], references: [id], onDelete: SetNull)
+  cylinderId         String?
+  cylinder           Cylinder?         @relation(fields: [cylinderId], references: [id], onDelete: SetNull)
+  userId             String?
+  user               User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  metadata           Json?
+  createdAt          DateTime          @default(now())
+
+  @@index([barcode])
+  @@index([action])
+  @@index([result])
+  @@index([batchId])
+  @@index([cylinderId])
+  @@index([userId])
+  @@index([expectedLocationId])
+  @@index([scannedLocationId])
+  @@index([createdAt])
 }
 
 model MaintenanceCase {
