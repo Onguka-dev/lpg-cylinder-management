@@ -5,6 +5,7 @@ import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { roleLabel } from "@/lib/rbac";
 
 export default async function WarehouseMobileProfilePage() {
   const session = await getCurrentSession();
@@ -25,7 +26,7 @@ export default async function WarehouseMobileProfilePage() {
       </div>
       <section className="rounded-[1.75rem] bg-brand-700 p-5 text-white shadow-brand">
         <UserCircle size={46} aria-hidden="true" />
-        <h2 className="mt-4 text-2xl font-bold">{session.user.name}</h2>
+        <h2 className="mt-4 text-2xl font-bold">{roleLabel(session.user.role)} account</h2>
         <p className="mt-1 text-sm text-brand-100">Warehouse clerk profile · {warehouse?.name ?? "Assigned warehouse"}</p>
         <div className="mt-4 flex gap-2">
           <StatusBadge tone="success">Online</StatusBadge>

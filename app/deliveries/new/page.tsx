@@ -3,6 +3,7 @@ import { DeliveryAssignmentForm } from "@/components/delivery-assignment-form";
 import { getCurrentSession } from "@/lib/auth";
 import { canManageDeliveries } from "@/lib/deliveries";
 import { prisma } from "@/lib/prisma";
+import { roleLabel } from "@/lib/rbac";
 
 export default async function NewDeliveryPage() {
   const session = await getCurrentSession();
@@ -40,7 +41,7 @@ export default async function NewDeliveryPage() {
           routes={routes}
           zones={zones}
           vehicles={vehicles}
-          users={users.map((user) => ({ id: user.id, name: `${user.name} (${user.role.name})` }))}
+          users={users.map((user) => ({ id: user.id, name: `${roleLabel(user.role.name)} account (${user.email})` }))}
         />
       </section>
     </div>

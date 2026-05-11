@@ -94,7 +94,7 @@ export default async function FieldSalesPage() {
     <div className="mx-auto max-w-6xl space-y-5 pb-24 sm:pb-0">
       <PageHeader
         eyebrow="Wells Gas / Green Wells Energies"
-        title={`Good day${session.user.name ? `, ${session.user.name.split(" ")[0]}` : ""}`}
+        title="Field sales workspace"
         description={`MSO ID: ${session.user.id.slice(0, 8).toUpperCase()} | ${assignment.route?.name ?? "Assigned route pending"} | ${assignment.zone?.name ?? "Assigned zone pending"}`}
         actions={
           <div className="flex flex-wrap gap-2">

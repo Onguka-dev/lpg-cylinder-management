@@ -208,20 +208,20 @@ export function AppShell({
                   <details className="group relative hidden sm:block">
                     <summary className="flex cursor-pointer list-none items-center gap-3 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm shadow-panel outline-none hover:border-brand-100 hover:bg-brand-50 focus-visible:ring-2 focus-visible:ring-brand-200">
                       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-xs font-bold text-brand-700">
-                        {session.user.name.slice(0, 1).toUpperCase()}
+                        {roleLabel(session.user.role).slice(0, 1).toUpperCase()}
                       </span>
                       <span className="min-w-0 text-left">
                         <span className="block truncate font-semibold text-slate-900">
-                          Hello {session.user.name.split(" ")[0]}
+                          {roleLabel(session.user.role)}
                         </span>
                         <span className="block truncate text-xs text-slate-500">
-                          {roleLabel(session.user.role)}
+                          Active workspace
                         </span>
                       </span>
                       <ChevronDown size={14} className="text-slate-400 transition group-open:rotate-180" aria-hidden="true" />
                     </summary>
                     <div className="absolute right-0 mt-2 w-72 rounded-brand border border-slate-200 bg-white p-3 shadow-soft">
-                      <p className="text-sm font-semibold text-slate-950">{session.user.name}</p>
+                      <p className="text-sm font-semibold text-slate-950">{roleLabel(session.user.role)} account</p>
                       <p className="mt-0.5 truncate text-xs text-slate-500">{session.user.email}</p>
                       <div className="mt-3 rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
                         <p className="font-semibold text-slate-900">{roleLabel(session.user.role)}</p>

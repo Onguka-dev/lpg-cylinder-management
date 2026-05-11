@@ -148,7 +148,7 @@ export default async function HomePage({
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHeader
         eyebrow="Dashboard"
-        title={`Hello ${session?.user.name.split(" ")[0] ?? "there"}, here is the Wells Gas operations view`}
+        title="Wells Gas operations view"
         description={`${roleLabel(session?.user.role ?? "ADMIN")} context for cylinder assets, warehouses, retail points, vehicles, movements, and safety signals.`}
         actions={
           <div className="flex flex-wrap items-center gap-2 text-sm">

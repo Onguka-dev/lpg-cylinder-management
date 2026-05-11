@@ -37,7 +37,7 @@ export default async function WarehouseMobileHomePage() {
       <section className="rounded-[1.75rem] bg-brand-700 p-5 text-white shadow-brand">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold text-brand-100">Good day, {session.user.name.split(" ")[0]}</p>
+            <p className="text-sm font-semibold text-brand-100">Warehouse operations workspace</p>
             <h1 className="mt-2 text-2xl font-bold">Warehouse Mobile</h1>
             <p className="mt-2 text-sm text-brand-100">{warehouse?.name ?? "Assigned warehouse"} · Online · {offlineQueue} pending sync</p>
           </div>

@@ -81,7 +81,7 @@ export function ReconciliationForm({ reconciliation, users, currentUserId, curre
               <option value="">Select user...</option>
               {users.map((user) => (
                 <option value={user.id} key={user.id}>
-                  {user.name} - {formatReconciliationLabel(user.role.name)}{user.location ? ` - ${user.location.name}` : ""}
+                  {formatReconciliationLabel(user.role.name)} account - {user.email}{user.location ? ` - ${user.location.name}` : ""}
                 </option>
               ))}
             </select>

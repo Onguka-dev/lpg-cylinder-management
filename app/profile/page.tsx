@@ -45,7 +45,7 @@ export default async function ProfilePage() {
     <div className="mx-auto max-w-5xl space-y-6">
       <PageHeader
         eyebrow="Staff profile"
-        title={user?.name ?? session.user.name}
+        title={`${roleLabel(role)} account`}
         description="Role, assigned location, device/session readiness, profile links, and app settings shortcuts."
         actions={<StatusBadge tone="success">Online</StatusBadge>}
       />
@@ -64,7 +64,7 @@ export default async function ProfilePage() {
               <UserCircle size={34} aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <h2 className="truncate text-lg font-bold text-slate-950">{user?.name ?? session.user.name}</h2>
+              <h2 className="truncate text-lg font-bold text-slate-950">{roleLabel(role)} account</h2>
               <p className="mt-1 truncate text-sm text-slate-500">{user?.email ?? session.user.email}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <StatusBadge tone="brand">{roleLabel(role)}</StatusBadge>

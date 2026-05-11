@@ -18,42 +18,42 @@ export const starterLocations = [
 
 export const starterUsers = [
   {
-    name: "Amina Okello",
+    name: "Admin Account",
     email: "admin@example.com",
     password: "password123",
     role: "ADMIN",
     locationCode: "HQ"
   },
   {
-    name: "Peter Mwangi",
+    name: "Warehouse Manager Account",
     email: "warehouse@example.com",
     password: "password123",
     role: "WAREHOUSE_MANAGER",
     locationCode: "WH-NBO"
   },
   {
-    name: "Grace Njeri",
+    name: "RSO Account",
     email: "rso@example.com",
     password: "password123",
     role: "RSO",
     locationCode: "DP-MBS"
   },
   {
-    name: "David Otieno",
+    name: "MSO Account",
     email: "mso@example.com",
     password: "password123",
     role: "MSO",
     locationCode: "RO-KSM"
   },
   {
-    name: "Sarah Wambui",
+    name: "Auditor Account",
     email: "auditor@example.com",
     password: "password123",
     role: "AUDITOR",
     locationCode: "HQ"
   },
   {
-    name: "Customer Demo",
+    name: "Customer Account",
     email: "customer@example.com",
     password: "password123",
     role: "CUSTOMER",

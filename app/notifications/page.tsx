@@ -13,6 +13,7 @@ import {
   formatNotificationStatus
 } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
+import { roleLabel } from "@/lib/rbac";
 
 export default async function NotificationsPage({ searchParams }: { searchParams?: Record<string, string | undefined> }) {
   const session = await getCurrentSession();
@@ -99,7 +100,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
           </select>
           <select className="rounded-lg border border-slate-300 px-3 py-2 text-sm" name="userId" defaultValue={userId ?? ""}>
             <option value="">All users</option>
-            {users.map((user) => <option value={user.id} key={user.id}>{user.name} - {user.role.name}</option>)}
+            {users.map((user) => <option value={user.id} key={user.id}>{roleLabel(user.role.name)} account - {user.email}</option>)}
           </select>
           <button className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white" type="submit">Apply filters</button>
         </div>

@@ -82,42 +82,42 @@ async function main() {
 
   const users = [
     {
-      name: "Amina Okello",
+      name: "Admin Account",
       email: "admin@example.com",
       passwordHash: hashPassword("password123"),
       roleId: roleId(RoleName.ADMIN),
       locationId: locationId("HQ")
     },
     {
-      name: "Peter Mwangi",
+      name: "Warehouse Manager Account",
       email: "warehouse@example.com",
       passwordHash: hashPassword("password123"),
       roleId: roleId(RoleName.WAREHOUSE_MANAGER),
       locationId: locationId("WH-NBO")
     },
     {
-      name: "Grace Njeri",
+      name: "RSO Account",
       email: "rso@example.com",
       passwordHash: hashPassword("password123"),
       roleId: roleId(RoleName.RSO),
       locationId: locationId("DP-MBS")
     },
     {
-      name: "David Otieno",
+      name: "MSO Account",
       email: "mso@example.com",
       passwordHash: hashPassword("password123"),
       roleId: roleId(RoleName.MSO),
       locationId: locationId("RO-KSM")
     },
     {
-      name: "Sarah Wambui",
+      name: "Auditor Account",
       email: "auditor@example.com",
       passwordHash: hashPassword("password123"),
       roleId: roleId(RoleName.AUDITOR),
       locationId: locationId("HQ")
     },
     {
-      name: "Customer Demo",
+      name: "Customer Account",
       email: "customer@example.com",
       passwordHash: hashPassword("password123"),
       roleId: roleId(RoleName.CUSTOMER),
@@ -424,7 +424,7 @@ async function main() {
           zoneId: westlandsZone.id,
           vehicleId: vehicle.id,
           assignedUserId: msoUser.id,
-          driverName: "David Otieno",
+          driverName: "Assigned Driver",
           status: DeliveryStatus.ASSIGNED
         },
         create: {
@@ -434,7 +434,7 @@ async function main() {
           zoneId: westlandsZone.id,
           vehicleId: vehicle.id,
           assignedUserId: msoUser.id,
-          driverName: "David Otieno",
+          driverName: "Assigned Driver",
           status: DeliveryStatus.ASSIGNED,
           createdById: adminUser.id
         }

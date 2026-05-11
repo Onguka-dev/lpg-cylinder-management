@@ -98,7 +98,7 @@ export default async function RetailSalesPage() {
     <div className="mx-auto max-w-6xl space-y-5 pb-24 sm:space-y-6 sm:pb-0">
       <PageHeader
         eyebrow="Retail Point Sales"
-        title={`Good day${session?.user.name ? `, ${session.user.name.split(" ")[0]}` : ""}`}
+        title="Retail sales workspace"
         description={`POS workspace for ${assignedLocation?.name ?? "assigned retail point"}. Walk-in refills, customer registration, payment capture and stock requests stay connected to existing workflows.`}
         actions={<StatusBadge tone="success">Online</StatusBadge>}
       />
