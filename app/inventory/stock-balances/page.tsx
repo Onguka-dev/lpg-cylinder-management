@@ -6,11 +6,11 @@ export default async function StockBalancesPage() {
     by: ["skuId", "currentLocationId", "status"],
     _count: { id: true },
     orderBy: [{ skuId: "asc" }, { currentLocationId: "asc" }, { status: "asc" }]
-  });
+  }).catch(() => []);
   const [skus, locations, thresholds] = await Promise.all([
-    prisma.masterDataRecord.findMany({ where: { id: { in: grouped.map((row) => row.skuId) } } }),
-    prisma.masterDataRecord.findMany({ where: { id: { in: grouped.map((row) => row.currentLocationId) } } }),
-    prisma.masterDataRecord.findMany({ where: { type: "STOCK_THRESHOLD", isActive: true } })
+    prisma.masterDataRecord.findMany({ where: { id: { in: grouped.map((row) => row.skuId) } } }).catch(() => []),
+    prisma.masterDataRecord.findMany({ where: { id: { in: grouped.map((row) => row.currentLocationId) } } }).catch(() => []),
+    prisma.masterDataRecord.findMany({ where: { type: "STOCK_THRESHOLD", isActive: true } }).catch(() => [])
   ]);
   const damagedCount = grouped
     .filter((row) => row.status === "DAMAGED")
@@ -46,6 +46,13 @@ export default async function StockBalancesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
+              {!grouped.length ? (
+                <tr>
+                  <td className="px-4 py-8 text-center text-sm text-slate-500" colSpan={4}>
+                    No stock balances are available yet. If this is the hosted demo, the database may still need provisioning or migration.
+                  </td>
+                </tr>
+              ) : null}
               {grouped.map((row) => (
                 <tr key={`${row.skuId}-${row.currentLocationId}-${row.status}`}>
                   <td className="px-4 py-3 font-medium text-slate-900">{skus.find((sku) => sku.id === row.skuId)?.name ?? "Unknown SKU"}</td>

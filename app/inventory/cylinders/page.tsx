@@ -25,7 +25,7 @@ export default async function CylindersPage({
     include: { sku: true, currentLocation: true },
     orderBy: { updatedAt: "desc" },
     take: 150
-  });
+  }).catch(() => []);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -77,6 +77,13 @@ export default async function CylindersPage({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
+              {!cylinders.length ? (
+                <tr>
+                  <td className="px-4 py-8 text-center text-sm text-slate-500" colSpan={7}>
+                    No cylinder records are available yet. If this is the hosted demo, the database may still need provisioning or migration.
+                  </td>
+                </tr>
+              ) : null}
               {cylinders.map((cylinder) => (
                 <tr key={cylinder.id}>
                   <td className="px-4 py-3 font-medium text-slate-900">{cylinder.serialNumber}</td>

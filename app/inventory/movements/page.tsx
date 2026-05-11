@@ -18,7 +18,7 @@ export default async function InventoryMovementsPage({
   const query = searchParams?.q?.trim() ?? "";
   const assignedLocationId =
     session?.user.role === "RSO" || session?.user.role === "MSO"
-      ? await getAssignedMasterLocationId(session.user.id)
+      ? await getAssignedMasterLocationId(session.user.id).catch(() => null)
       : null;
   const movements = await prisma.inventoryMovement.findMany({
     where: {
@@ -51,7 +51,7 @@ export default async function InventoryMovementsPage({
     },
     orderBy: { updatedAt: "desc" },
     take: 150
-  });
+  }).catch(() => []);
   const canRequest = session ? canRequestInventoryMovements(session.user.role) : false;
 
   return (
@@ -98,6 +98,13 @@ export default async function InventoryMovementsPage({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
+              {!movements.length ? (
+                <tr>
+                  <td className="px-4 py-8 text-center text-sm text-slate-500" colSpan={8}>
+                    No inventory movements are available yet. If this is the hosted demo, the database may still need provisioning or migration.
+                  </td>
+                </tr>
+              ) : null}
               {movements.map((movement) => (
                 <tr key={movement.id}>
                   <td className="px-4 py-3 font-medium text-slate-900">{movement.reference}</td>
