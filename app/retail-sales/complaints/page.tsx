@@ -19,14 +19,14 @@ export default async function RetailComplaintsPage() {
 
   const assignedLocationId =
     session.user.role === "RSO" || session.user.role === "MSO"
-      ? await getAssignedMasterLocationId(session.user.id)
+      ? await getAssignedMasterLocationId(session.user.id).catch(() => null)
       : null;
   const complaints = await prisma.customerComplaint.findMany({
     where: assignedLocationId ? { locationId: assignedLocationId } : undefined,
     include: { customer: true, location: true, createdBy: true },
     orderBy: { createdAt: "desc" },
     take: 100
-  });
+  }).catch(() => []);
   const canCreate = canManageCustomerComplaints(session.user.role);
 
   return (

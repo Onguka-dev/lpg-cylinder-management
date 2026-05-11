@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 export default async function RefillOrdersPage({ searchParams }: { searchParams?: { q?: string } }) {
   const session = await getCurrentSession();
   const query = searchParams?.q?.trim() ?? "";
-  const locationId = session?.user.role === "RSO" ? await getSalesLocationForSession(session) : null;
+  const locationId = session?.user.role === "RSO" ? await getSalesLocationForSession(session).catch(() => null) : null;
   const orders = await prisma.refillOrder.findMany({
     where: {
       AND: [
@@ -28,7 +28,7 @@ export default async function RefillOrdersPage({ searchParams }: { searchParams?
     include: { customer: true, sku: true, location: true, payment: true },
     orderBy: { createdAt: "desc" },
     take: 100
-  });
+  }).catch(() => []);
   const canCreate = session ? canManageRefillSales(session.user.role) : false;
 
   return (
@@ -71,6 +71,13 @@ export default async function RefillOrdersPage({ searchParams }: { searchParams?
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
+              {!orders.length ? (
+                <tr>
+                  <td className="px-4 py-8 text-center text-sm text-slate-500" colSpan={8}>
+                    No refill orders are available yet. If this is the hosted demo, the database may still need provisioning or migration.
+                  </td>
+                </tr>
+              ) : null}
               {orders.map((order) => (
                 <tr key={order.id}>
                   <td className="px-4 py-3 font-medium text-slate-900">{order.orderNumber}</td>

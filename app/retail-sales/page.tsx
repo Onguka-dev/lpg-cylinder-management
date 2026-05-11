@@ -24,7 +24,7 @@ export default async function RetailSalesPage() {
   const session = await getCurrentSession();
   const assignedLocationId =
     session?.user.role === "RSO" || session?.user.role === "MSO"
-      ? await getAssignedMasterLocationId(session.user.id)
+      ? await getAssignedMasterLocationId(session.user.id).catch(() => null)
       : null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -39,27 +39,27 @@ export default async function RetailSalesPage() {
     complaints,
     skus
   ] = await Promise.all([
-    assignedLocationId ? prisma.masterDataRecord.findUnique({ where: { id: assignedLocationId } }) : null,
+    assignedLocationId ? prisma.masterDataRecord.findUnique({ where: { id: assignedLocationId } }).catch(() => null) : null,
     prisma.refillOrder.count({
       where: {
         createdAt: { gte: today },
         ...(assignedLocationId ? { locationId: assignedLocationId } : {})
       }
-    }),
-    prisma.customer.count({ where: { createdAt: { gte: today } } }),
+    }).catch(() => 0),
+    prisma.customer.count({ where: { createdAt: { gte: today } } }).catch(() => 0),
     prisma.refillOrder.aggregate({
       where: {
         createdAt: { gte: today },
         ...(assignedLocationId ? { locationId: assignedLocationId } : {})
       },
       _sum: { totalAmount: true }
-    }),
+    }).catch(() => ({ _sum: { totalAmount: 0 } })),
     prisma.cylinder.groupBy({
       by: ["skuId", "status"],
       where: assignedLocationId ? { currentLocationId: assignedLocationId } : undefined,
       _count: { id: true },
       orderBy: { _count: { id: "desc" } }
-    }),
+    }).catch(() => []),
     prisma.inventoryMovement.count({
       where: {
         status: { in: ["REQUESTED", "APPROVED", "DISPATCHED", "VARIANCE_LOGGED"] },
@@ -67,17 +67,17 @@ export default async function RetailSalesPage() {
           ? { OR: [{ sourceLocationId: assignedLocationId }, { destinationLocationId: assignedLocationId }] }
           : {})
       }
-    }),
+    }).catch(() => 0),
     prisma.customerComplaint.count({
       where: {
         status: { in: ["SUBMITTED", "IN_REVIEW", "ESCALATED"] },
         ...(assignedLocationId ? { locationId: assignedLocationId } : {})
       }
-    }),
+    }).catch(() => 0),
     prisma.masterDataRecord.findMany({
       where: { type: "SKU_MASTER", isActive: true },
       orderBy: { name: "asc" }
-    })
+    }).catch(() => [])
   ]);
 
   const salesAmount = Number(todaysSales._sum.totalAmount ?? 0);

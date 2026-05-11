@@ -17,20 +17,20 @@ export default async function RetailInventoryPage() {
 
   const assignedLocationId =
     session.user.role === "RSO" || session.user.role === "MSO"
-      ? await getAssignedMasterLocationId(session.user.id)
+      ? await getAssignedMasterLocationId(session.user.id).catch(() => null)
       : null;
   const [location, skus, stock, thresholdRecord] = await Promise.all([
-    assignedLocationId ? prisma.masterDataRecord.findUnique({ where: { id: assignedLocationId } }) : null,
-    prisma.masterDataRecord.findMany({ where: { type: "SKU_MASTER", isActive: true }, orderBy: { name: "asc" } }),
+    assignedLocationId ? prisma.masterDataRecord.findUnique({ where: { id: assignedLocationId } }).catch(() => null) : null,
+    prisma.masterDataRecord.findMany({ where: { type: "SKU_MASTER", isActive: true }, orderBy: { name: "asc" } }).catch(() => []),
     prisma.cylinder.groupBy({
       by: ["skuId", "status"],
       where: assignedLocationId ? { currentLocationId: assignedLocationId } : undefined,
       _count: { id: true }
-    }),
+    }).catch(() => []),
     prisma.masterDataRecord.findFirst({
       where: { type: "STOCK_THRESHOLD", isActive: true, threshold: { not: null } },
       orderBy: { updatedAt: "desc" }
-    })
+    }).catch(() => null)
   ]);
   const threshold = thresholdRecord?.threshold ?? 5;
   const filledTotal = stock.filter((row) => row.status === "FILLED").reduce((sum, row) => sum + row._count.id, 0);

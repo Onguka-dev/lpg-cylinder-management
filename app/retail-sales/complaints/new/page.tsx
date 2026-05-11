@@ -19,14 +19,14 @@ export default async function NewRetailComplaintPage() {
 
   const assignedLocationId =
     session.user.role === "RSO" || session.user.role === "MSO"
-      ? await getAssignedMasterLocationId(session.user.id)
+      ? await getAssignedMasterLocationId(session.user.id).catch(() => null)
       : null;
   const [customers, locations] = await Promise.all([
-    prisma.customer.findMany({ where: { status: "ACTIVE" }, orderBy: { name: "asc" }, take: 100 }),
+    prisma.customer.findMany({ where: { status: "ACTIVE" }, orderBy: { name: "asc" }, take: 100 }).catch(() => []),
     prisma.masterDataRecord.findMany({
       where: { type: { in: [...locationMasterTypes] }, isActive: true },
       orderBy: [{ type: "asc" }, { name: "asc" }]
-    })
+    }).catch(() => [])
   ]);
 
   return (

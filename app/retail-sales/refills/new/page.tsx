@@ -13,11 +13,11 @@ export default async function NewRefillOrderPage() {
     redirect("/unauthorized");
   }
 
-  const assignedLocationId = session.user.role === "RSO" ? await getSalesLocationForSession(session) : null;
+  const assignedLocationId = session.user.role === "RSO" ? await getSalesLocationForSession(session).catch(() => null) : null;
   const [customers, skus, locations, groupedStock, prices] = await Promise.all([
-    prisma.customer.findMany({ where: { status: "ACTIVE" }, orderBy: { name: "asc" }, take: 100 }),
-    prisma.masterDataRecord.findMany({ where: { type: "SKU_MASTER", isActive: true }, orderBy: { name: "asc" } }),
-    prisma.masterDataRecord.findMany({ where: { type: { in: [...locationMasterTypes] }, isActive: true }, orderBy: { name: "asc" } }),
+    prisma.customer.findMany({ where: { status: "ACTIVE" }, orderBy: { name: "asc" }, take: 100 }).catch(() => []),
+    prisma.masterDataRecord.findMany({ where: { type: "SKU_MASTER", isActive: true }, orderBy: { name: "asc" } }).catch(() => []),
+    prisma.masterDataRecord.findMany({ where: { type: { in: [...locationMasterTypes] }, isActive: true }, orderBy: { name: "asc" } }).catch(() => []),
     prisma.cylinder.groupBy({
       by: ["skuId"],
       where: {
@@ -25,8 +25,8 @@ export default async function NewRefillOrderPage() {
         ...(assignedLocationId ? { currentLocationId: assignedLocationId } : {})
       },
       _count: { id: true }
-    }),
-    prisma.masterDataRecord.findMany({ where: { type: "PRICE", isActive: true }, orderBy: { updatedAt: "desc" } })
+    }).catch(() => []),
+    prisma.masterDataRecord.findMany({ where: { type: "PRICE", isActive: true }, orderBy: { updatedAt: "desc" } }).catch(() => [])
   ]);
 
   return (

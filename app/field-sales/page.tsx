@@ -30,7 +30,11 @@ export default async function FieldSalesPage() {
     redirect("/unauthorized");
   }
 
-  const assignment = await getFieldAssignment();
+  const assignment = await getFieldAssignment().catch(() => ({
+    vehicle: null,
+    route: null,
+    zone: null
+  }));
   const vehicleId = assignment.vehicle?.id;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -41,21 +45,21 @@ export default async function FieldSalesPage() {
           by: ["skuId", "status"],
           where: { currentLocationId: vehicleId },
           _count: { id: true }
-        })
+        }).catch(() => [])
       : [],
-    prisma.customer.findMany({ where: { status: "ACTIVE" }, orderBy: { updatedAt: "desc" }, take: 5 }),
+    prisma.customer.findMany({ where: { status: "ACTIVE" }, orderBy: { updatedAt: "desc" }, take: 5 }).catch(() => []),
     prisma.customerOrder.findMany({
       where: { channel: "MSO", status: { in: ["PENDING", "CONFIRMED", "ASSIGNED", "DISPATCHED"] } },
       include: { customer: true, deliveryZone: true, items: { include: { sku: true } } },
       orderBy: [{ isPriority: "desc" }, { expectedDeliveryDate: "asc" }],
       take: 8
-    }),
+    }).catch(() => []),
     prisma.fieldSale.findMany({
       where: vehicleId && session.user.role === "MSO" ? { vehicleId } : {},
       include: { customer: true, sku: true },
       orderBy: { createdAt: "desc" },
       take: 6
-    }),
+    }).catch(() => []),
     prisma.fieldSale.aggregate({
       where: {
         createdAt: { gte: today },
@@ -63,17 +67,17 @@ export default async function FieldSalesPage() {
       },
       _count: { id: true },
       _sum: { amount: true }
-    }),
+    }).catch(() => ({ _count: { id: 0 }, _sum: { amount: 0 } })),
     prisma.offlineSyncItem.count({
       where: {
         status: { in: ["QUEUED", "FAILED", "CONFLICT"] },
         ...(session.user.role === "MSO" ? { createdById: session.user.id } : {})
       }
-    })
+    }).catch(() => 0)
   ]);
 
   const skuIds = Array.from(new Set(stock.map((row) => row.skuId)));
-  const skus = await prisma.masterDataRecord.findMany({ where: { id: { in: skuIds } } });
+  const skus = await prisma.masterDataRecord.findMany({ where: { id: { in: skuIds } } }).catch(() => []);
   const skuNameById = new Map(skus.map((sku) => [sku.id, sku.name]));
   const filledStock = stock.filter((row) => row.status === "FILLED").reduce((sum, row) => sum + row._count.id, 0);
   const emptyReturns = stock.filter((row) => row.status === "EMPTY").reduce((sum, row) => sum + row._count.id, 0);
