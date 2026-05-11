@@ -40,6 +40,16 @@ describe("role-based access control", () => {
     expect(canAccessPath("AUDITOR", "/retail-sales/refills")).toBe(true);
   });
 
+  it("allows selling point full cylinder sales for accountable roles", () => {
+    expect(canAccessPath("RSO", "/retail-sales/full-cylinder-sales/new")).toBe(true);
+    expect(canAccessPath("RSO", "/api/retail/full-cylinder-sales")).toBe(true);
+    expect(canAccessPath("SERVICE_CENTRE_STAFF", "/retail-sales/full-cylinder-sales/new")).toBe(true);
+    expect(canAccessPath("MSO", "/retail-sales/full-cylinder-sales/new")).toBe(true);
+    expect(canAccessPath("MSO", "/api/retail/full-cylinder-sales")).toBe(true);
+    expect(canAccessPath("AUDITOR", "/retail-sales/full-cylinder-sales")).toBe(true);
+    expect(canAccessPath("CUSTOMER", "/retail-sales/full-cylinder-sales")).toBe(false);
+  });
+
   it("allows order management for operational roles", () => {
     expect(canAccessPath("RSO", "/orders")).toBe(true);
     expect(canAccessPath("MSO", "/api/orders")).toBe(true);

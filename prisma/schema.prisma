@@ -444,6 +444,7 @@ model User {
   createdPlantVarianceCases        PlantVarianceCase[]        @relation("PlantVarianceCreatedBy")
   refillOrders                     RefillOrder[]
   refillPayments                   Payment[]
+  fullCylinderSales                FullCylinderSale[]
   customerOrders                   CustomerOrder[]
   customerOrderHistoryEntries      CustomerOrderHistory[]
   fieldSales                       FieldSale[]
@@ -569,6 +570,8 @@ model MasterDataRecord {
   destinationMovements        InventoryMovement[]       @relation("MovementDestinationLocation")
   refillOrderSkus             RefillOrder[]             @relation("RefillOrderSku")
   refillOrderLocations        RefillOrder[]             @relation("RefillOrderLocation")
+  fullCylinderSaleSkus        FullCylinderSale[]        @relation("FullCylinderSaleSku")
+  fullCylinderSaleLocations   FullCylinderSale[]        @relation("FullCylinderSaleLocation")
   orderDeliveryZones          CustomerOrder[]           @relation("OrderDeliveryZone")
   orderItemSkus               CustomerOrderItem[]       @relation("OrderItemSku")
   fieldSaleSkus               FieldSale[]               @relation("FieldSaleSku")
@@ -610,6 +613,7 @@ model Customer {
   refillOrders      RefillOrder[]
   customerOrders    CustomerOrder[]
   fieldSales        FieldSale[]
+  fullCylinderSales FullCylinderSale[]
   invoices          Invoice[]
   billingPayments   BillingPayment[]
   complaints        CustomerComplaint[]
@@ -795,6 +799,7 @@ model Cylinder {
   emptyReturnRefillOrders RefillOrder[]               @relation("EmptyReturnCylinder")
   fieldFilledSales        FieldSale[]                 @relation("FieldFilledCylinder")
   fieldEmptyReturns       FieldSale[]                 @relation("FieldEmptyCylinder")
+  fullCylinderSales       FullCylinderSale[]
   expiryDate              DateTime?
   hydroTestDueDate        DateTime?
   unsafeStatus            Boolean                     @default(false)
@@ -1080,6 +1085,37 @@ model FieldSale {
   @@index([routeId])
   @@index([zoneId])
   @@index([status])
+}
+
+model FullCylinderSale {
+  id               String           @id @default(cuid())
+  saleNumber       String           @unique
+  customerId       String
+  customer         Customer         @relation(fields: [customerId], references: [id])
+  skuId            String
+  sku              MasterDataRecord @relation("FullCylinderSaleSku", fields: [skuId], references: [id])
+  locationId       String
+  location         MasterDataRecord @relation("FullCylinderSaleLocation", fields: [locationId], references: [id])
+  cylinderId       String
+  cylinder         Cylinder         @relation(fields: [cylinderId], references: [id])
+  paymentMethod    PaymentMethod
+  paymentReference String?
+  cylinderAmount   Decimal          @default(0) @db.Decimal(12, 2)
+  gasAmount        Decimal          @default(0) @db.Decimal(12, 2)
+  totalAmount      Decimal          @db.Decimal(12, 2)
+  invoiceNumber    String           @unique
+  receiptNumber    String           @unique
+  notes            String?
+  createdById      String?
+  createdBy        User?            @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([customerId])
+  @@index([skuId])
+  @@index([locationId])
+  @@index([cylinderId])
+  @@index([createdAt])
 }
 
 model RefillOrder {

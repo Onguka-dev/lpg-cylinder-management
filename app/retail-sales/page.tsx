@@ -32,8 +32,10 @@ export default async function RetailSalesPage() {
   const [
     assignedLocation,
     todayRefills,
+    todayFullCylinderSales,
     newCustomers,
     todaysSales,
+    todaysFullCylinderSales,
     stockByStatus,
     pendingTransfers,
     complaints,
@@ -46,8 +48,21 @@ export default async function RetailSalesPage() {
         ...(assignedLocationId ? { locationId: assignedLocationId } : {})
       }
     }).catch(() => 0),
+    prisma.fullCylinderSale.count({
+      where: {
+        createdAt: { gte: today },
+        ...(assignedLocationId ? { locationId: assignedLocationId } : {})
+      }
+    }).catch(() => 0),
     prisma.customer.count({ where: { createdAt: { gte: today } } }).catch(() => 0),
     prisma.refillOrder.aggregate({
+      where: {
+        createdAt: { gte: today },
+        ...(assignedLocationId ? { locationId: assignedLocationId } : {})
+      },
+      _sum: { totalAmount: true }
+    }).catch(() => ({ _sum: { totalAmount: 0 } })),
+    prisma.fullCylinderSale.aggregate({
       where: {
         createdAt: { gte: today },
         ...(assignedLocationId ? { locationId: assignedLocationId } : {})
@@ -80,13 +95,14 @@ export default async function RetailSalesPage() {
     }).catch(() => [])
   ]);
 
-  const salesAmount = Number(todaysSales._sum.totalAmount ?? 0);
+  const salesAmount = Number(todaysSales._sum.totalAmount ?? 0) + Number(todaysFullCylinderSales._sum.totalAmount ?? 0);
   const stockOnHand = stockByStatus.reduce((sum, row) => sum + row._count.id, 0);
   const filledStock = stockByStatus.filter((row) => row.status === "FILLED").reduce((sum, row) => sum + row._count.id, 0);
   const emptyStock = stockByStatus.filter((row) => row.status === "EMPTY").reduce((sum, row) => sum + row._count.id, 0);
 
   const quickActions = [
     { label: "New Refill", href: "/retail-sales/refills/new", icon: ReceiptText, primary: true },
+    { label: "Full Cylinder Sale", href: "/retail-sales/full-cylinder-sales/new", icon: PackagePlus },
     { label: "New Customer", href: "/customers/new", icon: UserPlus },
     { label: "Stock Transfer", href: "/inventory/movements/new", icon: RefreshCw },
     { label: "Goods Receipt", href: "/warehouse/incoming", icon: ArrowDownToLine },
@@ -104,9 +120,9 @@ export default async function RetailSalesPage() {
       />
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard icon={ReceiptText} label="Today's Refills" value={todayRefills.toLocaleString()} detail="Closed walk-in refill transactions" tone="brand" />
+        <MetricCard icon={ReceiptText} label="Today's Sales" value={(todayRefills + todayFullCylinderSales).toLocaleString()} detail={`${todayRefills} refills / ${todayFullCylinderSales} full cylinder`} tone="brand" />
         <MetricCard icon={UserPlus} label="New Customers" value={newCustomers.toLocaleString()} detail="Registered today" tone="success" />
-        <MetricCard icon={CreditCard} label="Sales Value" value={formatMoney(salesAmount)} detail="Today's retail refill sales" tone="info" />
+        <MetricCard icon={CreditCard} label="Sales Value" value={formatMoney(salesAmount)} detail="Today's retail sales" tone="info" />
         <MetricCard icon={PackagePlus} label="Stock On Hand" value={stockOnHand.toLocaleString()} detail={`${filledStock} filled / ${emptyStock} empty`} tone={filledStock <= 5 ? "warning" : "success"} />
       </section>
 
