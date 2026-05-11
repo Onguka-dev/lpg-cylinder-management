@@ -12,8 +12,9 @@ export default function InventoryPage() {
           receiving, and variance logging.
         </p>
       </section>
-      <section className="grid gap-4 md:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-5">
         <InventoryCard href="/inventory/cylinders" title="Cylinder Records" description="Create, search, edit, and audit cylinder master records." />
+        <InventoryCard href="/inventory/supplier-receipts" title="Supplier Receipts" description="Receive purchased cylinders into approved warehouses with serial and barcode control." />
         <InventoryCard href="/inventory/stock-balances" title="Stock Balances" description="View balances grouped by SKU, location, and status." />
         <InventoryCard href="/inventory/opening-balances/new" title="Opening Balance Entry" description="Manual import-style opening balance entry for initial cylinders." />
         <InventoryCard href="/inventory/movements" title="Inventory Movements" description="Request, approve, dispatch, receive, and audit stock movements." />

@@ -397,6 +397,7 @@ function buildNavigationSections(role: AppRole) {
             { key: "zone-c-dispatch", href: "/warehouse", label: "Zone C Dispatch / Loading Bay", icon: Truck },
             { key: "zone-d-maintenance", href: "/safety", label: "Zone D Maintenance", icon: Wrench },
             { key: "asset-tracking", href: "/inventory/cylinders", label: "Asset Tracking", icon: PackageCheck },
+            { key: "supplier-receipts", href: "/inventory/supplier-receipts", label: "Supplier Receipts", icon: PackageCheck },
             { key: "stock-movements", href: "/inventory/movements", label: "Stock Movements", icon: PackageCheck },
             { key: "transfer-requests", href: "/transfers", label: "Transfer Requests", icon: Truck },
             { key: "warehouse-reports", href: "/reports", label: "Warehouse Reports", icon: BarChart3 }

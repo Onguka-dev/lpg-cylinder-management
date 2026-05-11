@@ -93,6 +93,19 @@ enum InventoryMovementStatus {
   REJECTED
 }
 
+enum SupplierReceiptStatus {
+  DRAFT
+  REVIEWED
+  POSTED
+}
+
+enum SupplierReceiptCondition {
+  FILLED
+  EMPTY
+  DAMAGED
+  QUARANTINED
+}
+
 enum RefillOrderStatus {
   DRAFT
   CLOSED
@@ -371,6 +384,9 @@ model User {
   dispatchedInventoryMovements     InventoryMovement[]        @relation("MovementDispatchedBy")
   receivedInventoryMovements       InventoryMovement[]        @relation("MovementReceivedBy")
   inventoryMovementHistoryEntries  InventoryMovementHistory[]
+  createdSupplierReceipts          SupplierReceipt[]          @relation("SupplierReceiptCreatedBy")
+  reviewedSupplierReceipts         SupplierReceipt[]          @relation("SupplierReceiptReviewedBy")
+  postedSupplierReceipts           SupplierReceipt[]          @relation("SupplierReceiptPostedBy")
   refillOrders                     RefillOrder[]
   refillPayments                   Payment[]
   customerOrders                   CustomerOrder[]
@@ -509,6 +525,7 @@ model MasterDataRecord {
   deliveryVehicles            Delivery[]                @relation("DeliveryVehicle")
   reconciliationLocations     DailyReconciliation[]     @relation("ReconciliationLocation")
   complaintLocations          CustomerComplaint[]       @relation("CustomerComplaintLocation")
+  supplierReceipts            SupplierReceipt[]         @relation("SupplierReceiptWarehouse")
   custodyIssueLocations       CustomerCylinderCustody[] @relation("CustodyIssueLocation")
   custodyReturnLocations      CustomerCylinderCustody[] @relation("CustodyReturnLocation")
   metadata                    Json?
@@ -709,6 +726,7 @@ model Cylinder {
   notes                   String?
   historyEntries          CylinderHistory[]
   movementLines           InventoryMovementCylinder[]
+  supplierReceiptLines    SupplierReceiptLine[]
   customerCustodies       CustomerCylinderCustody[]
   scanEvents              ScanEvent[]
   filledRefillOrders      RefillOrder[]               @relation("FilledRefillCylinder")
@@ -1206,6 +1224,7 @@ model InventoryMovement {
   completedAt           DateTime?
   cylinders             InventoryMovementCylinder[]
   historyEntries        InventoryMovementHistory[]
+  supplierReceiptLines  SupplierReceiptLine[]
   createdAt             DateTime                    @default(now())
   updatedAt             DateTime                    @updatedAt
 
@@ -1242,6 +1261,63 @@ model InventoryMovementHistory {
 
   @@index([movementId])
   @@index([createdAt])
+}
+
+model SupplierReceipt {
+  id                     String                @id @default(cuid())
+  reference              String                @unique
+  warehouseId            String
+  warehouse              MasterDataRecord      @relation("SupplierReceiptWarehouse", fields: [warehouseId], references: [id])
+  supplierManufacturer   String
+  purchaseOrderReference String
+  deliveryNote           String?
+  vehicleTruckNumber     String?
+  receiptDateTime        DateTime
+  receivedByName         String
+  remarks                String?
+  attachmentPlaceholder  String?
+  status                 SupplierReceiptStatus @default(DRAFT)
+  createdById            String?
+  createdBy              User?                 @relation("SupplierReceiptCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  reviewedById           String?
+  reviewedBy             User?                 @relation("SupplierReceiptReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  postedById             String?
+  postedBy               User?                 @relation("SupplierReceiptPostedBy", fields: [postedById], references: [id], onDelete: SetNull)
+  reviewedAt             DateTime?
+  postedAt               DateTime?
+  lines                  SupplierReceiptLine[]
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+
+  @@index([warehouseId])
+  @@index([status])
+  @@index([receiptDateTime])
+  @@index([createdById])
+}
+
+model SupplierReceiptLine {
+  id                  String                   @id @default(cuid())
+  receiptId           String
+  receipt             SupplierReceipt          @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  cylinderSizeKg      Int
+  factorySerialNo     String                   @unique
+  barcode             String                   @unique
+  qrCode              String?
+  manufacturer        String
+  manufactureDate     DateTime?
+  condition           SupplierReceiptCondition
+  cylinderId          String?
+  cylinder            Cylinder?                @relation(fields: [cylinderId], references: [id], onDelete: SetNull)
+  inventoryMovementId String?
+  inventoryMovement   InventoryMovement?       @relation(fields: [inventoryMovementId], references: [id], onDelete: SetNull)
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+
+  @@index([receiptId])
+  @@index([cylinderSizeKg])
+  @@index([condition])
+  @@index([cylinderId])
+  @@index([inventoryMovementId])
 }
 
 model CylinderHistory {
