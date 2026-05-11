@@ -14,6 +14,10 @@ type CylinderFormRecord = {
   id?: string;
   serialNumber?: string;
   barcode?: string | null;
+  factorySerialNo?: string | null;
+  qrCode?: string | null;
+  cylinderSizeKg?: number | null;
+  manufacturer?: string | null;
   skuId?: string;
   manufactureDate?: string | null;
   inspectionDueDate?: string | null;
@@ -21,9 +25,12 @@ type CylinderFormRecord = {
   hydroTestDueDate?: string | null;
   unsafeStatus?: boolean;
   quarantinedStatus?: boolean;
+  activeStatus?: boolean;
+  companyOwned?: boolean;
   maintenanceStatus?: string;
   currentLocationId?: string;
   status?: string;
+  blockedReason?: string | null;
   notes?: string | null;
 };
 
@@ -50,6 +57,10 @@ export function CylinderForm({
     const payload = {
       serialNumber: formData.get("serialNumber"),
       barcode: formData.get("barcode") || undefined,
+      factorySerialNo: formData.get("factorySerialNo") || undefined,
+      qrCode: formData.get("qrCode") || undefined,
+      cylinderSizeKg: formData.get("cylinderSizeKg") || undefined,
+      manufacturer: formData.get("manufacturer") || undefined,
       skuId: formData.get("skuId"),
       manufactureDate: formData.get("manufactureDate") || undefined,
       inspectionDueDate: formData.get("inspectionDueDate") || undefined,
@@ -57,9 +68,12 @@ export function CylinderForm({
       hydroTestDueDate: formData.get("hydroTestDueDate") || undefined,
       unsafeStatus: formData.get("unsafeStatus") === "on",
       quarantinedStatus: formData.get("quarantinedStatus") === "on",
+      activeStatus: formData.get("activeStatus") === "on",
+      companyOwned: formData.get("companyOwned") === "on",
       maintenanceStatus: formData.get("maintenanceStatus"),
       currentLocationId: formData.get("currentLocationId"),
       status: formData.get("status"),
+      blockedReason: formData.get("blockedReason") || undefined,
       notes: formData.get("notes") || undefined
     };
 
@@ -91,7 +105,11 @@ export function CylinderForm({
       <div className="grid gap-4 md:grid-cols-2">
         <TextInput label="Serial Number" name="serialNumber" defaultValue={cylinder?.serialNumber} required />
         <TextInput label="Barcode/RFID Placeholder" name="barcode" defaultValue={cylinder?.barcode ?? undefined} />
+        <TextInput label="Factory Serial No." name="factorySerialNo" defaultValue={cylinder?.factorySerialNo ?? cylinder?.serialNumber} />
+        <TextInput label="QR Code" name="qrCode" defaultValue={cylinder?.qrCode ?? undefined} />
         <SelectInput label="SKU/Size" name="skuId" defaultValue={cylinder?.skuId ?? ""} options={skus} />
+        <TextInput label="Cylinder Size Kg" name="cylinderSizeKg" type="number" min="1" step="1" defaultValue={cylinder?.cylinderSizeKg ?? undefined} />
+        <TextInput label="Manufacturer" name="manufacturer" defaultValue={cylinder?.manufacturer ?? undefined} />
         <label className="block text-sm font-medium text-slate-700">
           Status
           <select
@@ -131,6 +149,14 @@ export function CylinderForm({
           <input name="quarantinedStatus" type="checkbox" defaultChecked={cylinder?.quarantinedStatus ?? false} />
           Quarantined cylinder
         </label>
+        <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+          <input name="activeStatus" type="checkbox" defaultChecked={cylinder?.activeStatus ?? true} />
+          Active asset
+        </label>
+        <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+          <input name="companyOwned" type="checkbox" defaultChecked={cylinder?.companyOwned ?? true} />
+          Company property
+        </label>
       </div>
 
       <SelectInput
@@ -139,6 +165,15 @@ export function CylinderForm({
         defaultValue={cylinder?.currentLocationId ?? ""}
         options={locations}
       />
+
+      <label className="block text-sm font-medium text-slate-700">
+        Blocked Reason
+        <textarea
+          className="mt-1 min-h-20 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
+          name="blockedReason"
+          defaultValue={cylinder?.blockedReason ?? ""}
+        />
+      </label>
 
       <label className="block text-sm font-medium text-slate-700">
         Notes
@@ -183,7 +218,7 @@ function TextInput({
 }: {
   label: string;
   name: string;
-  defaultValue?: string;
+  defaultValue?: string | number;
 } & Omit<InputHTMLAttributes<HTMLInputElement>, "defaultValue">) {
   return (
     <label className="block text-sm font-medium text-slate-700">

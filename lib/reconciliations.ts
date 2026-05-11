@@ -30,15 +30,15 @@ export const reconciliationOverrideSchema = z.object({
 });
 
 export function canViewReconciliations(role: AppRole) {
-  return ["ADMIN", "WAREHOUSE_MANAGER", "RSO", "MSO", "AUDITOR"].includes(role);
+  return ["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER", "RSO", "MSO", "SERVICE_CENTRE_STAFF", "FINANCE_SAP_REVIEWER", "AUDITOR"].includes(role);
 }
 
 export function canCreateReconciliations(role: AppRole) {
-  return ["ADMIN", "WAREHOUSE_MANAGER", "RSO", "MSO"].includes(role);
+  return ["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER", "RSO", "MSO", "SERVICE_CENTRE_STAFF"].includes(role);
 }
 
 export function canReviewReconciliations(role: AppRole) {
-  return ["ADMIN", "WAREHOUSE_MANAGER"].includes(role);
+  return ["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER", "FINANCE_SAP_REVIEWER"].includes(role);
 }
 
 export function canAdminOverrideReconciliation(role: AppRole) {

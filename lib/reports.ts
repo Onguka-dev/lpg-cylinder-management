@@ -32,7 +32,7 @@ export type ReportFilters = z.infer<typeof reportFilterSchema>;
 export type ReportType = (typeof reportTypes)[number];
 
 export function canViewReports(role: AppRole) {
-  return ["ADMIN", "WAREHOUSE_MANAGER", "RSO", "MSO", "AUDITOR"].includes(role);
+  return ["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER", "RSO", "MSO", "SERVICE_CENTRE_STAFF", "FINANCE_SAP_REVIEWER", "AUDITOR"].includes(role);
 }
 
 export function normalizeReportFilters(input: Record<string, unknown>): ReportFilters {

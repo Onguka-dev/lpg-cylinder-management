@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { getCurrentSession } from "@/lib/auth";
 import { requireInventoryManageSession, requireInventoryViewSession } from "@/lib/inventory-access";
-import { cylinderSchema, normalizeCylinderInput } from "@/lib/inventory";
+import { assertSingleCurrentLocation, cylinderSchema, normalizeCylinderInput } from "@/lib/inventory";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
@@ -20,6 +20,11 @@ export async function GET(
     include: {
       sku: true,
       currentLocation: true,
+      customerCustodies: {
+        orderBy: { issueDate: "desc" },
+        include: { customer: true, issueLocation: true, returnLocation: true },
+        take: 10
+      },
       historyEntries: {
         orderBy: { createdAt: "desc" },
         take: 20,
@@ -57,6 +62,7 @@ export async function PUT(
   }
 
   const data = normalizeCylinderInput(parsed.data);
+  assertSingleCurrentLocation(data);
 
   try {
     const cylinder = await prisma.$transaction(async (tx) => {
@@ -117,6 +123,14 @@ function duplicateMessage(target: unknown) {
 
   if (fields.includes("barcode")) {
     return "A cylinder with this barcode/RFID placeholder already exists.";
+  }
+
+  if (fields.includes("factorySerialNo")) {
+    return "A cylinder with this factory serial number already exists.";
+  }
+
+  if (fields.includes("qrCode")) {
+    return "A cylinder with this QR code already exists.";
   }
 
   return "A duplicate cylinder record already exists.";

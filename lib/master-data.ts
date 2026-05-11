@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 
 export const masterDataTypes = [
   "SKU_MASTER",
@@ -195,6 +196,11 @@ export const masterDataRecordSchema = z.object({
 });
 
 export type MasterDataFormValues = z.infer<typeof masterDataRecordSchema>;
+export type SeedMasterDataRecord = MasterDataFormValues & {
+  parentCode?: string;
+  parentType?: MasterDataTypeKey;
+  metadata?: Prisma.InputJsonValue;
+};
 
 export function getMasterDataConfig(type: string) {
   return masterDataConfigs.find((config) => config.type === type);
@@ -210,7 +216,7 @@ export function fromSlug(slug: string) {
   return masterDataTypeSchema.safeParse(type).success ? (type as MasterDataTypeKey) : null;
 }
 
-export const seedMasterDataRecords: MasterDataFormValues[] = [
+export const seedMasterDataRecords: SeedMasterDataRecord[] = [
   { type: "CYLINDER_SIZE", code: "SIZE-6KG", name: "6kg", capacityKg: 6, description: "Small household cylinder size" },
   { type: "CYLINDER_SIZE", code: "SIZE-13KG", name: "13kg", capacityKg: 13, description: "Standard household cylinder size" },
   { type: "CYLINDER_SIZE", code: "SIZE-50KG", name: "50kg", capacityKg: 50, description: "Commercial cylinder size" },
@@ -226,14 +232,98 @@ export const seedMasterDataRecords: MasterDataFormValues[] = [
   { type: "DELIVERY_FEE", code: "DEL-NBO", name: "Nairobi Delivery Fee", amount: 300, description: "Placeholder city delivery fee" },
   { type: "REGION", code: "REG-NBO", name: "Nairobi Region", description: "Central Nairobi operating area" },
   { type: "REGION", code: "REG-COAST", name: "Coast Region", description: "Coastal operating area" },
-  { type: "ZONE", code: "ZONE-WEST", name: "Westlands Zone", description: "Nairobi zone placeholder" },
-  { type: "ROUTE", code: "ROUTE-WEST-01", name: "Westlands Route 01", description: "Route placeholder only" },
+  { type: "REGION", code: "REG-WESTERN", name: "Western Kenya Region", description: "Western Kenya operating area" },
+  { type: "ZONE", code: "ZONE-WEST", name: "Westlands Zone", description: "Nairobi zone placeholder", parentCode: "REG-NBO", parentType: "REGION" },
+  { type: "ZONE", code: "ZONE-WESTERN-SERVICE", name: "Western Kenya Service Zone", description: "Western Kenya service centre zone", parentCode: "REG-WESTERN", parentType: "REGION" },
+  { type: "ZONE", code: "ZONE-NBO-SERVICE", name: "Nairobi Service Zone", description: "Nairobi service centre zone", parentCode: "REG-NBO", parentType: "REGION" },
+  { type: "ROUTE", code: "ROUTE-WEST-01", name: "Westlands Route 01", description: "Route placeholder only", parentCode: "ZONE-WEST", parentType: "ZONE" },
+  { type: "ROUTE", code: "ROUTE-WESTERN-01", name: "Western Kenya Service Route", description: "Route covering Western Kenya service centres", parentCode: "ZONE-WESTERN-SERVICE", parentType: "ZONE" },
+  { type: "ROUTE", code: "ROUTE-NBO-01", name: "Nairobi Service Route", description: "Route covering Nairobi service centres", parentCode: "ZONE-NBO-SERVICE", parentType: "ZONE" },
   { type: "LOCATION", code: "LOC-HQ", name: "Head Office", description: "Administration location" },
   { type: "LOCATION", code: "DP-MBS", name: "Mombasa Depot", description: "Sample depot assigned to the RSO demo user" },
-  { type: "WAREHOUSE", code: "WH-NBO", name: "Nairobi Main Warehouse", description: "Primary Nairobi warehouse" },
-  { type: "RETAIL_OUTLET", code: "RO-KSM", name: "Kisumu Retail Outlet", description: "Sample retail outlet" },
-  { type: "VEHICLE", code: "TRK-001", name: "Delivery Truck 001", description: "Sample delivery vehicle" },
-  { type: "MAINTENANCE_LOCATION", code: "MAINT-NBO", name: "Nairobi Maintenance Bay", description: "Maintenance holding location" },
-  { type: "DAMAGED_QUARANTINE_LOCATION", code: "DMG-NBO", name: "Nairobi Damaged Quarantine", description: "Damaged cylinder quarantine location" },
+  {
+    type: "LOCATION",
+    code: "LOC-CUSTOMER-VIRTUAL",
+    name: "Customer Virtual Custody",
+    description: "Virtual customer custody location for cylinders issued to customers",
+    metadata: { locationType: "CUSTOMER_VIRTUAL", region: "All Regions", activeStatus: "ACTIVE", allowedMovementDirections: ["ISSUE", "RETURN_FROM_CUSTOMER"] }
+  },
+  {
+    type: "WAREHOUSE",
+    code: "WH-WANDIEGE-MAIN",
+    name: "Wandiege Main Warehouse",
+    description: "Main Wells Gas warehouse at Wandiege",
+    parentCode: "ZONE-WESTERN-SERVICE",
+    parentType: "ZONE",
+    metadata: { locationType: "MAIN_WAREHOUSE", region: "Western Kenya", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "ISSUE", "TRANSFER_OUT", "TRANSFER_IN", "RETURN"] }
+  },
+  {
+    type: "WAREHOUSE",
+    code: "WH-LAKE-GAS-NBO",
+    name: "Lake Gas Nairobi Warehouse",
+    description: "Nairobi supplier warehouse for Lake Gas receipts",
+    parentCode: "ZONE-NBO-SERVICE",
+    parentType: "ZONE",
+    metadata: { locationType: "NAIROBI_WAREHOUSE", region: "Nairobi", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "TRANSFER_OUT", "TRANSFER_IN"] }
+  },
+  {
+    type: "WAREHOUSE",
+    code: "WH-OILCOM-NBO",
+    name: "Oilcom Nairobi Warehouse",
+    description: "Nairobi supplier warehouse for Oilcom receipts",
+    parentCode: "ZONE-NBO-SERVICE",
+    parentType: "ZONE",
+    metadata: { locationType: "NAIROBI_WAREHOUSE", region: "Nairobi", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "TRANSFER_OUT", "TRANSFER_IN"] }
+  },
+  {
+    type: "WAREHOUSE",
+    code: "WH-NBO",
+    name: "Nairobi Main Warehouse",
+    description: "Primary Nairobi warehouse",
+    parentCode: "ZONE-NBO-SERVICE",
+    parentType: "ZONE",
+    metadata: { locationType: "NAIROBI_WAREHOUSE", region: "Nairobi", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "ISSUE", "TRANSFER_OUT", "TRANSFER_IN", "RETURN"] }
+  },
+  {
+    type: "WAREHOUSE",
+    code: "WH-UGUNJA-SECONDARY",
+    name: "Ugunja Secondary Warehouse",
+    description: "Secondary warehouse serving Ugunja routes",
+    parentCode: "ZONE-WESTERN-SERVICE",
+    parentType: "ZONE",
+    metadata: { locationType: "SECONDARY_WAREHOUSE", region: "Western Kenya", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "ISSUE", "TRANSFER_OUT", "TRANSFER_IN", "RETURN"] }
+  },
+  {
+    type: "WAREHOUSE",
+    code: "PLANT-SABUNI-ROAD",
+    name: "Sabuni Road Refilling Plant",
+    description: "Refilling plant for cylinder receipts and dispatch",
+    parentCode: "ZONE-WESTERN-SERVICE",
+    parentType: "ZONE",
+    metadata: { locationType: "REFILLING_PLANT", region: "Western Kenya", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "ISSUE", "TRANSFER_OUT", "TRANSFER_IN", "REFILL"] }
+  },
+  { type: "RETAIL_OUTLET", code: "RO-KSM", name: "Kisumu Retail Outlet", description: "Sample retail outlet", parentCode: "ZONE-WESTERN-SERVICE", parentType: "ZONE", metadata: { locationType: "SERVICE_CENTRE", region: "Western Kenya", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "SALE", "RETURN"] } },
+  { type: "RETAIL_OUTLET", code: "STN-MBITA", name: "MBITA Service Station", description: "Service station for MBITA", parentCode: "ZONE-WESTERN-SERVICE", parentType: "ZONE", metadata: { locationType: "STATION", region: "Western Kenya", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "SALE", "RETURN"] } },
+  { type: "RETAIL_OUTLET", code: "STN-UGUNJA-A", name: "UGUNJA A Service Station", description: "Service station for UGUNJA A", parentCode: "ZONE-WESTERN-SERVICE", parentType: "ZONE", metadata: { locationType: "STATION", region: "Western Kenya", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "SALE", "RETURN"] } },
+  { type: "RETAIL_OUTLET", code: "STN-UGUNJA-B", name: "UGUNJA B Service Station", description: "Service station for UGUNJA B", parentCode: "ZONE-WESTERN-SERVICE", parentType: "ZONE", metadata: { locationType: "STATION", region: "Western Kenya", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "SALE", "RETURN"] } },
+  { type: "RETAIL_OUTLET", code: "STN-CBD", name: "CBD Service Station", description: "Service station for CBD", parentCode: "ZONE-WESTERN-SERVICE", parentType: "ZONE", metadata: { locationType: "STATION", region: "Western Kenya", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "SALE", "RETURN"] } },
+  { type: "RETAIL_OUTLET", code: "STN-KSM-1", name: "KSM 1 Service Station", description: "Service station for KSM 1", parentCode: "ZONE-WESTERN-SERVICE", parentType: "ZONE", metadata: { locationType: "STATION", region: "Western Kenya", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "SALE", "RETURN"] } },
+  { type: "RETAIL_OUTLET", code: "SC-KIBUYE", name: "KIBUYE Service Centre", description: "Western Kenya service centre", parentCode: "ZONE-WESTERN-SERVICE", parentType: "ZONE", metadata: { locationType: "SERVICE_CENTRE", region: "Western Kenya", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "SALE", "RETURN"] } },
+  { type: "RETAIL_OUTLET", code: "SC-POLYVIEW", name: "POLYVIEW Service Centre", description: "Western Kenya service centre", parentCode: "ZONE-WESTERN-SERVICE", parentType: "ZONE", metadata: { locationType: "SERVICE_CENTRE", region: "Western Kenya", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "SALE", "RETURN"] } },
+  { type: "RETAIL_OUTLET", code: "SC-MANYATTA", name: "MANYATTA Service Centre", description: "Western Kenya service centre", parentCode: "ZONE-WESTERN-SERVICE", parentType: "ZONE", metadata: { locationType: "SERVICE_CENTRE", region: "Western Kenya", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "SALE", "RETURN"] } },
+  { type: "RETAIL_OUTLET", code: "SC-MIGOSI", name: "MIGOSI Service Centre", description: "Western Kenya service centre", parentCode: "ZONE-WESTERN-SERVICE", parentType: "ZONE", metadata: { locationType: "SERVICE_CENTRE", region: "Western Kenya", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "SALE", "RETURN"] } },
+  { type: "RETAIL_OUTLET", code: "SC-KAKAMEGA", name: "KAKAMEGA Service Centre", description: "Western Kenya service centre", parentCode: "ZONE-WESTERN-SERVICE", parentType: "ZONE", metadata: { locationType: "SERVICE_CENTRE", region: "Western Kenya", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "SALE", "RETURN"] } },
+  { type: "RETAIL_OUTLET", code: "SC-GARDEN-ESTATE", name: "GARDEN ESTATE Service Centre", description: "Nairobi service centre", parentCode: "ZONE-NBO-SERVICE", parentType: "ZONE", metadata: { locationType: "SERVICE_CENTRE", region: "Nairobi", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "SALE", "RETURN"] } },
+  { type: "RETAIL_OUTLET", code: "SC-JOGOO-ROAD", name: "JOGOO ROAD Service Centre", description: "Nairobi service centre", parentCode: "ZONE-NBO-SERVICE", parentType: "ZONE", metadata: { locationType: "SERVICE_CENTRE", region: "Nairobi", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "SALE", "RETURN"] } },
+  { type: "RETAIL_OUTLET", code: "SC-NAIROBI-WEST", name: "NAIROBI WEST Service Centre", description: "Nairobi service centre", parentCode: "ZONE-NBO-SERVICE", parentType: "ZONE", metadata: { locationType: "SERVICE_CENTRE", region: "Nairobi", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "SALE", "RETURN"] } },
+  { type: "RETAIL_OUTLET", code: "SC-DAGORETTI", name: "DAGORETTI Service Centre", description: "Nairobi service centre", parentCode: "ZONE-NBO-SERVICE", parentType: "ZONE", metadata: { locationType: "SERVICE_CENTRE", region: "Nairobi", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "SALE", "RETURN"] } },
+  { type: "RETAIL_OUTLET", code: "SC-MLOLONGO", name: "MLOLONGO Service Centre", description: "Nairobi service centre", parentCode: "ZONE-NBO-SERVICE", parentType: "ZONE", metadata: { locationType: "SERVICE_CENTRE", region: "Nairobi", activeStatus: "ACTIVE", allowedMovementDirections: ["RECEIPT", "SALE", "RETURN"] } },
+  { type: "VEHICLE", code: "TRK-001", name: "Delivery Truck 001", description: "Sample delivery vehicle", metadata: { locationType: "VAN", region: "Nairobi", activeStatus: "ACTIVE", allowedMovementDirections: ["LOAD", "ISSUE", "RETURN", "TRANSFER_IN", "TRANSFER_OUT"] } },
+  { type: "VEHICLE", code: "VAN-KDK-152E", name: "KDK 152E Van", description: "Sales and delivery van KDK 152E", metadata: { locationType: "VAN", region: "Western Kenya", activeStatus: "ACTIVE", allowedMovementDirections: ["LOAD", "ISSUE", "RETURN", "TRANSFER_IN", "TRANSFER_OUT"] } },
+  { type: "VEHICLE", code: "VAN-KCX-301Q", name: "KCX 301Q Van", description: "Sales and delivery van KCX 301Q", metadata: { locationType: "VAN", region: "Western Kenya", activeStatus: "ACTIVE", allowedMovementDirections: ["LOAD", "ISSUE", "RETURN", "TRANSFER_IN", "TRANSFER_OUT"] } },
+  { type: "VEHICLE", code: "TUKTUK", name: "TUKTUK", description: "Tuktuk delivery vehicle", metadata: { locationType: "VAN", region: "Western Kenya", activeStatus: "ACTIVE", allowedMovementDirections: ["LOAD", "ISSUE", "RETURN", "TRANSFER_IN", "TRANSFER_OUT"] } },
+  { type: "MAINTENANCE_LOCATION", code: "MAINT-NBO", name: "Nairobi Maintenance Bay", description: "Maintenance holding location", metadata: { locationType: "MAINTENANCE", region: "Nairobi", activeStatus: "ACTIVE", allowedMovementDirections: ["TRANSFER_IN", "TRANSFER_OUT"] } },
+  { type: "DAMAGED_QUARANTINE_LOCATION", code: "DMG-NBO", name: "Nairobi Damaged Quarantine", description: "Damaged cylinder quarantine location", metadata: { locationType: "QUARANTINE", region: "Nairobi", activeStatus: "ACTIVE", allowedMovementDirections: ["TRANSFER_IN", "TRANSFER_OUT", "SCRAP"] } },
+  { type: "DAMAGED_QUARANTINE_LOCATION", code: "DMG-WANDIEGE", name: "Wandiege Quarantine", description: "Damaged cylinder quarantine location for Wandiege operations", metadata: { locationType: "QUARANTINE", region: "Western Kenya", activeStatus: "ACTIVE", allowedMovementDirections: ["TRANSFER_IN", "TRANSFER_OUT", "SCRAP"] } },
   { type: "STOCK_THRESHOLD", code: "THRESH-13KG-WH", name: "13kg Warehouse Minimum", threshold: 50, description: "Placeholder minimum stock threshold" }
 ];

@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   canManageInventory,
   canViewInventory,
+  assertNoOpenCustomerCustody,
+  assertSingleCurrentLocation,
   cylinderSchema,
   cylinderStatuses,
+  isCylinderBlockedForSaleOrDispatch,
   openingBalanceSchema
 } from "@/lib/inventory";
 import {
@@ -24,7 +27,10 @@ describe("inventory foundation", () => {
       "IN_TRANSIT",
       "RESERVED",
       "UNDER_MAINTENANCE",
-      "WITH_CUSTOMER"
+      "WITH_CUSTOMER",
+      "QUARANTINED",
+      "SCRAPPED_WRITTEN_OFF",
+      "LOST_OVERDUE"
     ]);
   });
 
@@ -32,11 +38,17 @@ describe("inventory foundation", () => {
     const parsed = cylinderSchema.safeParse({
       serialNumber: "CYL-TEST-001",
       barcode: "RFID-TEST-001",
+      factorySerialNo: "FACTORY-TEST-001",
+      qrCode: "QR-TEST-001",
+      cylinderSizeKg: 13,
+      manufacturer: "Demo manufacturer",
       skuId: "sku-id",
       manufactureDate: "2024-01-01",
       inspectionDueDate: "2027-01-01",
       currentLocationId: "location-id",
       status: "FILLED",
+      activeStatus: true,
+      companyOwned: true,
       notes: "Test cylinder"
     });
 
@@ -67,9 +79,10 @@ describe("inventory foundation", () => {
     expect(parsed.success).toBe(true);
   });
 
-  it("limits inventory management to Admin and Warehouse Manager", () => {
+  it("limits inventory management to Admin, Warehouse Manager, and Plant Manager", () => {
     expect(canManageInventory("ADMIN")).toBe(true);
     expect(canManageInventory("WAREHOUSE_MANAGER")).toBe(true);
+    expect(canManageInventory("PLANT_MANAGER")).toBe(true);
     expect(canManageInventory("AUDITOR")).toBe(false);
     expect(canViewInventory("AUDITOR")).toBe(true);
     expect(canViewInventory("RSO")).toBe(false);
@@ -116,10 +129,21 @@ describe("inventory foundation", () => {
   it("applies movement role permissions", () => {
     expect(canViewInventoryMovements("AUDITOR")).toBe(true);
     expect(canRequestInventoryMovements("RSO")).toBe(true);
+    expect(canRequestInventoryMovements("SERVICE_CENTRE_STAFF")).toBe(true);
     expect(canRequestInventoryMovements("CUSTOMER")).toBe(false);
     expect(canApproveInventoryMovements("WAREHOUSE_MANAGER")).toBe(true);
+    expect(canApproveInventoryMovements("PLANT_MANAGER")).toBe(true);
     expect(canApproveInventoryMovements("MSO")).toBe(false);
     expect(canCreateReceiptCylinders("RECEIPT")).toBe(true);
     expect(canCreateReceiptCylinders("TRANSFER")).toBe(false);
+  });
+
+  it("guards single-location and custody invariants", () => {
+    expect(() => assertSingleCurrentLocation({ currentLocationId: "loc" })).not.toThrow();
+    expect(() => assertSingleCurrentLocation({ currentLocationId: null })).toThrow("CYLINDER_LOCATION_REQUIRED");
+    expect(() => assertNoOpenCustomerCustody(0)).not.toThrow();
+    expect(() => assertNoOpenCustomerCustody(1)).toThrow("CYLINDER_ALREADY_IN_CUSTOMER_CUSTODY");
+    expect(isCylinderBlockedForSaleOrDispatch({ status: "QUARANTINED" })).toBe(true);
+    expect(isCylinderBlockedForSaleOrDispatch({ status: "FILLED", activeStatus: true })).toBe(false);
   });
 });

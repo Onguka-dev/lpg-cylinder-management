@@ -49,4 +49,28 @@ describe("master data configuration", () => {
       expect(seededTypes.has(config.type)).toBe(true);
     }
   });
+
+  it("seeds Wells Gas operating locations with movement metadata", () => {
+    const codes = new Set(seedMasterDataRecords.map((record) => record.code));
+    expect(Array.from(codes)).toEqual(expect.arrayContaining([
+      "WH-WANDIEGE-MAIN",
+      "WH-LAKE-GAS-NBO",
+      "WH-OILCOM-NBO",
+      "PLANT-SABUNI-ROAD",
+      "WH-UGUNJA-SECONDARY",
+      "VAN-KDK-152E",
+      "VAN-KCX-301Q",
+      "TUKTUK",
+      "SC-KIBUYE",
+      "SC-MLOLONGO",
+      "LOC-CUSTOMER-VIRTUAL",
+      "DMG-WANDIEGE"
+    ]));
+
+    const wandiege = seedMasterDataRecords.find((record) => record.code === "WH-WANDIEGE-MAIN");
+    expect(wandiege?.metadata).toMatchObject({
+      locationType: "MAIN_WAREHOUSE",
+      activeStatus: "ACTIVE"
+    });
+  });
 });

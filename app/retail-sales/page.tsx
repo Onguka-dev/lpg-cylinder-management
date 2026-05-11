@@ -23,7 +23,7 @@ import { prisma } from "@/lib/prisma";
 export default async function RetailSalesPage() {
   const session = await getCurrentSession();
   const assignedLocationId =
-    session?.user.role === "RSO" || session?.user.role === "MSO"
+    session?.user.role === "RSO" || session?.user.role === "MSO" || session?.user.role === "SERVICE_CENTRE_STAFF"
       ? await getAssignedMasterLocationId(session.user.id).catch(() => null)
       : null;
   const today = new Date();

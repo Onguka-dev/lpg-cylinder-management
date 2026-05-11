@@ -16,6 +16,11 @@ export default async function CylinderDetailPage({
       include: {
         sku: true,
         currentLocation: true,
+        customerCustodies: {
+          orderBy: { issueDate: "desc" },
+          include: { customer: true, issueLocation: true, returnLocation: true },
+          take: 10
+        },
         historyEntries: {
           orderBy: { createdAt: "desc" },
           include: { changedBy: true },
@@ -49,8 +54,15 @@ export default async function CylinderDetailPage({
         </div>
         <dl className="mt-8 grid gap-4 md:grid-cols-3">
           <Detail label="Barcode/RFID" value={cylinder.barcode ?? "None"} />
+          <Detail label="Factory Serial No." value={cylinder.factorySerialNo ?? cylinder.serialNumber} />
+          <Detail label="QR Code" value={cylinder.qrCode ?? "None"} />
+          <Detail label="Cylinder Size" value={cylinder.cylinderSizeKg ? `${cylinder.cylinderSizeKg}kg` : `${cylinder.sku.capacityKg ?? "Not set"}kg`} />
+          <Detail label="Manufacturer" value={cylinder.manufacturer ?? "Not set"} />
           <Detail label="Status" value={formatCylinderStatus(cylinder.status)} />
           <Detail label="Current Location" value={cylinder.currentLocation.name} />
+          <Detail label="Active Asset" value={cylinder.activeStatus ? "Yes" : "No"} />
+          <Detail label="Company Property" value={cylinder.companyOwned ? "Yes" : "No"} />
+          <Detail label="Blocked Reason" value={cylinder.blockedReason ?? "None"} />
           <Detail label="Manufacture Date" value={formatDate(cylinder.manufactureDate)} />
           <Detail label="Inspection Due" value={formatDate(cylinder.inspectionDueDate)} />
           <Detail label="Expiry Date" value={formatDate(cylinder.expiryDate)} />
@@ -60,6 +72,40 @@ export default async function CylinderDetailPage({
           <Detail label="Maintenance" value={cylinder.maintenanceStatus.replaceAll("_", " ").toLowerCase()} />
           <Detail label="Notes" value={cylinder.notes ?? "None"} />
         </dl>
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-panel">
+        <h2 className="text-base font-semibold text-slate-950">Customer Custody</h2>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[860px] text-left text-sm">
+            <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-4 py-3">Customer</th>
+                <th className="px-4 py-3">Issue Date</th>
+                <th className="px-4 py-3">Reference</th>
+                <th className="px-4 py-3">Follow-up</th>
+                <th className="px-4 py-3">Return</th>
+                <th className="px-4 py-3">Return Location</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {cylinder.customerCustodies.length ? cylinder.customerCustodies.map((custody) => (
+                <tr key={custody.id}>
+                  <td className="px-4 py-3 text-slate-700">{custody.customer.name}</td>
+                  <td className="px-4 py-3 text-slate-500">{formatDate(custody.issueDate)}</td>
+                  <td className="px-4 py-3 text-slate-500">{custody.saleReference ?? custody.refillReference ?? "None"}</td>
+                  <td className="px-4 py-3 text-slate-500">{formatDate(custody.expectedReturnFollowUpDate)}</td>
+                  <td className="px-4 py-3 text-slate-500">{formatDate(custody.returnDate)}</td>
+                  <td className="px-4 py-3 text-slate-500">{custody.returnLocation?.name ?? "Not returned"}</td>
+                </tr>
+              )) : (
+                <tr>
+                  <td className="px-4 py-6 text-center text-slate-500" colSpan={6}>No customer custody records yet.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-panel">

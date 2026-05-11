@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { CylinderMaintenanceStatus } from "@prisma/client";
 import type { AppRole } from "@/lib/auth-types";
+import { isCylinderBlockedForSaleOrDispatch } from "@/lib/inventory";
 
 export const inspectionResults = ["PASSED", "FAILED", "NEEDS_HYDRO_TEST", "UNSAFE"] as const;
 export const maintenanceCaseStatuses = ["OPEN", "INSPECTION_RECORDED", "QUARANTINED", "APPROVED_RETURN_TO_STOCK", "SCRAP_PLACEHOLDER", "CLOSED"] as const;
@@ -31,7 +32,7 @@ export const safetyIncidentSchema = z.object({
 });
 
 export function canManageSafety(role: AppRole) {
-  return role === "ADMIN" || role === "WAREHOUSE_MANAGER";
+  return role === "ADMIN" || role === "WAREHOUSE_MANAGER" || role === "PLANT_MANAGER";
 }
 
 export function canViewSafety(role: AppRole) {
@@ -39,7 +40,7 @@ export function canViewSafety(role: AppRole) {
 }
 
 export function canApproveSafety(role: AppRole) {
-  return role === "ADMIN" || role === "WAREHOUSE_MANAGER";
+  return role === "ADMIN" || role === "WAREHOUSE_MANAGER" || role === "PLANT_MANAGER";
 }
 
 export function generateSafetyReference(prefix: string) {
@@ -53,6 +54,7 @@ export function formatSafetyLabel(value: string) {
 
 export type SaleEligibleCylinder = {
   status: string;
+  activeStatus?: boolean | null;
   expiryDate?: Date | null;
   hydroTestDueDate?: Date | null;
   unsafeStatus?: boolean;
@@ -61,7 +63,11 @@ export type SaleEligibleCylinder = {
 };
 
 export function cylinderSaleBlockedReason(cylinder: SaleEligibleCylinder, now = new Date()) {
+  if (cylinder.activeStatus === false) return "Cylinder is inactive and cannot be sold or dispatched.";
   if (cylinder.status === "DAMAGED") return "Cylinder is damaged and cannot be sold or dispatched.";
+  if (cylinder.status === "QUARANTINED") return "Cylinder is quarantined and cannot be sold or dispatched.";
+  if (cylinder.status === "SCRAPPED_WRITTEN_OFF") return "Cylinder is scrapped or written off and cannot be sold or dispatched.";
+  if (cylinder.status === "LOST_OVERDUE") return "Cylinder is lost or overdue and cannot be sold or dispatched.";
   if (cylinder.status === "UNDER_MAINTENANCE" || cylinder.maintenanceStatus === "OPEN" || cylinder.maintenanceStatus === "IN_PROGRESS") {
     return "Cylinder is under maintenance and cannot be sold or dispatched.";
   }
@@ -75,10 +81,18 @@ export function cylinderSaleBlockedReason(cylinder: SaleEligibleCylinder, now = 
 export function saleEligibleCylinderWhere(now = new Date()) {
   return {
     status: "FILLED" as const,
+    activeStatus: true,
     unsafeStatus: false,
     quarantinedStatus: false,
     maintenanceStatus: { in: [CylinderMaintenanceStatus.NONE, CylinderMaintenanceStatus.CLEARED] },
     OR: [{ expiryDate: null }, { expiryDate: { gte: now } }],
     AND: [{ OR: [{ hydroTestDueDate: null }, { hydroTestDueDate: { gte: now } }] }]
   };
+}
+
+export function assertCylinderSaleOrDispatchAllowed(cylinder: SaleEligibleCylinder) {
+  const reason = cylinderSaleBlockedReason(cylinder);
+  if (reason || isCylinderBlockedForSaleOrDispatch(cylinder)) {
+    throw new Error(reason ?? "Cylinder cannot be sold or dispatched.");
+  }
 }

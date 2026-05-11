@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { getCurrentSession } from "@/lib/auth";
 import { normalizeCustomerInput } from "@/lib/customers";
+import { assertNoOpenCustomerCustody } from "@/lib/inventory";
 import { prisma } from "@/lib/prisma";
 import { getSalesLocationForSession, requireRefillSalesManageSession, requireRefillSalesViewSession } from "@/lib/refill-sales-access";
 import { generateRetailReference, refillOrderSchema } from "@/lib/refill-sales";
@@ -18,7 +19,7 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const query = url.searchParams.get("q")?.trim();
-  const locationId = auth.session.user.role === "RSO" ? await getSalesLocationForSession(auth.session) : null;
+  const locationId = ["RSO", "SERVICE_CENTRE_STAFF"].includes(auth.session.user.role) ? await getSalesLocationForSession(auth.session) : null;
 
   const orders = await prisma.refillOrder.findMany({
     where: {
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
     : await getSalesLocationForSession(auth.session);
 
   if (!locationId) {
-    return NextResponse.json({ error: "No assigned sales location found for this RSO user." }, { status: 400 });
+    return NextResponse.json({ error: "No assigned sales location found for this sales user." }, { status: 400 });
   }
 
   try {
@@ -113,6 +114,9 @@ export async function POST(request: Request) {
       if (!customer) throw new Error("CUSTOMER_NOT_FOUND");
       if (!sku) throw new Error("SKU_NOT_FOUND");
       if (!filledCylinder) throw new Error("NO_FILLED_STOCK");
+      assertNoOpenCustomerCustody(await tx.customerCylinderCustody.count({
+        where: { cylinderId: filledCylinder.id, returnDate: null }
+      }));
 
       const price = await tx.masterDataRecord.findFirst({
         where: {
@@ -132,11 +136,15 @@ export async function POST(request: Request) {
       const receiptNumber = generateRetailReference("RCT");
       const paymentNumber = generateRetailReference("PAY");
       const emptySerial = generateRetailReference(`EMPTY-${sku.code}`);
+      const followUpDate = new Date();
+      followUpDate.setDate(followUpDate.getDate() + 30);
 
       const emptyCylinder = await tx.cylinder.create({
         data: {
           serialNumber: emptySerial,
           barcode: `${emptySerial}-RFID`,
+          factorySerialNo: emptySerial,
+          cylinderSizeKg: sku.capacityKg,
           skuId: sku.id,
           currentLocationId: locationId,
           status: "EMPTY",
@@ -149,6 +157,18 @@ export async function POST(request: Request) {
         data: {
           status: "WITH_CUSTOMER",
           notes: `Issued to ${customer.name} via refill ${orderNumber}`
+        }
+      });
+
+      await tx.customerCylinderCustody.create({
+        data: {
+          cylinderId: filledCylinder.id,
+          customerId,
+          refillReference: orderNumber,
+          issueLocationId: locationId,
+          expectedReturnFollowUpDate: followUpDate,
+          notes: `Issued during walk-in refill ${orderNumber}`,
+          createdById: auth.session.user.id
         }
       });
 
@@ -246,7 +266,8 @@ function errorMessage(message: string) {
     CUSTOMER_REQUIRED: "Select an existing customer or register a new customer.",
     CUSTOMER_NOT_FOUND: "Selected customer was not found.",
     SKU_NOT_FOUND: "Selected SKU was not found.",
-    NO_FILLED_STOCK: "No filled stock is available for this SKU at your assigned outlet."
+    NO_FILLED_STOCK: "No filled stock is available for this SKU at your assigned outlet.",
+    CYLINDER_ALREADY_IN_CUSTOMER_CUSTODY: "This cylinder already has an open customer custody record."
   };
 
   return messages[message];

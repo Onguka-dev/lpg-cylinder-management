@@ -28,6 +28,9 @@ describe("safety compliance", () => {
 
   it("blocks unsafe cylinders from sale or dispatch", () => {
     expect(cylinderSaleBlockedReason({ status: "DAMAGED" })).toContain("damaged");
+    expect(cylinderSaleBlockedReason({ status: "QUARANTINED" })).toContain("quarantined");
+    expect(cylinderSaleBlockedReason({ status: "SCRAPPED_WRITTEN_OFF" })).toContain("scrapped");
+    expect(cylinderSaleBlockedReason({ status: "LOST_OVERDUE" })).toContain("lost");
     expect(cylinderSaleBlockedReason({ status: "FILLED", unsafeStatus: true })).toContain("unsafe");
     expect(cylinderSaleBlockedReason({ status: "FILLED", quarantinedStatus: true })).toContain("quarantined");
     expect(cylinderSaleBlockedReason({ status: "FILLED", expiryDate: new Date("2020-01-01") }, new Date("2026-05-06"))).toContain("expired");

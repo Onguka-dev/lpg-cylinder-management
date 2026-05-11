@@ -60,7 +60,7 @@ export const seedNotificationTemplates = notificationEventTypes.flatMap((eventTy
 type NotificationTx = PrismaClient | Prisma.TransactionClient;
 
 export function canViewNotifications(role: AppRole) {
-  return ["ADMIN", "WAREHOUSE_MANAGER", "RSO", "MSO", "AUDITOR"].includes(role);
+  return ["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER", "RSO", "MSO", "SERVICE_CENTRE_STAFF", "FINANCE_SAP_REVIEWER", "AUDITOR"].includes(role);
 }
 
 export function canManageNotifications(role: AppRole) {
@@ -68,7 +68,7 @@ export function canManageNotifications(role: AppRole) {
 }
 
 export function canSendNotifications(role: AppRole) {
-  return ["ADMIN", "WAREHOUSE_MANAGER"].includes(role);
+  return ["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER"].includes(role);
 }
 
 export function formatNotificationEvent(eventType: string) {

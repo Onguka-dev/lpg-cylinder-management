@@ -24,7 +24,7 @@ export default async function NewInventoryMovementPage() {
     })
   ]);
   const assignedLocationId =
-    session.user.role === "RSO" || session.user.role === "MSO"
+    session.user.role === "RSO" || session.user.role === "MSO" || session.user.role === "SERVICE_CENTRE_STAFF"
       ? await getAssignedMasterLocationId(session.user.id)
       : null;
 
@@ -44,7 +44,7 @@ export default async function NewInventoryMovementPage() {
           skus={skus}
           locations={locations}
           assignedLocationId={assignedLocationId}
-          restrictToAssignedLocation={session.user.role === "RSO" || session.user.role === "MSO"}
+          restrictToAssignedLocation={session.user.role === "RSO" || session.user.role === "MSO" || session.user.role === "SERVICE_CENTRE_STAFF"}
         />
       </section>
     </div>

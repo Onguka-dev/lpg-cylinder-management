@@ -63,7 +63,7 @@ export async function getAssignedMasterLocationId(userId: string) {
   const assignedLocation = await prisma.masterDataRecord.findFirst({
     where: {
       code: user.location.code,
-      type: { in: ["LOCATION", "WAREHOUSE", "RETAIL_OUTLET", "MAINTENANCE_LOCATION", "DAMAGED_QUARANTINE_LOCATION"] },
+      type: { in: ["LOCATION", "WAREHOUSE", "RETAIL_OUTLET", "VEHICLE", "MAINTENANCE_LOCATION", "DAMAGED_QUARANTINE_LOCATION"] },
       isActive: true
     },
     select: { id: true }

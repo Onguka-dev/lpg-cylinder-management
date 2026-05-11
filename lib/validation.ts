@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const roleSchema = z.object({
-  name: z.enum(["ADMIN", "WAREHOUSE_MANAGER", "RSO", "MSO", "AUDITOR", "CUSTOMER"]),
+  name: z.enum(["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER", "RSO", "MSO", "SERVICE_CENTRE_STAFF", "FINANCE_SAP_REVIEWER", "AUDITOR", "CUSTOMER"]),
   description: z.string().min(3)
 });
 

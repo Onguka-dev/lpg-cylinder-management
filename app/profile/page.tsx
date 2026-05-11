@@ -6,14 +6,18 @@ import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { getCurrentSession } from "@/lib/auth";
+import type { AppRole } from "@/lib/auth-types";
 import { canAccessPath, roleLabel } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 
-const assignedLocationByRole = {
+const assignedLocationByRole: Record<AppRole, string> = {
   ADMIN: "Head Office Command Centre",
   WAREHOUSE_MANAGER: "Central Warehouse",
+  PLANT_MANAGER: "Refilling Plant",
   RSO: "Retail Outlet Network",
   MSO: "Assigned Route / Vehicle",
+  SERVICE_CENTRE_STAFF: "Service Centre",
+  FINANCE_SAP_REVIEWER: "Finance and SAP Desk",
   AUDITOR: "Audit and Compliance Desk",
   CUSTOMER: "Customer Self-Service"
 };

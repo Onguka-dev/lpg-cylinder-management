@@ -33,12 +33,24 @@ async function main() {
       description: "Warehouse stock visibility and cylinder handling"
     },
     {
+      name: RoleName.PLANT_MANAGER,
+      description: "Refilling plant receipts, dispatch, safety, and stock controls"
+    },
+    {
       name: RoleName.RSO,
       description: "Regional sales operations placeholder role"
     },
     {
       name: RoleName.MSO,
       description: "Market sales operations placeholder role"
+    },
+    {
+      name: RoleName.SERVICE_CENTRE_STAFF,
+      description: "Service centre sales, receipts, returns, and customer support"
+    },
+    {
+      name: RoleName.FINANCE_SAP_REVIEWER,
+      description: "Finance, payment, SAP/accounting, and audit review"
     },
     {
       name: RoleName.AUDITOR,
@@ -61,7 +73,10 @@ async function main() {
   const locations = [
     { code: "HQ", name: "Head Office", type: LocationType.HEAD_OFFICE },
     { code: "WH-NBO", name: "Nairobi Main Warehouse", type: LocationType.WAREHOUSE },
+    { code: "WH-WANDIEGE-MAIN", name: "Wandiege Main Warehouse", type: LocationType.WAREHOUSE },
+    { code: "PLANT-SABUNI-ROAD", name: "Sabuni Road Refilling Plant", type: LocationType.WAREHOUSE },
     { code: "DP-MBS", name: "Mombasa Depot", type: LocationType.DEPOT },
+    { code: "SC-KIBUYE", name: "KIBUYE Service Centre", type: LocationType.RETAIL_OUTLET },
     { code: "RO-KSM", name: "Kisumu Retail Outlet", type: LocationType.RETAIL_OUTLET }
   ];
 
@@ -93,7 +108,14 @@ async function main() {
       email: "warehouse@example.com",
       passwordHash: hashPassword("password123"),
       roleId: roleId(RoleName.WAREHOUSE_MANAGER),
-      locationId: locationId("WH-NBO")
+      locationId: locationId("WH-WANDIEGE-MAIN")
+    },
+    {
+      name: "Plant Manager Account",
+      email: "plant@example.com",
+      passwordHash: hashPassword("password123"),
+      roleId: roleId(RoleName.PLANT_MANAGER),
+      locationId: locationId("PLANT-SABUNI-ROAD")
     },
     {
       name: "RSO Account",
@@ -108,6 +130,20 @@ async function main() {
       passwordHash: hashPassword("password123"),
       roleId: roleId(RoleName.MSO),
       locationId: locationId("RO-KSM")
+    },
+    {
+      name: "Service Centre Staff Account",
+      email: "service@example.com",
+      passwordHash: hashPassword("password123"),
+      roleId: roleId(RoleName.SERVICE_CENTRE_STAFF),
+      locationId: locationId("SC-KIBUYE")
+    },
+    {
+      name: "Finance/SAP Reviewer Account",
+      email: "finance@example.com",
+      passwordHash: hashPassword("password123"),
+      roleId: roleId(RoleName.FINANCE_SAP_REVIEWER),
+      locationId: locationId("HQ")
     },
     {
       name: "Auditor Account",
@@ -177,6 +213,16 @@ async function main() {
   }
 
   for (const record of seedMasterDataRecords) {
+    const parent = record.parentCode
+      ? await prisma.masterDataRecord.findFirst({
+          where: {
+            type: (record.parentType ?? record.type) as MasterDataType,
+            code: record.parentCode.toUpperCase()
+          },
+          select: { id: true }
+        })
+      : null;
+
     await prisma.masterDataRecord.upsert({
       where: {
         type_code: {
@@ -192,7 +238,8 @@ async function main() {
         rate: record.rate,
         capacityKg: record.capacityKg,
         threshold: record.threshold,
-        metadata: {}
+        parentId: parent?.id ?? null,
+        metadata: record.metadata ?? {}
       },
       create: {
         type: record.type as MasterDataType,
@@ -204,7 +251,8 @@ async function main() {
         rate: record.rate,
         capacityKg: record.capacityKg,
         threshold: record.threshold,
-        metadata: {}
+        parentId: parent?.id ?? null,
+        metadata: record.metadata ?? {}
       }
     });
   }
@@ -277,17 +325,29 @@ async function main() {
       where: { serialNumber: cylinder.serialNumber },
       update: {
         barcode: cylinder.barcode,
+        factorySerialNo: cylinder.serialNumber,
+        cylinderSizeKg: cylinder.skuId === sku6kg?.id ? 6 : cylinder.skuId === sku13kg?.id ? 13 : cylinder.skuId === sku50kg?.id ? 50 : null,
+        manufacturer: "Wells Gas demo supplier",
         skuId: cylinder.skuId,
         currentLocationId: cylinder.currentLocationId,
         status: cylinder.status,
+        activeStatus: true,
+        companyOwned: true,
+        blockedReason: cylinder.status === CylinderStatus.DAMAGED ? "Seed damaged cylinder." : cylinder.status === CylinderStatus.UNDER_MAINTENANCE ? "Seed maintenance cylinder." : null,
         notes: "Seed cylinder for Stage 4 inventory foundation"
       },
       create: {
         serialNumber: cylinder.serialNumber,
         barcode: cylinder.barcode,
+        factorySerialNo: cylinder.serialNumber,
+        cylinderSizeKg: cylinder.skuId === sku6kg?.id ? 6 : cylinder.skuId === sku13kg?.id ? 13 : cylinder.skuId === sku50kg?.id ? 50 : null,
+        manufacturer: "Wells Gas demo supplier",
         skuId: cylinder.skuId,
         currentLocationId: cylinder.currentLocationId,
         status: cylinder.status,
+        activeStatus: true,
+        companyOwned: true,
+        blockedReason: cylinder.status === CylinderStatus.DAMAGED ? "Seed damaged cylinder." : cylinder.status === CylinderStatus.UNDER_MAINTENANCE ? "Seed maintenance cylinder." : null,
         notes: "Seed cylinder for Stage 4 inventory foundation"
       }
     });

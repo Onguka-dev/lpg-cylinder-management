@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 export default async function RefillOrdersPage({ searchParams }: { searchParams?: { q?: string } }) {
   const session = await getCurrentSession();
   const query = searchParams?.q?.trim() ?? "";
-  const locationId = session?.user.role === "RSO" ? await getSalesLocationForSession(session).catch(() => null) : null;
+  const locationId = session && ["RSO", "SERVICE_CENTRE_STAFF"].includes(session.user.role) ? await getSalesLocationForSession(session).catch(() => null) : null;
   const orders = await prisma.refillOrder.findMany({
     where: {
       AND: [

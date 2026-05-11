@@ -79,23 +79,23 @@ export type InventoryMovementTypeKey = (typeof inventoryMovementTypes)[number];
 export type InventoryMovementStatusKey = (typeof inventoryMovementStatuses)[number];
 
 export function canViewInventoryMovements(role: AppRole) {
-  return ["ADMIN", "WAREHOUSE_MANAGER", "RSO", "MSO", "AUDITOR"].includes(role);
+  return ["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER", "RSO", "MSO", "SERVICE_CENTRE_STAFF", "AUDITOR"].includes(role);
 }
 
 export function canRequestInventoryMovements(role: AppRole) {
-  return ["ADMIN", "WAREHOUSE_MANAGER", "RSO", "MSO"].includes(role);
+  return ["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER", "RSO", "MSO", "SERVICE_CENTRE_STAFF"].includes(role);
 }
 
 export function canApproveInventoryMovements(role: AppRole) {
-  return role === "ADMIN" || role === "WAREHOUSE_MANAGER";
+  return role === "ADMIN" || role === "WAREHOUSE_MANAGER" || role === "PLANT_MANAGER";
 }
 
 export function canDispatchInventoryMovements(role: AppRole) {
-  return role === "ADMIN" || role === "WAREHOUSE_MANAGER";
+  return role === "ADMIN" || role === "WAREHOUSE_MANAGER" || role === "PLANT_MANAGER";
 }
 
 export function canReceiveInventoryMovements(role: AppRole) {
-  return ["ADMIN", "WAREHOUSE_MANAGER", "RSO", "MSO"].includes(role);
+  return ["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER", "RSO", "MSO", "SERVICE_CENTRE_STAFF"].includes(role);
 }
 
 export function formatMovementType(type: string) {

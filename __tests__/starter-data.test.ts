@@ -12,8 +12,11 @@ describe("starter data", () => {
     expect(starterRoles.map((role) => role.name)).toEqual([
       "ADMIN",
       "WAREHOUSE_MANAGER",
+      "PLANT_MANAGER",
       "RSO",
       "MSO",
+      "SERVICE_CENTRE_STAFF",
+      "FINANCE_SAP_REVIEWER",
       "AUDITOR",
       "CUSTOMER"
     ]);

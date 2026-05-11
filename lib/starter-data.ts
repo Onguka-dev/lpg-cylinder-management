@@ -3,8 +3,11 @@ import { lpgSkuSchema, locationSchema, roleSchema, sampleUserSchema } from "@/li
 export const starterRoles = [
   { name: "ADMIN", description: "System administration and organization-wide oversight" },
   { name: "WAREHOUSE_MANAGER", description: "Warehouse stock visibility and cylinder handling" },
+  { name: "PLANT_MANAGER", description: "Refilling plant receipts, dispatch, safety, and stock controls" },
   { name: "RSO", description: "Regional sales operations placeholder role" },
   { name: "MSO", description: "Market sales operations placeholder role" },
+  { name: "SERVICE_CENTRE_STAFF", description: "Service centre sales, receipts, returns, and customer support" },
+  { name: "FINANCE_SAP_REVIEWER", description: "Finance, payment, SAP/accounting, and audit review" },
   { name: "AUDITOR", description: "Read-focused audit and compliance placeholder role" },
   { name: "CUSTOMER", description: "Customer self-service placeholder role" }
 ] as const;
@@ -32,6 +35,13 @@ export const starterUsers = [
     locationCode: "WH-NBO"
   },
   {
+    name: "Plant Manager Account",
+    email: "plant@example.com",
+    password: "password123",
+    role: "PLANT_MANAGER",
+    locationCode: "WH-NBO"
+  },
+  {
     name: "RSO Account",
     email: "rso@example.com",
     password: "password123",
@@ -44,6 +54,20 @@ export const starterUsers = [
     password: "password123",
     role: "MSO",
     locationCode: "RO-KSM"
+  },
+  {
+    name: "Service Centre Staff Account",
+    email: "service@example.com",
+    password: "password123",
+    role: "SERVICE_CENTRE_STAFF",
+    locationCode: "RO-KSM"
+  },
+  {
+    name: "Finance/SAP Reviewer Account",
+    email: "finance@example.com",
+    password: "password123",
+    role: "FINANCE_SAP_REVIEWER",
+    locationCode: "HQ"
   },
   {
     name: "Auditor Account",

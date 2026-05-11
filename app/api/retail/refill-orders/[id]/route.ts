@@ -31,7 +31,7 @@ export async function GET(
     return NextResponse.json({ error: "Refill order not found." }, { status: 404 });
   }
 
-  if (auth.session.user.role === "RSO") {
+  if (["RSO", "SERVICE_CENTRE_STAFF"].includes(auth.session.user.role)) {
     const assignedLocationId = await getSalesLocationForSession(auth.session);
     if (order.locationId !== assignedLocationId) {
       return NextResponse.json({ error: "This refill order is outside your assigned outlet." }, { status: 403 });

@@ -75,11 +75,11 @@ export type OfflineSyncItemTypeKey = (typeof offlineSyncItemTypes)[number];
 export type OfflineSyncStatusKey = (typeof offlineSyncStatuses)[number];
 
 export function canUseOfflineMode(role: AppRole) {
-  return ["ADMIN", "WAREHOUSE_MANAGER", "MSO"].includes(role);
+  return ["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER", "MSO", "SERVICE_CENTRE_STAFF"].includes(role);
 }
 
 export function canReviewOfflineSync(role: AppRole) {
-  return ["ADMIN", "WAREHOUSE_MANAGER"].includes(role);
+  return ["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER"].includes(role);
 }
 
 export function formatOfflineSyncType(type: string) {

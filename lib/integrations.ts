@@ -59,7 +59,7 @@ export const seedIntegrationSettings = [
 ] as const;
 
 export function canViewIntegrations(role: AppRole) {
-  return ["ADMIN", "WAREHOUSE_MANAGER", "AUDITOR"].includes(role);
+  return ["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER", "FINANCE_SAP_REVIEWER", "AUDITOR"].includes(role);
 }
 
 export function canManageIntegrations(role: AppRole) {
@@ -67,7 +67,7 @@ export function canManageIntegrations(role: AppRole) {
 }
 
 export function canTriggerIntegrations(role: AppRole) {
-  return ["ADMIN", "WAREHOUSE_MANAGER"].includes(role);
+  return ["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER", "FINANCE_SAP_REVIEWER"].includes(role);
 }
 
 export function formatIntegrationProvider(providerType: string) {

@@ -53,7 +53,7 @@ export async function POST(
     return NextResponse.json({ error: "Movement not found." }, { status: 404 });
   }
 
-  if ((session?.user.role === "RSO" || session?.user.role === "MSO") && action === "receive") {
+  if ((session?.user.role === "RSO" || session?.user.role === "MSO" || session?.user.role === "SERVICE_CENTRE_STAFF") && action === "receive") {
     const assignedLocationId = await getAssignedMasterLocationId(session.user.id);
     if (
       !movementTouchesAssignedLocation({
@@ -63,7 +63,7 @@ export async function POST(
       })
     ) {
       return NextResponse.json(
-        { error: "RSO/MSO users can receive stock only for their assigned location." },
+        { error: "Sales and service users can receive stock only for their assigned location." },
         { status: 403 }
       );
     }
@@ -226,6 +226,7 @@ export async function POST(
           }
         } else {
           if (!canCreateReceiptCylinders(movement.type)) throw new Error("RECEIPT_NOT_ALLOWED");
+          const sku = await tx.masterDataRecord.findUnique({ where: { id: movement.skuId } });
 
           for (let index = 1; index <= receivedQuantity; index += 1) {
             const serial = `${movement.reference}-RCV-${String(index).padStart(3, "0")}`;
@@ -233,6 +234,8 @@ export async function POST(
               data: {
                 serialNumber: serial,
                 barcode: `${serial}-RFID`,
+                factorySerialNo: serial,
+                cylinderSizeKg: sku?.capacityKg ?? null,
                 skuId: movement.skuId,
                 currentLocationId: movement.destinationLocationId,
                 status: movement.destinationStatus,

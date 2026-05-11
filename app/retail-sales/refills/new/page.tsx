@@ -13,7 +13,7 @@ export default async function NewRefillOrderPage() {
     redirect("/unauthorized");
   }
 
-  const assignedLocationId = session.user.role === "RSO" ? await getSalesLocationForSession(session).catch(() => null) : null;
+  const assignedLocationId = ["RSO", "SERVICE_CENTRE_STAFF"].includes(session.user.role) ? await getSalesLocationForSession(session).catch(() => null) : null;
   const [customers, skus, locations, groupedStock, prices] = await Promise.all([
     prisma.customer.findMany({ where: { status: "ACTIVE" }, orderBy: { name: "asc" }, take: 100 }).catch(() => []),
     prisma.masterDataRecord.findMany({ where: { type: "SKU_MASTER", isActive: true }, orderBy: { name: "asc" } }).catch(() => []),

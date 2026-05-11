@@ -48,6 +48,10 @@ export default async function EditCylinderPage({
               id: cylinder.id,
               serialNumber: cylinder.serialNumber,
               barcode: cylinder.barcode,
+              factorySerialNo: cylinder.factorySerialNo,
+              qrCode: cylinder.qrCode,
+              cylinderSizeKg: cylinder.cylinderSizeKg,
+              manufacturer: cylinder.manufacturer,
               skuId: cylinder.skuId,
               manufactureDate: cylinder.manufactureDate?.toISOString().slice(0, 10),
               inspectionDueDate: cylinder.inspectionDueDate?.toISOString().slice(0, 10),
@@ -55,9 +59,12 @@ export default async function EditCylinderPage({
               hydroTestDueDate: cylinder.hydroTestDueDate?.toISOString().slice(0, 10),
               unsafeStatus: cylinder.unsafeStatus,
               quarantinedStatus: cylinder.quarantinedStatus,
+              activeStatus: cylinder.activeStatus,
+              companyOwned: cylinder.companyOwned,
               maintenanceStatus: cylinder.maintenanceStatus,
               currentLocationId: cylinder.currentLocationId,
               status: cylinder.status,
+              blockedReason: cylinder.blockedReason,
               notes: cylinder.notes
             }}
           />

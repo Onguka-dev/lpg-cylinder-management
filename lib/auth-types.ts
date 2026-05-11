@@ -1,8 +1,11 @@
 export type AppRole =
   | "ADMIN"
   | "WAREHOUSE_MANAGER"
+  | "PLANT_MANAGER"
   | "RSO"
   | "MSO"
+  | "SERVICE_CENTRE_STAFF"
+  | "FINANCE_SAP_REVIEWER"
   | "AUDITOR"
   | "CUSTOMER";
 

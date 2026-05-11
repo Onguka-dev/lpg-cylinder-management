@@ -28,7 +28,7 @@ export default async function RefillOrderDetailPage({ params }: { params: { id: 
 
   if (!order) notFound();
 
-  if (session.user.role === "RSO") {
+  if (["RSO", "SERVICE_CENTRE_STAFF"].includes(session.user.role)) {
     const assignedLocationId = await getSalesLocationForSession(session);
     if (order.locationId !== assignedLocationId) redirect("/unauthorized");
   }

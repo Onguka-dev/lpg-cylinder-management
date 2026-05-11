@@ -25,11 +25,11 @@ export const customerComplaintSchema = z.object({
 export type CustomerComplaintFormValues = z.infer<typeof customerComplaintSchema>;
 
 export function canManageCustomerComplaints(role: AppRole) {
-  return role === "ADMIN" || role === "RSO" || role === "MSO";
+  return role === "ADMIN" || role === "RSO" || role === "MSO" || role === "SERVICE_CENTRE_STAFF";
 }
 
 export function canViewCustomerComplaints(role: AppRole) {
-  return canManageCustomerComplaints(role) || role === "AUDITOR";
+  return canManageCustomerComplaints(role) || role === "AUDITOR" || role === "FINANCE_SAP_REVIEWER";
 }
 
 export function normalizeCustomerComplaintInput(input: CustomerComplaintFormValues) {

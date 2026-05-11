@@ -48,7 +48,7 @@ export default async function InventoryMovementDetailPage({
 
   if (!movement) notFound();
 
-  if (session.user.role === "RSO" || session.user.role === "MSO") {
+  if (session.user.role === "RSO" || session.user.role === "MSO" || session.user.role === "SERVICE_CENTRE_STAFF") {
     const assignedLocationId = await getAssignedMasterLocationId(session.user.id);
     if (
       !movementTouchesAssignedLocation({

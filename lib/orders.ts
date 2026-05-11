@@ -29,15 +29,15 @@ export type OrderFormValues = z.infer<typeof orderSchema>;
 export type OrderStatusKey = (typeof orderStatuses)[number];
 
 export function canViewOrders(role: AppRole) {
-  return ["ADMIN", "WAREHOUSE_MANAGER", "RSO", "MSO", "AUDITOR"].includes(role);
+  return ["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER", "RSO", "MSO", "SERVICE_CENTRE_STAFF", "FINANCE_SAP_REVIEWER", "AUDITOR"].includes(role);
 }
 
 export function canManageOrders(role: AppRole) {
-  return ["ADMIN", "RSO", "MSO"].includes(role);
+  return ["ADMIN", "RSO", "MSO", "SERVICE_CENTRE_STAFF"].includes(role);
 }
 
 export function canChangeOrderStatus(role: AppRole) {
-  return ["ADMIN", "WAREHOUSE_MANAGER", "RSO", "MSO"].includes(role);
+  return ["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER", "RSO", "MSO", "SERVICE_CENTRE_STAFF"].includes(role);
 }
 
 export function canModifyOrderStatus(status: string) {

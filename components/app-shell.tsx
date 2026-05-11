@@ -527,8 +527,11 @@ function buildBreadcrumbs(pathname: string, pageTitle: string) {
 const assignedLocationByRole: Record<AppRole, string> = {
   ADMIN: "Head Office Command Centre",
   WAREHOUSE_MANAGER: "Central Warehouse",
+  PLANT_MANAGER: "Refilling Plant",
   RSO: "Retail Outlet Network",
   MSO: "Assigned Route / Vehicle",
+  SERVICE_CENTRE_STAFF: "Service Centre",
+  FINANCE_SAP_REVIEWER: "Finance and SAP Desk",
   AUDITOR: "Audit and Compliance Desk",
   CUSTOMER: "Customer Self-Service"
 };
@@ -536,8 +539,11 @@ const assignedLocationByRole: Record<AppRole, string> = {
 const notificationFallbackByRole: Record<AppRole, number> = {
   ADMIN: 5,
   WAREHOUSE_MANAGER: 4,
+  PLANT_MANAGER: 4,
   RSO: 3,
   MSO: 3,
+  SERVICE_CENTRE_STAFF: 3,
+  FINANCE_SAP_REVIEWER: 2,
   AUDITOR: 2,
   CUSTOMER: 1
 };

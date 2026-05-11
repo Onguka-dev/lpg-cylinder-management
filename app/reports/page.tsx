@@ -190,7 +190,7 @@ function Filters({ filters, skus, locations, regions }: { filters: ReportFilters
         <Select name="locationId" value={filters.locationId ?? ""} label="All locations" options={locations} />
         <select className="rounded-lg border border-slate-300 px-3 py-2 text-sm" name="role" defaultValue={filters.role ?? ""}>
           <option value="">All roles</option>
-          {["ADMIN", "WAREHOUSE_MANAGER", "RSO", "MSO", "AUDITOR", "CUSTOMER"].map((role) => <option value={role} key={role}>{formatReportLabel(role)}</option>)}
+          {["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER", "RSO", "MSO", "SERVICE_CENTRE_STAFF", "FINANCE_SAP_REVIEWER", "AUDITOR", "CUSTOMER"].map((role) => <option value={role} key={role}>{formatReportLabel(role)}</option>)}
         </select>
         <select className="rounded-lg border border-slate-300 px-3 py-2 text-sm" name="customerCategory" defaultValue={filters.customerCategory ?? ""}>
           <option value="">All customer categories</option>

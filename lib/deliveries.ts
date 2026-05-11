@@ -44,15 +44,15 @@ export const deliveryStatusSchema = z.object({
 export type DeliveryStatusKey = (typeof deliveryStatuses)[number];
 
 export function canViewDeliveries(role: AppRole) {
-  return ["ADMIN", "WAREHOUSE_MANAGER", "MSO", "AUDITOR"].includes(role);
+  return ["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER", "MSO", "AUDITOR"].includes(role);
 }
 
 export function canManageDeliveries(role: AppRole) {
-  return ["ADMIN", "WAREHOUSE_MANAGER", "MSO"].includes(role);
+  return ["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER", "MSO"].includes(role);
 }
 
 export function canUpdateDeliveryStatus(role: AppRole) {
-  return ["ADMIN", "WAREHOUSE_MANAGER", "MSO"].includes(role);
+  return ["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER", "MSO"].includes(role);
 }
 
 export function formatDeliveryStatus(status: string) {

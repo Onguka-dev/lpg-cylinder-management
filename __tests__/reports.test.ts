@@ -35,6 +35,7 @@ describe("reporting and analytics", () => {
     expect(canViewReports("ADMIN")).toBe(true);
     expect(canViewReports("AUDITOR")).toBe(true);
     expect(canViewReports("RSO")).toBe(true);
+    expect(canViewReports("FINANCE_SAP_REVIEWER")).toBe(true);
     expect(canViewReports("CUSTOMER")).toBe(false);
   });
 

@@ -18,7 +18,7 @@ export default async function NewRetailComplaintPage() {
   }
 
   const assignedLocationId =
-    session.user.role === "RSO" || session.user.role === "MSO"
+    session.user.role === "RSO" || session.user.role === "MSO" || session.user.role === "SERVICE_CENTRE_STAFF"
       ? await getAssignedMasterLocationId(session.user.id).catch(() => null)
       : null;
   const [customers, locations] = await Promise.all([

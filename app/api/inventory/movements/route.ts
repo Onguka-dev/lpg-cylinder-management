@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const query = url.searchParams.get("q")?.trim();
   const assignedLocationId =
-    session?.user.role === "RSO" || session?.user.role === "MSO"
+    session?.user.role === "RSO" || session?.user.role === "MSO" || session?.user.role === "SERVICE_CENTRE_STAFF"
       ? await getAssignedMasterLocationId(session.user.id)
       : null;
 
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
 
   const data = normalizeInventoryMovementInput(parsed.data);
 
-  if (session?.user.role === "RSO" || session?.user.role === "MSO") {
+  if (session?.user.role === "RSO" || session?.user.role === "MSO" || session?.user.role === "SERVICE_CENTRE_STAFF") {
     const assignedLocationId = await getAssignedMasterLocationId(session.user.id);
     if (
       !movementTouchesAssignedLocation({
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
       })
     ) {
       return NextResponse.json(
-        { error: "RSO/MSO users can request stock only for their assigned location." },
+        { error: "Sales and service users can request stock only for their assigned location." },
         { status: 403 }
       );
     }

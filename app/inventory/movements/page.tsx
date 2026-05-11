@@ -17,7 +17,7 @@ export default async function InventoryMovementsPage({
   const session = await getCurrentSession();
   const query = searchParams?.q?.trim() ?? "";
   const assignedLocationId =
-    session?.user.role === "RSO" || session?.user.role === "MSO"
+    session?.user.role === "RSO" || session?.user.role === "MSO" || session?.user.role === "SERVICE_CENTRE_STAFF"
       ? await getAssignedMasterLocationId(session.user.id).catch(() => null)
       : null;
   const movements = await prisma.inventoryMovement.findMany({

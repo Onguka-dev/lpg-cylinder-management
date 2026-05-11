@@ -29,11 +29,11 @@ export const customerSchema = z.object({
 export type CustomerFormValues = z.infer<typeof customerSchema>;
 
 export function canManageCustomers(role: AppRole) {
-  return role === "ADMIN" || role === "RSO" || role === "MSO";
+  return role === "ADMIN" || role === "RSO" || role === "MSO" || role === "SERVICE_CENTRE_STAFF";
 }
 
 export function canViewCustomers(role: AppRole) {
-  return canManageCustomers(role) || role === "AUDITOR";
+  return canManageCustomers(role) || role === "AUDITOR" || role === "FINANCE_SAP_REVIEWER";
 }
 
 export function normalizeCustomerInput(input: CustomerFormValues) {

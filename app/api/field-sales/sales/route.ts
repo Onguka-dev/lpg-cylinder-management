@@ -4,6 +4,7 @@ import { getCurrentSession } from "@/lib/auth";
 import { normalizeCustomerInput } from "@/lib/customers";
 import { fieldSaleSchema, generateFieldSaleNumber } from "@/lib/field-sales";
 import { getFieldAssignment, requireFieldSalesManageSession, requireFieldSalesViewSession } from "@/lib/field-sales-access";
+import { assertNoOpenCustomerCustody } from "@/lib/inventory";
 import { prisma } from "@/lib/prisma";
 import { saleEligibleCylinderWhere } from "@/lib/safety";
 
@@ -113,6 +114,9 @@ export async function POST(request: Request) {
       if (!customer) throw new Error("CUSTOMER_NOT_FOUND");
       if (!sku) throw new Error("SKU_NOT_FOUND");
       if (!filledCylinder) throw new Error("NO_FILLED_STOCK");
+      assertNoOpenCustomerCustody(await tx.customerCylinderCustody.count({
+        where: { cylinderId: filledCylinder.id, returnDate: null }
+      }));
 
       const price = await tx.masterDataRecord.findFirst({
         where: {
@@ -128,11 +132,15 @@ export async function POST(request: Request) {
       const amount = price?.amount ?? new Prisma.Decimal(0);
       const saleNumber = generateFieldSaleNumber();
       const emptySerial = `FIELD-EMPTY-${saleNumber}`;
+      const followUpDate = new Date();
+      followUpDate.setDate(followUpDate.getDate() + 30);
 
       const emptyCylinder = await tx.cylinder.create({
         data: {
           serialNumber: emptySerial,
           barcode: `${emptySerial}-RFID`,
+          factorySerialNo: emptySerial,
+          cylinderSizeKg: sku.capacityKg,
           skuId: sku.id,
           currentLocationId: assignment.vehicle.id,
           status: "EMPTY",
@@ -144,7 +152,20 @@ export async function POST(request: Request) {
         where: { id: filledCylinder.id },
         data: {
           status: "WITH_CUSTOMER",
+          currentLocationId: filledCylinder.currentLocationId,
           notes: `Issued to ${customer.name} by MSO field sale ${saleNumber}`
+        }
+      });
+
+      await tx.customerCylinderCustody.create({
+        data: {
+          cylinderId: filledCylinder.id,
+          customerId,
+          saleReference: saleNumber,
+          issueLocationId: assignment.vehicle.id,
+          expectedReturnFollowUpDate: followUpDate,
+          notes: `Issued during field sale ${saleNumber}`,
+          createdById: auth.session.user.id
         }
       });
 
@@ -223,7 +244,8 @@ function errorMessage(message: string) {
     CUSTOMER_REQUIRED: "Select an existing customer or register a field customer.",
     CUSTOMER_NOT_FOUND: "Selected customer was not found.",
     SKU_NOT_FOUND: "Selected SKU was not found.",
-    NO_FILLED_STOCK: "No filled stock is available for this SKU on the assigned vehicle."
+    NO_FILLED_STOCK: "No filled stock is available for this SKU on the assigned vehicle.",
+    CYLINDER_ALREADY_IN_CUSTOMER_CUSTODY: "This cylinder already has an open customer custody record."
   };
 
   return messages[message];

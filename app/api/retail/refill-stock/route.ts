@@ -16,7 +16,7 @@ export async function GET() {
     : await getSalesLocationForSession(auth.session);
 
   if (auth.session.user.role !== "ADMIN" && !locationId) {
-    return NextResponse.json({ error: "No assigned sales location found for this RSO user." }, { status: 400 });
+    return NextResponse.json({ error: "No assigned sales location found for this sales user." }, { status: 400 });
   }
 
   const grouped = await prisma.cylinder.groupBy({

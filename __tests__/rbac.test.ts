@@ -11,6 +11,8 @@ describe("role-based access control", () => {
     expect(canAccessPath("WAREHOUSE_MANAGER", "/inventory")).toBe(true);
     expect(canAccessPath("WAREHOUSE_MANAGER", "/transfers")).toBe(true);
     expect(canAccessPath("WAREHOUSE_MANAGER", "/reports")).toBe(true);
+    expect(canAccessPath("PLANT_MANAGER", "/inventory/movements")).toBe(true);
+    expect(canAccessPath("PLANT_MANAGER", "/safety")).toBe(true);
   });
 
   it("limits auditor to reports and audit logs", () => {
@@ -31,6 +33,7 @@ describe("role-based access control", () => {
   it("allows RSO refill sales while blocking unrelated roles", () => {
     expect(canAccessPath("RSO", "/retail-sales/refills")).toBe(true);
     expect(canAccessPath("RSO", "/api/retail/refill-orders")).toBe(true);
+    expect(canAccessPath("SERVICE_CENTRE_STAFF", "/retail-sales/refills")).toBe(true);
     expect(canAccessPath("MSO", "/retail-sales/refills")).toBe(false);
     expect(canAccessPath("CUSTOMER", "/retail-sales/refills")).toBe(false);
     expect(canAccessPath("AUDITOR", "/retail-sales/refills")).toBe(true);
@@ -69,6 +72,7 @@ describe("role-based access control", () => {
     expect(canAccessPath("MSO", "/api/billing/invoices")).toBe(true);
     expect(canAccessPath("WAREHOUSE_MANAGER", "/reports")).toBe(true);
     expect(canAccessPath("AUDITOR", "/payments")).toBe(true);
+    expect(canAccessPath("FINANCE_SAP_REVIEWER", "/payments")).toBe(true);
     expect(canAccessPath("AUDITOR", "/api/reports/export")).toBe(true);
     expect(canAccessPath("CUSTOMER", "/payments")).toBe(false);
     expect(canAccessPath("CUSTOMER", "/reports")).toBe(false);
@@ -129,6 +133,8 @@ describe("role-based access control", () => {
 
   it("has a default dashboard for each role", () => {
     expect(defaultRouteByRole.RSO).toBe("/rso");
+    expect(defaultRouteByRole.PLANT_MANAGER).toBe("/warehouse");
+    expect(defaultRouteByRole.FINANCE_SAP_REVIEWER).toBe("/payments");
     expect(defaultRouteByRole.CUSTOMER).toBe("/customer");
   });
 });
