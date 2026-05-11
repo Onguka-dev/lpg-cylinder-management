@@ -399,6 +399,7 @@ function buildNavigationSections(role: AppRole) {
             { key: "asset-tracking", href: "/inventory/cylinders", label: "Asset Tracking", icon: PackageCheck },
             { key: "supplier-receipts", href: "/inventory/supplier-receipts", label: "Supplier Receipts", icon: PackageCheck },
             { key: "plant-transfers", href: "/inventory/plant-transfers", label: "Plant Transfers", icon: Truck },
+            { key: "selling-point-dispatches", href: "/inventory/selling-point-dispatches", label: "Selling Point Dispatches", icon: Truck },
             { key: "stock-movements", href: "/inventory/movements", label: "Stock Movements", icon: PackageCheck },
             { key: "transfer-requests", href: "/transfers", label: "Transfer Requests", icon: Truck },
             { key: "warehouse-reports", href: "/reports", label: "Warehouse Reports", icon: BarChart3 }

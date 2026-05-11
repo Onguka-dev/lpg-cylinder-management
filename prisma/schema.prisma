@@ -64,6 +64,7 @@ enum CylinderStatus {
   EMPTY_IN_TRANSIT
   FILLED_IN_TRANSIT
   FILLED_AT_WAREHOUSE
+  FILLED_AT_SELLING_POINT
   DAMAGED
   IN_TRANSIT
   RESERVED
@@ -1271,6 +1272,13 @@ model InventoryMovement {
   varianceQuantity      Int?
   varianceReason        String?
   notes                 String?
+  vehicle               String?
+  driverSalesRep        String?
+  route                 String?
+  dispatchOfficerName   String?
+  receivingOfficerName  String?
+  transferDateTime      DateTime?
+  expectedReceiptAt     DateTime?
   requestedById         String?
   requestedBy           User?                       @relation("MovementRequestedBy", fields: [requestedById], references: [id], onDelete: SetNull)
   approvedById          String?

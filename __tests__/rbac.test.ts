@@ -27,6 +27,7 @@ describe("role-based access control", () => {
     expect(canAccessPath("RSO", "/inventory/movements")).toBe(true);
     expect(canAccessPath("RSO", "/inventory/cylinders")).toBe(false);
     expect(canAccessPath("MSO", "/api/inventory/movements")).toBe(true);
+    expect(canAccessPath("MSO", "/inventory/selling-point-dispatches")).toBe(true);
     expect(canAccessPath("MSO", "/inventory/stock-balances")).toBe(false);
   });
 

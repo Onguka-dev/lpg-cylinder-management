@@ -26,6 +26,7 @@ describe("inventory foundation", () => {
       "EMPTY_IN_TRANSIT",
       "FILLED_IN_TRANSIT",
       "FILLED_AT_WAREHOUSE",
+      "FILLED_AT_SELLING_POINT",
       "DAMAGED",
       "IN_TRANSIT",
       "RESERVED",

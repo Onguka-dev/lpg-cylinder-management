@@ -37,6 +37,7 @@ export const moduleNavItems = [
   { href: "/inventory", label: "Inventory", icon: Boxes },
   { href: "/inventory/supplier-receipts", label: "Supplier Receipts", icon: PackageCheck },
   { href: "/inventory/plant-transfers", label: "Plant Transfers", icon: Truck },
+  { href: "/inventory/selling-point-dispatches", label: "Selling Point Dispatches", icon: Truck },
   { href: "/inventory/movements", label: "Movements", icon: PackageCheck },
   { href: "/transfers", label: "Transfers", icon: PackageCheck },
   { href: "/retail-sales", label: "Retail Sales", icon: ShoppingCart },
