@@ -6,6 +6,7 @@ import {
   SESSION_DURATION_SECONDS,
   verifySessionToken
 } from "@/lib/session-core";
+import { isDemoAuthFallbackEnabled, isDemoSessionId } from "@/lib/demo-auth";
 import { prisma } from "@/lib/prisma";
 
 export async function getCurrentSession() {
@@ -17,7 +18,11 @@ export async function getCurrentSession() {
 
   const stored = await prisma.userSession.findUnique({
     where: { sessionTokenId: session.sessionId }
-  });
+  }).catch(() => null);
+
+  if (!stored && isDemoAuthFallbackEnabled() && isDemoSessionId(session.sessionId)) {
+    return session;
+  }
 
   if (!stored || stored.status !== "ACTIVE" || stored.expiresAt.getTime() < Date.now()) {
     if (stored?.status === "ACTIVE") {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { auditCategoryForAction, auditCategories } from "@/lib/audit";
+import { DEMO_PASSWORD, getDemoUser, isDemoSessionId } from "@/lib/demo-auth";
 import { validateStrongPassword } from "@/lib/passwords";
 import {
   canManageSecurity,
@@ -14,6 +15,14 @@ describe("security controls", () => {
     expect(validateStrongPassword("password123").length).toBeGreaterThan(0);
     expect(validateStrongPassword("StrongerPass123!")).toEqual([]);
     expect(passwordPolicySummary()).toContain("12+ characters");
+  });
+
+  it("keeps the hosted demo login fallback scoped to seeded accounts", () => {
+    expect(DEMO_PASSWORD).toBe("password123");
+    expect(getDemoUser("ADMIN@EXAMPLE.COM")).toMatchObject({ role: "ADMIN" });
+    expect(getDemoUser("unknown@example.com")).toBeNull();
+    expect(isDemoSessionId("demo-session-id")).toBe(true);
+    expect(isDemoSessionId("database-session-id")).toBe(false);
   });
 
   it("defines MFA, session timeout, and permission control seed settings", () => {

@@ -4,6 +4,7 @@ import { createSessionCookieForSession, toSessionUser } from "@/lib/auth";
 import { writeAuditLog } from "@/lib/audit";
 import { defaultRouteByRole, canAccessPath } from "@/lib/rbac";
 import { SESSION_COOKIE_NAME, SESSION_DURATION_SECONDS } from "@/lib/session-core";
+import { DEMO_PASSWORD, getDemoUser, isDemoAuthFallbackEnabled } from "@/lib/demo-auth";
 import { verifyPassword } from "@/lib/passwords";
 import { prisma } from "@/lib/prisma";
 
@@ -28,19 +29,47 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Enter a valid email and password." }, { status: 400 });
   }
 
+  const email = parsed.data.email.toLowerCase();
   const user = await prisma.user.findUnique({
-    where: { email: parsed.data.email.toLowerCase() },
+    where: { email },
     include: { role: true }
-  });
+  }).catch(() => null);
 
   if (!user || !verifyPassword(parsed.data.password, user.passwordHash)) {
+    const demoUser = getDemoUser(email);
+
+    if (
+      isDemoAuthFallbackEnabled() &&
+      demoUser &&
+      parsed.data.password === DEMO_PASSWORD
+    ) {
+      const sessionTokenId = `demo-${crypto.randomUUID()}`;
+      const redirectTo =
+        parsed.data.next && canAccessPath(demoUser.role, parsed.data.next)
+          ? parsed.data.next
+          : defaultRouteByRole[demoUser.role];
+      const response = NextResponse.json({ redirectTo });
+
+      response.cookies.set({
+        name: SESSION_COOKIE_NAME,
+        value: await createSessionCookieForSession(demoUser, sessionTokenId),
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: SESSION_DURATION_SECONDS
+      });
+
+      return response;
+    }
+
     await writeAuditLog({
       action: "LOGIN_FAILED",
       category: "AUTH",
       severity: "WARNING",
-      details: `Failed sign-in attempt for ${parsed.data.email.toLowerCase()}`,
+      details: `Failed sign-in attempt for ${email}`,
       request
-    });
+    }).catch(() => null);
 
     return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
   }
@@ -73,7 +102,7 @@ export async function POST(request: Request) {
     request,
     userId: user.id,
     metadata: { redirectTo, mfaVerified: false }
-  });
+  }).catch(() => null);
 
   const response = NextResponse.json({ redirectTo });
   response.cookies.set({
