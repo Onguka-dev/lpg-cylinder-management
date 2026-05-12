@@ -22,7 +22,7 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const movements = await prisma.inventoryMovement.findMany({
-    where: buildSellingPointSearchWhere(url.searchParams.get("q"), url.searchParams.get("status")),
+    where: buildSellingPointSearchWhere(url.searchParams.get("q"), url.searchParams.get("status"), url.searchParams.get("region")),
     include: { sku: true, sourceLocation: true, destinationLocation: true, cylinders: { include: { cylinder: true } } },
     orderBy: { updatedAt: "desc" },
     take: 150
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const session = await getCurrentSession();
   if (!session) return NextResponse.json({ error: "Sign in to dispatch to selling points." }, { status: 401 });
-  if (!canManageSellingPointDispatch(session.user.role)) return NextResponse.json({ error: "Only Admin and Warehouse Manager users can dispatch from Wandiege." }, { status: 403 });
+  if (!canManageSellingPointDispatch(session.user.role)) return NextResponse.json({ error: "Only Admin and Warehouse Manager users can dispatch to selling points." }, { status: 403 });
 
   const body = await request.json().catch(() => null);
   const parsed = sellingPointDispatchSchema.safeParse(body);

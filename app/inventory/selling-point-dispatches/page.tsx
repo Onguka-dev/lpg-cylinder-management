@@ -1,31 +1,29 @@
 import Link from "next/link";
 import { InventoryMovementStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { buildSellingPointSearchWhere, getSellingPointLocations } from "@/lib/selling-point-distribution-posting";
-import { formatSellingPointLabel, sellingPointDestinationCodes } from "@/lib/selling-point-distribution";
+import { buildSellingPointSearchWhere, buildSellingPointStockWhere, getSellingPointLocations } from "@/lib/selling-point-distribution-posting";
+import { formatSellingPointLabel } from "@/lib/selling-point-distribution";
 
 export default async function SellingPointDispatchesPage({
   searchParams
 }: {
-  searchParams?: { q?: string; status?: string };
+  searchParams?: { q?: string; status?: string; region?: string };
 }) {
   const q = searchParams?.q ?? "";
+  const region = searchParams?.region === "NAIROBI" || searchParams?.region === "WESTERN" ? searchParams.region : "";
   const status = searchParams?.status && Object.values(InventoryMovementStatus).includes(searchParams.status as InventoryMovementStatus)
     ? searchParams.status
     : "";
-  const { destinations } = await getSellingPointLocations(prisma);
+  const { sources, destinations } = await getSellingPointLocations(prisma);
   const movements = await prisma.inventoryMovement.findMany({
-    where: buildSellingPointSearchWhere(q, status),
+    where: buildSellingPointSearchWhere(q, status, region),
     include: { sku: true, sourceLocation: true, destinationLocation: true, cylinders: true },
     orderBy: { updatedAt: "desc" },
     take: 150
   });
   const balances = await prisma.cylinder.groupBy({
     by: ["currentLocationId", "status", "cylinderSizeKg"],
-    where: {
-      currentLocation: { code: { in: [...sellingPointDestinationCodes] } },
-      status: { in: ["FILLED", "FILLED_AT_SELLING_POINT", "FILLED_AT_WAREHOUSE", "EMPTY"] }
-    },
+    where: buildSellingPointStockWhere(region === "NAIROBI" ? "Nairobi" : region === "WESTERN" ? "Western Kenya" : null),
     _count: { _all: true },
     orderBy: [{ currentLocationId: "asc" }, { cylinderSizeKg: "asc" }]
   });
@@ -36,10 +34,10 @@ export default async function SellingPointDispatchesPage({
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-panel">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold text-brand-700">Stage 7</p>
-            <h1 className="mt-2 text-2xl font-semibold text-slate-950">Dispatch to Selling Points</h1>
+            <p className="text-sm font-semibold text-brand-700">Stage 8</p>
+            <h1 className="mt-2 text-2xl font-semibold text-slate-950">Regional dispatch to selling points</h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-              Move filled cylinders from Wandiege to Ugunja, vans, service stations, and Western Kenya service centres with scan-controlled dispatch and receipt.
+              Move filled cylinders from Wandiege, Lake Gas, or Oilcom to the allowed regional service centres with scan-controlled dispatch and receipt.
             </p>
           </div>
           <Link className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white" href="/inventory/selling-point-dispatches/new">
@@ -49,8 +47,13 @@ export default async function SellingPointDispatchesPage({
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
-        <form className="grid gap-3 md:grid-cols-[1fr_220px_auto]" action="/inventory/selling-point-dispatches">
+        <form className="grid gap-3 md:grid-cols-[1fr_180px_220px_auto]" action="/inventory/selling-point-dispatches">
           <input className="rounded-lg border border-slate-300 px-3 py-2 text-sm" name="q" placeholder="Search transfer, barcode, source, destination" defaultValue={q} />
+          <select className="rounded-lg border border-slate-300 px-3 py-2 text-sm" name="region" defaultValue={region}>
+            <option value="">All regions</option>
+            <option value="WESTERN">Western Kenya</option>
+            <option value="NAIROBI">Nairobi</option>
+          </select>
           <select className="rounded-lg border border-slate-300 px-3 py-2 text-sm" name="status" defaultValue={status}>
             <option value="">All receiving statuses</option>
             {Object.values(InventoryMovementStatus).map((item) => <option value={item} key={item}>{formatSellingPointLabel(item)}</option>)}
@@ -61,6 +64,9 @@ export default async function SellingPointDispatchesPage({
 
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
         <h2 className="text-base font-semibold text-slate-950">Destination stock dashboard</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Sources: {sources.map((source) => source.name).join(", ")}. Nairobi stock remains reported against Nairobi centres until it is formally transferred.
+        </p>
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500">

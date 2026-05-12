@@ -6,12 +6,19 @@ import {
   canViewSellingPointDispatch,
   findDuplicateCodes,
   formatSellingPointLabel,
+  getDispatchableSourceStatuses,
+  getSellingPointRouteForDestination,
+  getSellingPointRouteForSource,
   isWarehouseDestination,
+  nairobiSellingPointDestinationCodes,
+  nairobiSellingPointSourceCodes,
   normalizeCodeList,
   sellingPointDestinationCodes,
+  sellingPointSourceCodes,
   sellingPointDispatchSchema,
   sellingPointReceiveSchema,
-  sellingPointSourceCode
+  sellingPointSourceCode,
+  sourceCanDispatchToDestination
 } from "@/lib/selling-point-distribution";
 
 describe("selling point distribution workflow", () => {
@@ -21,15 +28,26 @@ describe("selling point distribution workflow", () => {
 
   it("defines Wandiege source and allowed destinations", () => {
     expect(sellingPointSourceCode).toBe("WH-WANDIEGE-MAIN");
+    expect(sellingPointSourceCodes).toContain("WH-LAKE-GAS-NBO");
+    expect(sellingPointSourceCodes).toContain("WH-OILCOM-NBO");
     expect(sellingPointDestinationCodes).toContain("WH-UGUNJA-SECONDARY");
     expect(sellingPointDestinationCodes).toContain("VAN-KDK-152E");
     expect(sellingPointDestinationCodes).toContain("SC-POLYVIEW");
     expect(sellingPointDestinationCodes).toContain("SC-KAKAMEGA");
+    expect(nairobiSellingPointSourceCodes).toEqual(["WH-LAKE-GAS-NBO", "WH-OILCOM-NBO"]);
+    expect(nairobiSellingPointDestinationCodes).toEqual([
+      "SC-GARDEN-ESTATE",
+      "SC-JOGOO-ROAD",
+      "SC-NAIROBI-WEST",
+      "SC-DAGORETTI",
+      "SC-MLOLONGO"
+    ]);
   });
 
   it("validates dispatch and receipt scan payloads", () => {
     expect(sellingPointDispatchSchema.safeParse({
       reference: "DIST-WAN-001",
+      sourceLocationId: "source-id",
       destinationLocationId: "destination-id",
       cylinderCodes: ["BAR-1"],
       vehicle: "KDK 152E",
@@ -49,6 +67,17 @@ describe("selling point distribution workflow", () => {
     expect(isWarehouseDestination("WH-UGUNJA-SECONDARY")).toBe(true);
     expect(isWarehouseDestination("SC-POLYVIEW")).toBe(false);
     expect(formatSellingPointLabel("FILLED_AT_SELLING_POINT")).toBe("Filled At Selling Point");
+  });
+
+  it("keeps Nairobi and Western dispatch routes separate", () => {
+    expect(getSellingPointRouteForSource("WH-LAKE-GAS-NBO")?.key).toBe("NAIROBI");
+    expect(getSellingPointRouteForDestination("SC-DAGORETTI")?.key).toBe("NAIROBI");
+    expect(sourceCanDispatchToDestination("WH-LAKE-GAS-NBO", "SC-DAGORETTI")).toBe(true);
+    expect(sourceCanDispatchToDestination("WH-OILCOM-NBO", "SC-GARDEN-ESTATE")).toBe(true);
+    expect(sourceCanDispatchToDestination("WH-WANDIEGE-MAIN", "SC-DAGORETTI")).toBe(false);
+    expect(sourceCanDispatchToDestination("WH-LAKE-GAS-NBO", "SC-POLYVIEW")).toBe(false);
+    expect(getDispatchableSourceStatuses("WH-WANDIEGE-MAIN")).toEqual(["FILLED_AT_WAREHOUSE"]);
+    expect(getDispatchableSourceStatuses("WH-LAKE-GAS-NBO")).toEqual(["FILLED_AT_WAREHOUSE", "FILLED"]);
   });
 
   it("aligns permissions by role", () => {

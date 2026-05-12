@@ -1,27 +1,48 @@
 import type { CylinderStatus, Prisma, PrismaClient } from "@prisma/client";
 import {
+  getDispatchableSourceStatuses,
+  getSellingPointRouteForLocationCode,
   isWarehouseDestination,
   normalizeCodeList,
   sellingPointDestinationCodes,
+  sellingPointSourceCodes,
   sellingPointSourceCode,
+  sourceCanDispatchToDestination,
   type SellingPointDispatchInput
 } from "@/lib/selling-point-distribution";
 
 type Db = PrismaClient;
 
-export async function getSellingPointLocations(db: Pick<Db, "masterDataRecord">) {
+export async function getSellingPointLocations(
+  db: Pick<Db, "masterDataRecord">,
+  options?: { preferredRegion?: string | null }
+) {
   const locations = await db.masterDataRecord.findMany({
     where: {
-      code: { in: [sellingPointSourceCode, ...sellingPointDestinationCodes] },
+      code: { in: [...sellingPointSourceCodes, ...sellingPointDestinationCodes] },
       type: { in: ["WAREHOUSE", "RETAIL_OUTLET", "VEHICLE"] },
       isActive: true
     },
     orderBy: [{ type: "asc" }, { name: "asc" }]
   });
-  const source = locations.find((location) => location.code === sellingPointSourceCode);
+  const sources = locations.filter((location) => sellingPointSourceCodes.includes(location.code as never));
   const destinations = locations.filter((location) => sellingPointDestinationCodes.includes(location.code as never));
-  if (!source) throw new Error("SELLING_POINT_SOURCE_MISSING");
-  return { source, destinations };
+  const source = sources.find((location) => location.code === sellingPointSourceCode);
+  if (!source || !sources.length) throw new Error("SELLING_POINT_SOURCE_MISSING");
+
+  const preferredRegion = options?.preferredRegion?.trim().toLowerCase();
+  const regionSources = preferredRegion
+    ? sources.filter((location) => getLocationRegion(location)?.toLowerCase() === preferredRegion)
+    : sources;
+  const regionDestinations = preferredRegion
+    ? destinations.filter((location) => getLocationRegion(location)?.toLowerCase() === preferredRegion)
+    : destinations;
+
+  return {
+    source,
+    sources: regionSources.length ? regionSources : sources,
+    destinations: regionDestinations.length ? regionDestinations : destinations
+  };
 }
 
 export async function createSellingPointDispatch(
@@ -30,12 +51,19 @@ export async function createSellingPointDispatch(
   userId?: string | null,
   userRole?: string | null
 ) {
-  const { source, destinations } = await getSellingPointLocations(db);
+  const { source: defaultSource, sources, destinations } = await getSellingPointLocations(db);
+  const source = input.sourceLocationId
+    ? sources.find((location) => location.id === input.sourceLocationId)
+    : defaultSource;
+  if (!source) throw new Error("SELLING_POINT_SOURCE_NOT_ALLOWED");
   const destination = destinations.find((location) => location.id === input.destinationLocationId);
   if (!destination) throw new Error("SELLING_POINT_DESTINATION_NOT_ALLOWED");
+  if (!sourceCanDispatchToDestination(source.code, destination.code)) {
+    throw new Error("SELLING_POINT_CROSS_REGION_REQUIRES_TRANSFER");
+  }
 
   const codes = normalizeCodeList(input.cylinderCodes);
-  const allowedStatuses: CylinderStatus[] = input.adminOverride && userRole === "ADMIN" ? ["FILLED_AT_WAREHOUSE", "FILLED"] : ["FILLED_AT_WAREHOUSE"];
+  const allowedStatuses = [...getDispatchableSourceStatuses(source.code, input.adminOverride, userRole)] as CylinderStatus[];
   const cylinders = await db.cylinder.findMany({
     where: {
       currentLocationId: source.id,
@@ -58,8 +86,8 @@ export async function createSellingPointDispatch(
   if (cylinders.length !== codes.length) {
     throw new Error(
       input.adminOverride && userRole === "ADMIN"
-        ? "Only active, unblocked filled cylinders at Wandiege can be dispatched."
-        : "Only FILLED_AT_WAREHOUSE cylinders currently at Wandiege can be dispatched."
+        ? `Only active, unblocked filled cylinders at ${source.name} can be dispatched.`
+        : `Only ${allowedStatuses.join(" or ")} cylinders currently at ${source.name} can be dispatched.`
     );
   }
 
@@ -86,7 +114,7 @@ export async function createSellingPointDispatch(
           approvedQuantity: group.length,
           dispatchedQuantity: group.length,
           varianceQuantity: 0,
-          notes: input.remarks?.trim() || `Dispatch from Wandiege to ${destination.name}.`,
+          notes: input.remarks?.trim() || `Dispatch from ${source.name} to ${destination.name}.`,
           vehicle: input.vehicle.trim(),
           driverSalesRep: input.driverSalesRep.trim(),
           route: input.route.trim(),
@@ -107,7 +135,7 @@ export async function createSellingPointDispatch(
           movementId: movement.id,
           toStatus: "DISPATCHED",
           action: "Selling point dispatch",
-          details: `Dispatched ${group.length} filled ${sku.name} cylinder(s) from Wandiege to ${destination.name}.`,
+          details: `Dispatched ${group.length} filled ${sku.name} cylinder(s) from ${source.name} to ${destination.name}.`,
           changedById: userId
         }
       });
@@ -221,8 +249,10 @@ export async function receiveSellingPointDispatch(
 
 export function sellingPointActionErrorMessage(message: string) {
   const messages: Record<string, string> = {
-    SELLING_POINT_SOURCE_MISSING: "Wandiege Main Warehouse is missing from master data.",
+    SELLING_POINT_SOURCE_MISSING: "Selling point source warehouses are missing from master data.",
+    SELLING_POINT_SOURCE_NOT_ALLOWED: "Select an allowed selling point source warehouse.",
     SELLING_POINT_DESTINATION_NOT_ALLOWED: "Select an allowed selling point destination.",
+    SELLING_POINT_CROSS_REGION_REQUIRES_TRANSFER: "This source cannot dispatch directly to that destination. Transfer stock to the correct regional warehouse first, or use an authorized cross-region movement.",
     SELLING_POINT_DISPATCH_NOT_FOUND: "Dispatch not found.",
     SELLING_POINT_DISPATCH_NOT_RECEIVABLE: "Only dispatched selling point transfers can be received.",
     SELLING_POINT_DESTINATION_REQUIRED: "This dispatch is missing a destination.",
@@ -232,12 +262,21 @@ export function sellingPointActionErrorMessage(message: string) {
   return messages[message] ?? (message.startsWith("Only ") ? message : null);
 }
 
-export function buildSellingPointSearchWhere(query?: string | null, status?: string | null): Prisma.InventoryMovementWhereInput {
+export function buildSellingPointSearchWhere(query?: string | null, status?: string | null, region?: string | null): Prisma.InventoryMovementWhereInput {
   const q = query?.trim();
+  const route = getRouteFilter(region);
   return {
     type: "TRANSFER",
-    sourceLocation: { code: sellingPointSourceCode },
-    destinationLocation: { code: { in: [...sellingPointDestinationCodes] } },
+    sourceLocation: {
+      code: {
+        in: route?.sourceCodes ? [...route.sourceCodes] : [...sellingPointSourceCodes]
+      }
+    },
+    destinationLocation: {
+      code: {
+        in: route?.destinationCodes ? [...route.destinationCodes] : [...sellingPointDestinationCodes]
+      }
+    },
     ...(status ? { status: status as never } : {}),
     ...(q
       ? {
@@ -252,4 +291,32 @@ export function buildSellingPointSearchWhere(query?: string | null, status?: str
         }
       : {})
   };
+}
+
+export function buildSellingPointStockWhere(region?: string | null): Prisma.CylinderWhereInput {
+  const route = getRouteFilter(region);
+  return {
+    currentLocation: {
+      code: {
+        in: route?.destinationCodes ? [...route.destinationCodes] : [...sellingPointDestinationCodes]
+      }
+    },
+    status: { in: ["FILLED", "FILLED_AT_SELLING_POINT", "FILLED_AT_WAREHOUSE", "EMPTY"] }
+  };
+}
+
+export function getLocationRegion(location: { metadata?: Prisma.JsonValue | null }) {
+  const metadata = location.metadata;
+  if (metadata && typeof metadata === "object" && !Array.isArray(metadata) && "region" in metadata) {
+    const value = metadata.region;
+    return typeof value === "string" ? value : null;
+  }
+  return null;
+}
+
+function getRouteFilter(value?: string | null) {
+  const normalized = value?.trim().toUpperCase();
+  if (normalized === "NAIROBI") return getSellingPointRouteForLocationCode("SC-DAGORETTI");
+  if (normalized === "WESTERN" || normalized === "WESTERN KENYA") return getSellingPointRouteForLocationCode(sellingPointSourceCode);
+  return null;
 }

@@ -5,7 +5,13 @@ import { useRouter } from "next/navigation";
 
 type LocationOption = { id: string; code: string; name: string };
 
-export function SellingPointDispatchForm({ destinations }: { destinations: LocationOption[] }) {
+export function SellingPointDispatchForm({
+  sources,
+  destinations
+}: {
+  sources: LocationOption[];
+  destinations: LocationOption[];
+}) {
   const router = useRouter();
   const [codes, setCodes] = useState("");
   const [error, setError] = useState("");
@@ -21,6 +27,7 @@ export function SellingPointDispatchForm({ destinations }: { destinations: Locat
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         reference: formData.get("reference"),
+        sourceLocationId: formData.get("sourceLocationId"),
         destinationLocationId: formData.get("destinationLocationId"),
         vehicle: formData.get("vehicle"),
         driverSalesRep: formData.get("driverSalesRep"),
@@ -48,6 +55,14 @@ export function SellingPointDispatchForm({ destinations }: { destinations: Locat
     <form className="space-y-5" onSubmit={submit}>
       <div className="grid gap-4 md:grid-cols-2">
         <Input label="Transfer Number" name="reference" placeholder="DIST-WAN-0001" required />
+        <label className="block text-sm font-medium text-slate-700">
+          Source warehouse
+          <select className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" name="sourceLocationId" required defaultValue={sources[0]?.id ?? ""}>
+            {sources.map((source) => (
+              <option value={source.id} key={source.id}>{source.code} - {source.name}</option>
+            ))}
+          </select>
+        </label>
         <label className="block text-sm font-medium text-slate-700">
           Destination
           <select className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" name="destinationLocationId" required defaultValue="">
