@@ -17,6 +17,8 @@ describe("RSO refill sales", () => {
     const parsed = refillOrderSchema.safeParse({
       customerId: "customer-id",
       skuId: "sku-id",
+      filledCylinderCode: "FULL-001",
+      emptyReturnCylinderCode: "EMPTY-001",
       paymentMethod: "CASH",
       paymentReference: "CASH-001"
     });
@@ -35,6 +37,8 @@ describe("RSO refill sales", () => {
         status: "ACTIVE"
       },
       skuId: "sku-id",
+      filledCylinderCode: "FULL-002",
+      emptyReturnCylinderCode: "EMPTY-002",
       paymentMethod: "MPESA"
     });
 
@@ -42,7 +46,8 @@ describe("RSO refill sales", () => {
   });
 
   it("requires a customer and limits refill creation to RSO/Admin", () => {
-    expect(refillOrderSchema.safeParse({ skuId: "sku-id", paymentMethod: "CARD" }).success).toBe(false);
+    expect(refillOrderSchema.safeParse({ skuId: "sku-id", paymentMethod: "CARD", filledCylinderCode: "FULL-003", emptyReturnCylinderCode: "EMPTY-003" }).success).toBe(false);
+    expect(refillOrderSchema.safeParse({ customerId: "customer-id", skuId: "sku-id", paymentMethod: "CARD", filledCylinderCode: "SAME", emptyReturnCylinderCode: " same " }).success).toBe(false);
     expect(canManageRefillSales("RSO")).toBe(true);
     expect(canManageRefillSales("ADMIN")).toBe(true);
     expect(canManageRefillSales("MSO")).toBe(false);

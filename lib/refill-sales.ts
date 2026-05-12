@@ -8,6 +8,8 @@ export const refillOrderSchema = z.object({
   customerId: z.string().optional().nullable(),
   customer: customerSchema.optional(),
   skuId: z.string().min(1, "Select a SKU or cylinder size."),
+  filledCylinderCode: z.string().trim().min(1, "Scan the outgoing full cylinder barcode or serial number."),
+  emptyReturnCylinderCode: z.string().trim().min(1, "Scan the returned empty cylinder barcode or serial number."),
   paymentMethod: z.enum(paymentMethods),
   paymentReference: z.string().trim().max(80, "Payment reference must be 80 characters or fewer.").optional().nullable(),
   notes: z.string().trim().max(400, "Notes must be 400 characters or fewer.").optional().nullable()
@@ -17,6 +19,13 @@ export const refillOrderSchema = z.object({
       code: z.ZodIssueCode.custom,
       path: ["customerId"],
       message: "Select an existing customer or register a new customer."
+    });
+  }
+  if (value.filledCylinderCode && value.emptyReturnCylinderCode && value.filledCylinderCode.trim().toUpperCase() === value.emptyReturnCylinderCode.trim().toUpperCase()) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["emptyReturnCylinderCode"],
+      message: "The outgoing full cylinder and returned empty cylinder must be different cylinders."
     });
   }
 });

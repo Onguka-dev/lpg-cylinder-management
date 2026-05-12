@@ -55,6 +55,8 @@ export function RefillOrderForm({
         : undefined,
       skuId: formData.get("skuId"),
       locationId: formData.get("locationId") || undefined,
+      filledCylinderCode: formData.get("filledCylinderCode"),
+      emptyReturnCylinderCode: formData.get("emptyReturnCylinderCode"),
       paymentMethod: formData.get("paymentMethod"),
       paymentReference: formData.get("paymentReference") || undefined,
       notes: formData.get("notes") || undefined
@@ -163,6 +165,9 @@ export function RefillOrderForm({
             </select>
           </label>
         ) : null}
+
+        <TextInput label="Outgoing full cylinder scan" name="filledCylinderCode" placeholder="Scan filled cylinder barcode / serial" required />
+        <TextInput label="Returned empty cylinder scan" name="emptyReturnCylinderCode" placeholder="Scan returned empty barcode / serial" required />
 
         <label className="block text-sm font-semibold text-slate-700">
           Payment Method

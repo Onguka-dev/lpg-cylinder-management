@@ -54,6 +54,8 @@ describe("Stage 18 UAT demo readiness", () => {
     const parsed = refillOrderSchema.safeParse({
       customerId: "customer-uat",
       skuId: "sku-6kg",
+      filledCylinderCode: "UAT-FULL-6KG-001",
+      emptyReturnCylinderCode: "UAT-EMPTY-6KG-001",
       paymentMethod: "MPESA",
       paymentReference: "MPESA-UAT-001",
       notes: "Walk-in refill sale."
