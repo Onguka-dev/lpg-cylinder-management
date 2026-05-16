@@ -411,6 +411,7 @@ function buildNavigationSections(role: AppRole) {
     {
       title: "Retail Points",
       items: [
+        { key: "retail-pos", href: "/retail-sales/pos", label: "POS", icon: ShoppingCart },
         { key: "retail-sales", href: "/retail-sales", label: "Retail Sales", icon: ShoppingCart },
         { key: "retail-inventory", href: "/retail-inventory", label: "Retail Inventory", icon: Boxes },
         { key: "retail-complaints", href: "/retail-sales/complaints", label: "Complaints", icon: Bell },

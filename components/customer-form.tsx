@@ -9,6 +9,7 @@ type CustomerFormRecord = {
   name?: string;
   phone?: string;
   proofReference?: string;
+  kraPin?: string | null;
   category?: string;
   address?: string;
   latitude?: string | number | null;
@@ -16,6 +17,7 @@ type CustomerFormRecord = {
   status?: string;
   creditLimit?: string | number | null;
   notes?: string | null;
+  documentPlaceholder?: string | null;
 };
 
 export function CustomerForm({ customer }: { customer?: CustomerFormRecord }) {
@@ -36,13 +38,15 @@ export function CustomerForm({ customer }: { customer?: CustomerFormRecord }) {
       name: formData.get("name"),
       phone: formData.get("phone"),
       proofReference: formData.get("proofReference"),
+      kraPin: formData.get("kraPin") || undefined,
       category: formData.get("category"),
       address: formData.get("address"),
       latitude: valueOrNull(formData.get("latitude")),
       longitude: valueOrNull(formData.get("longitude")),
       status: formData.get("status"),
       creditLimit: valueOrNull(formData.get("creditLimit")),
-      notes: [idType ? `ID type: ${idType}` : "", notes || ""].filter(Boolean).join(" | ") || undefined
+      notes: [idType ? `ID type: ${idType}` : "", notes || ""].filter(Boolean).join(" | ") || undefined,
+      documentPlaceholder: formData.get("documentPlaceholder") || undefined
     };
 
     const response = await fetch(
@@ -104,6 +108,7 @@ export function CustomerForm({ customer }: { customer?: CustomerFormRecord }) {
           defaultValue={customer?.proofReference}
           required
         />
+        <TextInput label="KRA PIN" name="kraPin" defaultValue={customer?.kraPin ?? undefined} />
         <label className="block text-sm font-medium text-slate-700">
           Customer Category
           <select
@@ -134,6 +139,7 @@ export function CustomerForm({ customer }: { customer?: CustomerFormRecord }) {
         <TextInput label="Latitude Placeholder" name="latitude" type="number" step="0.000001" defaultValue={customer?.latitude ?? undefined} />
         <TextInput label="Longitude Placeholder" name="longitude" type="number" step="0.000001" defaultValue={customer?.longitude ?? undefined} />
         <TextInput label="Credit Limit Placeholder" name="creditLimit" type="number" min="0" step="0.01" defaultValue={customer?.creditLimit ?? undefined} />
+        <TextInput label="Document Placeholder" name="documentPlaceholder" defaultValue={customer?.documentPlaceholder ?? undefined} />
         <label className="block text-sm font-medium text-slate-700">
           Customer Status
           <select

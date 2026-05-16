@@ -41,6 +41,7 @@ export const moduleNavItems = [
   { href: "/inventory/movements", label: "Movements", icon: PackageCheck },
   { href: "/transfers", label: "Transfers", icon: PackageCheck },
   { href: "/retail-sales", label: "Retail Sales", icon: ShoppingCart },
+  { href: "/retail-sales/pos", label: "POS", icon: ShoppingCart },
   { href: "/retail-inventory", label: "Retail Inventory", icon: Boxes },
   { href: "/field-sales", label: "Field Sales", icon: MapPinned },
   { href: "/offline", label: "Offline Mode", icon: Wifi },

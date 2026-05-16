@@ -20,7 +20,8 @@ export async function GET(request: Request) {
           OR: [
             { name: { contains: query, mode: "insensitive" } },
             { phone: { contains: query, mode: "insensitive" } },
-            { proofReference: { contains: query, mode: "insensitive" } }
+            { proofReference: { contains: query, mode: "insensitive" } },
+            { kraPin: { contains: query, mode: "insensitive" } }
           ]
         }
       : undefined,

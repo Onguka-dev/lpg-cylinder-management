@@ -61,6 +61,7 @@ enum CustomerStatus {
 enum CylinderStatus {
   FILLED
   EMPTY
+  EMPTY_AT_SELLING_POINT
   EMPTY_IN_TRANSIT
   FILLED_IN_TRANSIT
   FILLED_AT_WAREHOUSE
@@ -604,6 +605,7 @@ model Customer {
   name              String
   phone             String                    @unique
   proofReference    String                    @unique
+  kraPin            String?
   category          CustomerCategory
   address           String
   latitude          Decimal?                  @db.Decimal(9, 6)
@@ -611,6 +613,7 @@ model Customer {
   status            CustomerStatus            @default(ACTIVE)
   creditLimit       Decimal?                  @db.Decimal(12, 2)
   notes             String?
+  documentPlaceholder String?
   refillOrders      RefillOrder[]
   customerOrders    CustomerOrder[]
   fieldSales        FieldSale[]

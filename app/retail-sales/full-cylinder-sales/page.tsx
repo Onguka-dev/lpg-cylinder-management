@@ -29,7 +29,10 @@ export default async function FullCylinderSalesPage() {
             <p className="mt-3 text-sm leading-6 text-slate-600">Completed full cylinder sales with customer custody and scan audit.</p>
           </div>
           {canManageFullCylinderSales(session.user.role) ? (
-            <Link className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white" href="/retail-sales/full-cylinder-sales/new">New sale</Link>
+            <div className="flex flex-wrap gap-2">
+              <Link className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white" href="/retail-sales/pos">Open POS</Link>
+              <Link className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700" href="/retail-sales/full-cylinder-sales/new">New sale</Link>
+            </div>
           ) : null}
         </div>
       </section>
@@ -47,7 +50,9 @@ export default async function FullCylinderSalesPage() {
           <tbody className="divide-y divide-slate-100">
             {sales.map((sale) => (
               <tr key={sale.id}>
-                <td className="px-4 py-3 font-semibold text-brand-700">{sale.saleNumber}</td>
+                <td className="px-4 py-3 font-semibold text-brand-700">
+                  <Link href={`/retail-sales/full-cylinder-sales/${sale.id}`}>{sale.saleNumber}</Link>
+                </td>
                 <td className="px-4 py-3">{sale.customer.name}</td>
                 <td className="px-4 py-3">{sale.cylinder.barcode ?? sale.cylinder.serialNumber}</td>
                 <td className="px-4 py-3">{sale.location.name}</td>

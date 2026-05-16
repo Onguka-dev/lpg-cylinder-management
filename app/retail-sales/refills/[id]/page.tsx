@@ -28,7 +28,7 @@ export default async function RefillOrderDetailPage({ params }: { params: { id: 
 
   if (!order) notFound();
 
-  if (["RSO", "SERVICE_CENTRE_STAFF"].includes(session.user.role)) {
+  if (["RSO", "MSO", "SERVICE_CENTRE_STAFF"].includes(session.user.role)) {
     const assignedLocationId = await getSalesLocationForSession(session);
     if (order.locationId !== assignedLocationId) redirect("/unauthorized");
   }
@@ -61,6 +61,8 @@ export default async function RefillOrderDetailPage({ params }: { params: { id: 
           <dl className="mt-4 grid gap-3 text-sm">
             <Detail label="Customer" value={order.customer.name} />
             <Detail label="Phone" value={order.customer.phone} />
+            <Detail label="ID/Passport" value={order.customer.proofReference} />
+            <Detail label="KRA PIN" value={order.customer.kraPin ?? "Not recorded"} />
             <Detail label="SKU" value={order.sku.name} />
             <Detail label="Handled By" value={order.createdBy?.name ?? "System"} />
           </dl>
@@ -69,8 +71,9 @@ export default async function RefillOrderDetailPage({ params }: { params: { id: 
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-panel">
           <h2 className="text-base font-semibold text-slate-950">Cylinder Exchange</h2>
           <dl className="mt-4 grid gap-3 text-sm">
-            <Detail label="Filled Issued" value={`${order.filledCylinder.serialNumber} (${formatCylinderStatus(order.filledCylinder.status)})`} />
-            <Detail label="Empty Received" value={`${order.emptyReturnCylinder.serialNumber} (${formatCylinderStatus(order.emptyReturnCylinder.status)})`} />
+            <Detail label="Sale Type" value="Refill Exchange/Gas Only" />
+            <Detail label="Filled Issued" value={`${order.filledCylinder.barcode ?? order.filledCylinder.serialNumber} (${formatCylinderStatus(order.filledCylinder.status)})`} />
+            <Detail label="Empty Received" value={`${order.emptyReturnCylinder.barcode ?? order.emptyReturnCylinder.serialNumber} (${formatCylinderStatus(order.emptyReturnCylinder.status)})`} />
             <Detail label="Delivery" value={order.deliveryPlaceholder ?? "Placeholder"} />
             <Detail label="Credit" value={order.creditPlaceholder ?? "Placeholder"} />
           </dl>

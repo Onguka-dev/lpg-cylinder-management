@@ -97,11 +97,12 @@ export default async function RetailSalesPage() {
 
   const salesAmount = Number(todaysSales._sum.totalAmount ?? 0) + Number(todaysFullCylinderSales._sum.totalAmount ?? 0);
   const stockOnHand = stockByStatus.reduce((sum, row) => sum + row._count.id, 0);
-  const filledStock = stockByStatus.filter((row) => row.status === "FILLED").reduce((sum, row) => sum + row._count.id, 0);
-  const emptyStock = stockByStatus.filter((row) => row.status === "EMPTY").reduce((sum, row) => sum + row._count.id, 0);
+  const filledStock = stockByStatus.filter((row) => row.status === "FILLED" || row.status === "FILLED_AT_SELLING_POINT").reduce((sum, row) => sum + row._count.id, 0);
+  const emptyStock = stockByStatus.filter((row) => row.status === "EMPTY" || row.status === "EMPTY_AT_SELLING_POINT").reduce((sum, row) => sum + row._count.id, 0);
 
   const quickActions = [
-    { label: "New Refill", href: "/retail-sales/refills/new", icon: ReceiptText, primary: true },
+    { label: "New POS Sale", href: "/retail-sales/pos", icon: ReceiptText, primary: true },
+    { label: "New Refill", href: "/retail-sales/refills/new", icon: ReceiptText },
     { label: "Full Cylinder Sale", href: "/retail-sales/full-cylinder-sales/new", icon: PackagePlus },
     { label: "New Customer", href: "/customers/new", icon: UserPlus },
     { label: "Stock Transfer", href: "/inventory/movements/new", icon: RefreshCw },
@@ -157,8 +158,12 @@ export default async function RetailSalesPage() {
         <SectionCard title="Inventory overview" description="Outlet stock by SKU with filled and empty visibility.">
           <div className="space-y-3">
             {skus.map((sku) => {
-              const filled = stockByStatus.find((row) => row.skuId === sku.id && row.status === "FILLED")?._count.id ?? 0;
-              const empty = stockByStatus.find((row) => row.skuId === sku.id && row.status === "EMPTY")?._count.id ?? 0;
+              const filled = stockByStatus
+                .filter((row) => row.skuId === sku.id && (row.status === "FILLED" || row.status === "FILLED_AT_SELLING_POINT"))
+                .reduce((sum, row) => sum + row._count.id, 0);
+              const empty = stockByStatus
+                .filter((row) => row.skuId === sku.id && (row.status === "EMPTY" || row.status === "EMPTY_AT_SELLING_POINT"))
+                .reduce((sum, row) => sum + row._count.id, 0);
               return (
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4" key={sku.id}>
                   <div className="flex items-start justify-between gap-3">

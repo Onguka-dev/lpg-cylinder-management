@@ -17,13 +17,15 @@ export const customerSchema = z.object({
     .trim()
     .min(3, "ID/passport/proof reference must be at least 3 characters.")
     .max(40, "ID/passport/proof reference must be 40 characters or fewer."),
+  kraPin: z.string().trim().max(40, "KRA PIN must be 40 characters or fewer.").optional().nullable(),
   category: z.enum(customerCategories),
   address: z.string().trim().min(3, "Address must be at least 3 characters.").max(180),
   latitude: z.coerce.number().min(-90, "Latitude must be at least -90.").max(90, "Latitude cannot exceed 90.").optional().nullable(),
   longitude: z.coerce.number().min(-180, "Longitude must be at least -180.").max(180, "Longitude cannot exceed 180.").optional().nullable(),
   status: z.enum(customerStatuses).default("ACTIVE"),
   creditLimit: z.coerce.number().nonnegative("Credit limit cannot be negative.").optional().nullable(),
-  notes: z.string().trim().max(500, "Notes must be 500 characters or fewer.").optional().nullable()
+  notes: z.string().trim().max(500, "Notes must be 500 characters or fewer.").optional().nullable(),
+  documentPlaceholder: z.string().trim().max(120, "Document placeholder must be 120 characters or fewer.").optional().nullable()
 });
 
 export type CustomerFormValues = z.infer<typeof customerSchema>;
@@ -41,13 +43,15 @@ export function normalizeCustomerInput(input: CustomerFormValues) {
     name: input.name.trim(),
     phone: input.phone.trim(),
     proofReference: input.proofReference.trim().toUpperCase(),
+    kraPin: input.kraPin?.trim().toUpperCase() || null,
     category: input.category,
     address: input.address.trim(),
     latitude: input.latitude ?? null,
     longitude: input.longitude ?? null,
     status: input.status,
     creditLimit: input.creditLimit ?? null,
-    notes: input.notes?.trim() || null
+    notes: input.notes?.trim() || null,
+    documentPlaceholder: input.documentPlaceholder?.trim() || null
   };
 }
 

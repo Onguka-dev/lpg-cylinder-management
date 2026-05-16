@@ -51,7 +51,7 @@ export const refillOrderSchema = z.object({
 export type RefillOrderFormValues = z.infer<typeof refillOrderSchema>;
 
 export function canManageRefillSales(role: AppRole) {
-  return role === "ADMIN" || role === "RSO" || role === "SERVICE_CENTRE_STAFF";
+  return role === "ADMIN" || role === "RSO" || role === "MSO" || role === "SERVICE_CENTRE_STAFF";
 }
 
 export function canViewRefillSales(role: AppRole) {

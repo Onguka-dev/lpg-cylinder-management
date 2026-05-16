@@ -179,7 +179,7 @@ async function reportRows(type: ReportType, filters: ReturnType<typeof normalize
   return history.map((entry) => ({ date: entry.createdAt.toISOString(), cylinder: entry.cylinder.serialNumber, fromStatus: entry.previousStatus ?? "", toStatus: entry.newStatus, reason: entry.reason, changedBy: entry.changedBy?.name ?? "System" }));
 }
 
-const cylinderStatuses = ["FILLED", "EMPTY", "DAMAGED", "IN_TRANSIT", "RESERVED", "UNDER_MAINTENANCE", "WITH_CUSTOMER"];
+const cylinderStatuses = ["FILLED", "EMPTY", "EMPTY_AT_SELLING_POINT", "EMPTY_IN_TRANSIT", "FILLED_IN_TRANSIT", "FILLED_AT_WAREHOUSE", "FILLED_AT_SELLING_POINT", "DAMAGED", "IN_TRANSIT", "RESERVED", "UNDER_MAINTENANCE", "WITH_CUSTOMER", "QUARANTINED", "SCRAPPED_WRITTEN_OFF", "LOST_OVERDUE"];
 const deliveryStatuses = ["ASSIGNED", "LOADING_CONFIRMED", "CUSTOMER_ARRIVAL", "DELIVERED", "FAILED", "RETURNED", "EXCEPTION"];
 const invoiceStatuses = ["DRAFT", "ISSUED", "PARTIALLY_PAID", "PAID", "OVERDUE", "CANCELLED"];
 const reconciliationStatuses = ["DRAFT", "SUBMITTED", "APPROVED", "RETURNED"];

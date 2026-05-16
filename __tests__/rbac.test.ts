@@ -31,11 +31,13 @@ describe("role-based access control", () => {
     expect(canAccessPath("MSO", "/inventory/stock-balances")).toBe(false);
   });
 
-  it("allows RSO refill sales while blocking unrelated roles", () => {
+  it("allows selling point refill sales while blocking unrelated roles", () => {
     expect(canAccessPath("RSO", "/retail-sales/refills")).toBe(true);
     expect(canAccessPath("RSO", "/api/retail/refill-orders")).toBe(true);
     expect(canAccessPath("SERVICE_CENTRE_STAFF", "/retail-sales/refills")).toBe(true);
-    expect(canAccessPath("MSO", "/retail-sales/refills")).toBe(false);
+    expect(canAccessPath("MSO", "/retail-sales/refills")).toBe(true);
+    expect(canAccessPath("MSO", "/retail-sales/pos")).toBe(true);
+    expect(canAccessPath("MSO", "/api/retail/refill-orders")).toBe(true);
     expect(canAccessPath("CUSTOMER", "/retail-sales/refills")).toBe(false);
     expect(canAccessPath("AUDITOR", "/retail-sales/refills")).toBe(true);
   });

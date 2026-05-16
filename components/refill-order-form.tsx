@@ -49,9 +49,12 @@ export function RefillOrderForm({
             name: formData.get("customerName"),
             phone: formData.get("phone"),
             proofReference: formData.get("proofReference"),
+            kraPin: formData.get("kraPin") || undefined,
             category: formData.get("category"),
             address: formData.get("address"),
-            status: "ACTIVE"
+            status: "ACTIVE",
+            documentPlaceholder: formData.get("documentPlaceholder") || undefined,
+            notes: formData.get("customerNotes") || undefined
           }
         : undefined,
       skuId: formData.get("skuId"),
@@ -110,6 +113,7 @@ export function RefillOrderForm({
           <TextInput label="Customer Name" name="customerName" required />
           <TextInput label="Phone" name="phone" required />
           <TextInput label="ID/Passport/Proof Ref" name="proofReference" required />
+          <TextInput label="KRA PIN" name="kraPin" />
           <label className="block text-sm font-medium text-slate-700">
             Category
             <select className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" name="category" defaultValue="DOMESTIC">
@@ -121,6 +125,8 @@ export function RefillOrderForm({
           <div className="md:col-span-2">
             <TextInput label="Address" name="address" required />
           </div>
+          <TextInput label="Document Placeholder" name="documentPlaceholder" />
+          <TextInput label="Customer Notes" name="customerNotes" />
         </div>
       )}
 

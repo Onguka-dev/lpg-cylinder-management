@@ -66,12 +66,14 @@ describe("RSO refill sales", () => {
     }).success).toBe(false);
   });
 
-  it("requires a customer and limits refill creation to RSO/Admin", () => {
+  it("requires a customer and limits refill creation to selling point roles", () => {
     expect(refillOrderSchema.safeParse({ skuId: "sku-id", paymentMethod: "CARD", filledCylinderCode: "FULL-003", emptyReturnCylinderCode: "EMPTY-003" }).success).toBe(false);
     expect(refillOrderSchema.safeParse({ customerId: "customer-id", skuId: "sku-id", paymentMethod: "CARD", filledCylinderCode: "SAME", emptyReturnCylinderCode: " same " }).success).toBe(false);
     expect(canManageRefillSales("RSO")).toBe(true);
     expect(canManageRefillSales("ADMIN")).toBe(true);
-    expect(canManageRefillSales("MSO")).toBe(false);
+    expect(canManageRefillSales("MSO")).toBe(true);
+    expect(canManageRefillSales("SERVICE_CENTRE_STAFF")).toBe(true);
+    expect(canManageRefillSales("WAREHOUSE_MANAGER")).toBe(false);
     expect(canViewRefillSales("AUDITOR")).toBe(true);
   });
 });

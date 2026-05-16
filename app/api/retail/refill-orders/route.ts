@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const query = url.searchParams.get("q")?.trim();
-  const locationId = ["RSO", "SERVICE_CENTRE_STAFF"].includes(auth.session.user.role) ? await getSalesLocationForSession(auth.session) : null;
+  const locationId = ["RSO", "MSO", "SERVICE_CENTRE_STAFF"].includes(auth.session.user.role) ? await getSalesLocationForSession(auth.session) : null;
 
   const orders = await prisma.refillOrder.findMany({
     where: {
@@ -112,6 +112,7 @@ export async function POST(request: Request) {
         tx.cylinder.findFirst({
           where: {
             ...saleEligibleCylinderWhere(),
+            status: { in: ["FILLED", "FILLED_AT_SELLING_POINT"] },
             skuId: parsed.data.skuId,
             currentLocationId: locationId,
             OR: [
@@ -195,7 +196,7 @@ export async function POST(request: Request) {
             cylinderSizeKg: returnedSizeKg ?? sku.capacityKg,
             skuId: sku.id,
             currentLocationId: locationId,
-            status: "EMPTY",
+            status: "EMPTY_AT_SELLING_POINT",
             notes: parsed.data.emptyReturnNoQr
               ? `Non-coded empty exchange logged by serial for refill ${orderNumber}`
               : `Scanned legacy empty exchange received for refill ${orderNumber}`
@@ -206,7 +207,7 @@ export async function POST(request: Request) {
           where: { id: emptyCylinder.id },
           data: {
             currentLocationId: locationId,
-            status: "EMPTY",
+            status: "EMPTY_AT_SELLING_POINT",
             notes: parsed.data.emptyReturnNoQr
               ? `Non-coded empty exchange returned by ${customer.name} for refill ${orderNumber}`
               : `Empty exchange returned by ${customer.name} for refill ${orderNumber}`
@@ -294,7 +295,7 @@ export async function POST(request: Request) {
           {
             cylinderId: emptyCylinder.id,
             previousStatus: previousEmptyStatus,
-            newStatus: "EMPTY",
+            newStatus: "EMPTY_AT_SELLING_POINT",
             previousLocationId: previousEmptyLocationId,
             newLocationId: locationId,
             changedById: auth.session.user.id,

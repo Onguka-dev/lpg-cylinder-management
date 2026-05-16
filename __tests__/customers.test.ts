@@ -12,13 +12,15 @@ describe("customer management", () => {
       name: "Test Customer",
       phone: "+254700000001",
       proofReference: "ID-TEST-001",
+      kraPin: "P051234567A",
       category: "DOMESTIC",
       address: "Nairobi",
       latitude: -1.2921,
       longitude: 36.8219,
       status: "ACTIVE",
       creditLimit: 1000,
-      notes: "Test notes"
+      notes: "Test notes",
+      documentPlaceholder: "KYC document placeholder"
     });
 
     expect(parsed.success).toBe(true);

@@ -17,7 +17,7 @@ export function requireRefillSalesViewSession(session: AppSession | null): AuthR
 export function requireRefillSalesManageSession(session: AppSession | null): AuthResult {
   if (!session) return { ok: false, status: 401, error: "Sign in to create refill sales." };
   if (!canManageRefillSales(session.user.role)) {
-    return { ok: false, status: 403, error: "Only Admin and RSO users can create refill sales." };
+    return { ok: false, status: 403, error: "Only Admin, RSO, MSO, and service centre users can create refill sales." };
   }
   return { ok: true, session };
 }

@@ -15,7 +15,14 @@ export default async function CustomerProfilePage({
       where: { id: params.id },
       include: {
         invoices: { include: { payments: true }, orderBy: { updatedAt: "desc" }, take: 8 },
-        billingPayments: { include: { invoice: true }, orderBy: { createdAt: "desc" }, take: 8 }
+        billingPayments: { include: { invoice: true }, orderBy: { createdAt: "desc" }, take: 8 },
+        cylinderCustodies: {
+          include: { cylinder: { include: { sku: true, currentLocation: true } }, issueLocation: true, returnLocation: true },
+          orderBy: { issueDate: "desc" },
+          take: 12
+        },
+        refillOrders: { include: { sku: true, filledCylinder: true, emptyReturnCylinder: true, location: true }, orderBy: { createdAt: "desc" }, take: 8 },
+        fullCylinderSales: { include: { sku: true, cylinder: true, location: true }, orderBy: { createdAt: "desc" }, take: 8 }
       }
     })
   ]);
@@ -50,11 +57,13 @@ export default async function CustomerProfilePage({
 
         <dl className="mt-8 grid gap-4 md:grid-cols-3">
           <Detail label="Proof Reference" value={customer.proofReference} />
+          <Detail label="KRA PIN" value={customer.kraPin ?? "Not recorded"} />
           <Detail label="Category" value={formatEnum(customer.category)} />
           <Detail label="Status" value={formatEnum(customer.status)} />
           <Detail label="Address" value={customer.address} />
           <Detail label="Geolocation" value={formatGeo(customer.latitude, customer.longitude)} />
           <Detail label="Credit Limit" value={customer.creditLimit?.toString() ?? "None"} />
+          <Detail label="Document Placeholder" value={customer.documentPlaceholder ?? "Not recorded"} />
           <div className="md:col-span-3">
             <Detail label="Notes" value={customer.notes ?? "None"} />
           </div>
@@ -62,6 +71,38 @@ export default async function CustomerProfilePage({
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
+          <h2 className="text-base font-semibold text-slate-950">Cylinder Custody</h2>
+          <div className="mt-4 grid gap-3">
+            {customer.cylinderCustodies.map((custody) => (
+              <div className="rounded-lg border border-slate-200 p-3 text-sm" key={custody.id}>
+                <span className="font-medium text-slate-900">{custody.cylinder.barcode ?? custody.cylinder.serialNumber}</span>
+                <span className="mt-1 block text-slate-500">
+                  {custody.cylinder.sku?.name ?? `${custody.cylinder.cylinderSizeKg ?? ""}kg`} issued at {custody.issueLocation?.name ?? "Unknown location"}; {custody.returnDate ? `returned to ${custody.returnLocation?.name ?? "recorded location"}` : "currently with customer"}
+                </span>
+              </div>
+            ))}
+            {!customer.cylinderCustodies.length ? <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">No custody records yet.</p> : null}
+          </div>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
+          <h2 className="text-base font-semibold text-slate-950">Refill and Sale History</h2>
+          <div className="mt-4 grid gap-3">
+            {customer.refillOrders.map((order) => (
+              <Link className="rounded-lg border border-slate-200 p-3 text-sm hover:border-brand-200 hover:bg-brand-50" href={`/retail-sales/refills/${order.id}`} key={order.id}>
+                <span className="font-medium text-slate-900">{order.orderNumber}</span>
+                <span className="mt-1 block text-slate-500">{order.sku.name} refill at {order.location.name}; outgoing {order.filledCylinder.barcode ?? order.filledCylinder.serialNumber}</span>
+              </Link>
+            ))}
+            {customer.fullCylinderSales.map((sale) => (
+              <Link className="rounded-lg border border-slate-200 p-3 text-sm hover:border-brand-200 hover:bg-brand-50" href={`/retail-sales/full-cylinder-sales/${sale.id}`} key={sale.id}>
+                <span className="font-medium text-slate-900">{sale.saleNumber}</span>
+                <span className="mt-1 block text-slate-500">{sale.sku.name} full cylinder at {sale.location.name}; outgoing {sale.cylinder.barcode ?? sale.cylinder.serialNumber}</span>
+              </Link>
+            ))}
+            {!customer.refillOrders.length && !customer.fullCylinderSales.length ? <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">No refill or full cylinder sales yet.</p> : null}
+          </div>
+        </div>
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
           <h2 className="text-base font-semibold text-slate-950">Payment History</h2>
           <div className="mt-4 grid gap-3">

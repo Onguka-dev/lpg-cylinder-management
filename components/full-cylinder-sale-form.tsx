@@ -37,9 +37,12 @@ export function FullCylinderSaleForm({
           name: formData.get("customerName"),
           phone: formData.get("phone"),
           proofReference: formData.get("proofReference"),
+          kraPin: formData.get("kraPin") || undefined,
           category: formData.get("category"),
           address: formData.get("address"),
-          status: "ACTIVE"
+          status: "ACTIVE",
+          documentPlaceholder: formData.get("documentPlaceholder") || undefined,
+          notes: formData.get("customerNotes") || undefined
         } : undefined,
         locationId: formData.get("locationId") || undefined,
         cylinderCode: formData.get("cylinderCode"),
@@ -56,7 +59,7 @@ export function FullCylinderSaleForm({
       setError(result.error ?? "Unable to complete full cylinder sale.");
       return;
     }
-    router.push("/retail-sales/full-cylinder-sales");
+    router.push(result.sale?.id ? `/retail-sales/full-cylinder-sales/${result.sale.id}` : "/retail-sales/full-cylinder-sales");
     router.refresh();
   }
 
@@ -82,6 +85,7 @@ export function FullCylinderSaleForm({
           <Input label="Customer Name" name="customerName" required />
           <Input label="Phone" name="phone" required />
           <Input label="ID/Passport/Proof Ref" name="proofReference" required />
+          <Input label="KRA PIN" name="kraPin" />
           <label className="block text-sm font-medium text-slate-700">
             Category
             <select className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" name="category" defaultValue="DOMESTIC">
@@ -91,6 +95,8 @@ export function FullCylinderSaleForm({
             </select>
           </label>
           <div className="md:col-span-2"><Input label="Address" name="address" required /></div>
+          <Input label="Document Placeholder" name="documentPlaceholder" />
+          <Input label="Customer Notes" name="customerNotes" />
         </div>
       )}
 
