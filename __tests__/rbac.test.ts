@@ -42,6 +42,16 @@ describe("role-based access control", () => {
     expect(canAccessPath("AUDITOR", "/retail-sales/refills")).toBe(true);
   });
 
+  it("allows reverse logistics for selling points and warehouse receipt", () => {
+    expect(canAccessPath("RSO", "/retail-sales/empty-returns/new")).toBe(true);
+    expect(canAccessPath("RSO", "/inventory/empty-return-transfers/new")).toBe(true);
+    expect(canAccessPath("MSO", "/api/retail/empty-returns")).toBe(true);
+    expect(canAccessPath("SERVICE_CENTRE_STAFF", "/api/inventory/empty-return-transfers")).toBe(true);
+    expect(canAccessPath("WAREHOUSE_MANAGER", "/api/inventory/empty-return-transfers/transfer-id/actions")).toBe(true);
+    expect(canAccessPath("AUDITOR", "/inventory/empty-return-transfers")).toBe(true);
+    expect(canAccessPath("CUSTOMER", "/retail-sales/empty-returns/new")).toBe(false);
+  });
+
   it("allows selling point full cylinder sales for accountable roles", () => {
     expect(canAccessPath("RSO", "/retail-sales/full-cylinder-sales/new")).toBe(true);
     expect(canAccessPath("RSO", "/api/retail/full-cylinder-sales")).toBe(true);

@@ -104,6 +104,7 @@ export default async function RetailSalesPage() {
     { label: "New POS Sale", href: "/retail-sales/pos", icon: ReceiptText, primary: true },
     { label: "New Refill", href: "/retail-sales/refills/new", icon: ReceiptText },
     { label: "Full Cylinder Sale", href: "/retail-sales/full-cylinder-sales/new", icon: PackagePlus },
+    { label: "Empty Return", href: "/retail-sales/empty-returns/new", icon: ArrowDownToLine },
     { label: "New Customer", href: "/customers/new", icon: UserPlus },
     { label: "Stock Transfer", href: "/inventory/movements/new", icon: RefreshCw },
     { label: "Goods Receipt", href: "/warehouse/incoming", icon: ArrowDownToLine },

@@ -42,6 +42,8 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Rec
     safetyCounts,
     maintenanceCases,
     damagedCylinders,
+    reverseLogisticsCounts,
+    overdueCustodies,
     userActivity
   ] = await Promise.all([
     prisma.masterDataRecord.findMany({ where: { type: "SKU_MASTER", isActive: true }, orderBy: { name: "asc" } }),
@@ -67,6 +69,8 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Rec
     ]),
     prisma.maintenanceCase.findMany({ where: { ...(maintenanceStatuses.includes(filters.status ?? "") ? { status: filters.status as never } : {}) }, include: { cylinder: { include: { sku: true, currentLocation: true } } }, orderBy: { updatedAt: "desc" }, take: 10 }),
     prisma.cylinder.findMany({ where: { OR: [{ status: "DAMAGED" }, { unsafeStatus: true }, { quarantinedStatus: true }] }, include: { sku: true, currentLocation: true }, orderBy: { updatedAt: "desc" }, take: 10 }),
+    prisma.cylinder.groupBy({ by: ["status"], where: { status: { in: ["EMPTY_AT_SELLING_POINT", "EMPTY_IN_TRANSIT", "EMPTY_AT_WAREHOUSE", "DAMAGED", "QUARANTINED"] } }, _count: { _all: true } }),
+    prisma.customerCylinderCustody.count({ where: { returnDate: null, expectedReturnFollowUpDate: { lt: now } } }),
     prisma.auditLog.findMany({ where: { ...(createdAt ? { createdAt } : {}), ...(filters.role ? { user: { role: { name: filters.role as never } } } : {}) }, include: { user: { include: { role: true } } }, orderBy: { createdAt: "desc" }, take: 12 })
   ]);
 
@@ -99,6 +103,7 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Rec
         <Summary label="Delivery Records" value={String(deliveryByStatus.reduce((sum, row) => sum + row._count._all, 0))} />
         <Summary label="Activity Logs" value={String(userActivity.length)} />
         <Summary label="Plant Variances" value={String(plantVarianceCases.length)} />
+        <Summary label="Overdue Returns" value={String(overdueCustodies)} />
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
@@ -156,6 +161,12 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Rec
       </section>
 
       <section className="grid gap-5 lg:grid-cols-2">
+        <ReportPanel title="Reverse Logistics">
+          <BarList rows={reverseLogisticsCounts.map((row) => ({ label: formatReportLabel(row.status), value: row._count._all }))} />
+        </ReportPanel>
+      </section>
+
+      <section className="grid gap-5 lg:grid-cols-2">
         <ReportPanel title="Maintenance Due">
           <SimpleTable headers={["Case", "Cylinder", "SKU", "Location", "Status"]} rows={maintenanceCases.map((item) => [item.caseNumber, item.cylinder.serialNumber, item.cylinder.sku.name, item.cylinder.currentLocation.name, formatReportLabel(item.status)])} />
         </ReportPanel>
@@ -179,7 +190,7 @@ function cylinderWhere(filters: ReportFilters) {
   };
 }
 
-const cylinderStatuses = ["FILLED", "EMPTY", "EMPTY_AT_SELLING_POINT", "EMPTY_IN_TRANSIT", "FILLED_IN_TRANSIT", "FILLED_AT_WAREHOUSE", "FILLED_AT_SELLING_POINT", "DAMAGED", "IN_TRANSIT", "RESERVED", "UNDER_MAINTENANCE", "WITH_CUSTOMER", "QUARANTINED", "SCRAPPED_WRITTEN_OFF", "LOST_OVERDUE"];
+const cylinderStatuses = ["FILLED", "EMPTY", "EMPTY_AT_SELLING_POINT", "EMPTY_AT_WAREHOUSE", "EMPTY_IN_TRANSIT", "FILLED_IN_TRANSIT", "FILLED_AT_WAREHOUSE", "FILLED_AT_SELLING_POINT", "DAMAGED", "IN_TRANSIT", "RESERVED", "UNDER_MAINTENANCE", "WITH_CUSTOMER", "QUARANTINED", "SCRAPPED_WRITTEN_OFF", "LOST_OVERDUE"];
 const deliveryStatuses = ["ASSIGNED", "LOADING_CONFIRMED", "CUSTOMER_ARRIVAL", "DELIVERED", "FAILED", "RETURNED", "EXCEPTION"];
 const invoiceStatuses = ["DRAFT", "ISSUED", "PARTIALLY_PAID", "PAID", "OVERDUE", "CANCELLED"];
 const reconciliationStatuses = ["DRAFT", "SUBMITTED", "APPROVED", "RETURNED"];
@@ -209,7 +220,7 @@ function Filters({ filters, skus, locations, regions }: { filters: ReportFilters
         <Select name="skuId" value={filters.skuId ?? ""} label="All SKUs" options={skus} />
         <select className="rounded-lg border border-slate-300 px-3 py-2 text-sm" name="status" defaultValue={filters.status ?? ""}>
           <option value="">All statuses</option>
-          {["FILLED", "EMPTY", "EMPTY_IN_TRANSIT", "FILLED_IN_TRANSIT", "FILLED_AT_WAREHOUSE", "DAMAGED", "IN_TRANSIT", "RESERVED", "UNDER_MAINTENANCE", "WITH_CUSTOMER", "DELIVERED", "FAILED", "APPROVED", "SUBMITTED", "OPEN", "QUARANTINED"].map((status) => <option value={status} key={status}>{formatReportLabel(status)}</option>)}
+          {["FILLED", "EMPTY", "EMPTY_AT_SELLING_POINT", "EMPTY_AT_WAREHOUSE", "EMPTY_IN_TRANSIT", "FILLED_IN_TRANSIT", "FILLED_AT_WAREHOUSE", "DAMAGED", "IN_TRANSIT", "RESERVED", "UNDER_MAINTENANCE", "WITH_CUSTOMER", "DELIVERED", "FAILED", "APPROVED", "SUBMITTED", "OPEN", "QUARANTINED"].map((status) => <option value={status} key={status}>{formatReportLabel(status)}</option>)}
         </select>
       </div>
       <div className="mt-3 flex flex-wrap gap-3">

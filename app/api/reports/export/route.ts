@@ -53,6 +53,36 @@ async function reportRows(type: ReportType, filters: ReturnType<typeof normalize
     }));
   }
 
+  if (type === "customer-custody-report" && filters.status === "OVERDUE") {
+    const custodies = await prisma.customerCylinderCustody.findMany({
+      where: {
+        returnDate: null,
+        expectedReturnFollowUpDate: { lt: new Date() },
+        ...(filters.skuId ? { cylinder: { skuId: filters.skuId } } : {}),
+        ...(filters.locationId ? { issueLocationId: filters.locationId } : {})
+      },
+      include: { customer: true, cylinder: { include: { sku: true, currentLocation: true } }, issueLocation: true, returnLocation: true },
+      orderBy: { expectedReturnFollowUpDate: "asc" },
+      take: 500
+    });
+    return custodies.map((custody) => ({
+      customer: custody.customer.name,
+      customerPhone: custody.customer.phone,
+      cylinder: custody.cylinder.serialNumber,
+      barcode: custody.cylinder.barcode ?? "",
+      sku: custody.cylinder.sku.name,
+      currentStatus: custody.cylinder.status,
+      currentLocation: custody.cylinder.currentLocation.name,
+      custodyStatus: "OVERDUE",
+      issueLocation: custody.issueLocation?.name ?? "",
+      issueDate: custody.issueDate.toISOString().slice(0, 10),
+      expectedReturn: custody.expectedReturnFollowUpDate?.toISOString().slice(0, 10) ?? "",
+      returnLocation: "",
+      returnDate: "",
+      reference: custody.refillReference ?? custody.saleReference ?? ""
+    }));
+  }
+
   if (type === "customer-custody-report") {
     const custodies = await prisma.customerCylinderCustody.findMany({
       where: {
@@ -179,7 +209,7 @@ async function reportRows(type: ReportType, filters: ReturnType<typeof normalize
   return history.map((entry) => ({ date: entry.createdAt.toISOString(), cylinder: entry.cylinder.serialNumber, fromStatus: entry.previousStatus ?? "", toStatus: entry.newStatus, reason: entry.reason, changedBy: entry.changedBy?.name ?? "System" }));
 }
 
-const cylinderStatuses = ["FILLED", "EMPTY", "EMPTY_AT_SELLING_POINT", "EMPTY_IN_TRANSIT", "FILLED_IN_TRANSIT", "FILLED_AT_WAREHOUSE", "FILLED_AT_SELLING_POINT", "DAMAGED", "IN_TRANSIT", "RESERVED", "UNDER_MAINTENANCE", "WITH_CUSTOMER", "QUARANTINED", "SCRAPPED_WRITTEN_OFF", "LOST_OVERDUE"];
+const cylinderStatuses = ["FILLED", "EMPTY", "EMPTY_AT_SELLING_POINT", "EMPTY_AT_WAREHOUSE", "EMPTY_IN_TRANSIT", "FILLED_IN_TRANSIT", "FILLED_AT_WAREHOUSE", "FILLED_AT_SELLING_POINT", "DAMAGED", "IN_TRANSIT", "RESERVED", "UNDER_MAINTENANCE", "WITH_CUSTOMER", "QUARANTINED", "SCRAPPED_WRITTEN_OFF", "LOST_OVERDUE"];
 const deliveryStatuses = ["ASSIGNED", "LOADING_CONFIRMED", "CUSTOMER_ARRIVAL", "DELIVERED", "FAILED", "RETURNED", "EXCEPTION"];
 const invoiceStatuses = ["DRAFT", "ISSUED", "PARTIALLY_PAID", "PAID", "OVERDUE", "CANCELLED"];
 const reconciliationStatuses = ["DRAFT", "SUBMITTED", "APPROVED", "RETURNED"];

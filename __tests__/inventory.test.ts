@@ -24,6 +24,7 @@ describe("inventory foundation", () => {
       "FILLED",
       "EMPTY",
       "EMPTY_AT_SELLING_POINT",
+      "EMPTY_AT_WAREHOUSE",
       "EMPTY_IN_TRANSIT",
       "FILLED_IN_TRANSIT",
       "FILLED_AT_WAREHOUSE",

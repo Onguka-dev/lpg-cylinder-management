@@ -50,6 +50,10 @@ export function SellingPointPosForm({
     setError("");
 
     if (saleType === "RETURN_ONLY" || saleType === "ACCESSORIES") {
+      if (saleType === "RETURN_ONLY") {
+        router.push("/retail-sales/empty-returns/new");
+        return;
+      }
       setError("This POS stage records full-cylinder sales and refill exchanges. Use the existing return or accessory workflow for this selected sale type.");
       return;
     }

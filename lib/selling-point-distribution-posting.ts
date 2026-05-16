@@ -304,7 +304,7 @@ export function buildSellingPointStockWhere(region?: string | null): Prisma.Cyli
         in: route?.destinationCodes ? [...route.destinationCodes] : [...sellingPointDestinationCodes]
       }
     },
-    status: { in: ["FILLED", "FILLED_AT_SELLING_POINT", "FILLED_AT_WAREHOUSE", "EMPTY"] }
+    status: { in: ["FILLED", "FILLED_AT_SELLING_POINT", "FILLED_AT_WAREHOUSE", "EMPTY", "EMPTY_AT_SELLING_POINT"] }
   };
 }
 

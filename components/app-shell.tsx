@@ -400,6 +400,7 @@ function buildNavigationSections(role: AppRole) {
             { key: "supplier-receipts", href: "/inventory/supplier-receipts", label: "Supplier Receipts", icon: PackageCheck },
             { key: "plant-transfers", href: "/inventory/plant-transfers", label: "Plant Transfers", icon: Truck },
             { key: "selling-point-dispatches", href: "/inventory/selling-point-dispatches", label: "Selling Point Dispatches", icon: Truck },
+            { key: "empty-return-transfers", href: "/inventory/empty-return-transfers", label: "Empty Return Transfers", icon: Truck },
             { key: "stock-movements", href: "/inventory/movements", label: "Stock Movements", icon: PackageCheck },
             { key: "transfer-requests", href: "/transfers", label: "Transfer Requests", icon: Truck },
             { key: "warehouse-reports", href: "/reports", label: "Warehouse Reports", icon: BarChart3 }
@@ -413,6 +414,7 @@ function buildNavigationSections(role: AppRole) {
       items: [
         { key: "retail-pos", href: "/retail-sales/pos", label: "POS", icon: ShoppingCart },
         { key: "retail-sales", href: "/retail-sales", label: "Retail Sales", icon: ShoppingCart },
+        { key: "empty-returns", href: "/retail-sales/empty-returns/new", label: "Empty Returns", icon: PackageCheck },
         { key: "retail-inventory", href: "/retail-inventory", label: "Retail Inventory", icon: Boxes },
         { key: "retail-complaints", href: "/retail-sales/complaints", label: "Complaints", icon: Bell },
         { key: "rso", href: "/rso", label: "RSO Workspace", icon: MapPinned }
