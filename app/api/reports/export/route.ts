@@ -30,7 +30,7 @@ export async function GET(request: Request) {
 async function reportRows(type: ReportType, filters: ReturnType<typeof normalizeReportFilters>) {
   const createdAt = dateRange(filters);
 
-  if (type === "inventory-levels" || type === "cylinder-status" || type === "cylinder-location") {
+  if (type === "stock-report" || type === "inventory-levels" || type === "cylinder-status" || type === "cylinder-location") {
     const cylinders = await prisma.cylinder.findMany({
       where: {
         ...(filters.skuId ? { skuId: filters.skuId } : {}),
@@ -50,6 +50,43 @@ async function reportRows(type: ReportType, filters: ReturnType<typeof normalize
       hydroTestDueDate: cylinder.hydroTestDueDate?.toISOString().slice(0, 10) ?? "",
       unsafe: cylinder.unsafeStatus,
       quarantined: cylinder.quarantinedStatus
+    }));
+  }
+
+  if (type === "customer-custody-report") {
+    const custodies = await prisma.customerCylinderCustody.findMany({
+      where: {
+        ...(createdAt ? { issueDate: createdAt } : {}),
+        ...(filters.skuId ? { cylinder: { skuId: filters.skuId } } : {}),
+        ...(filters.locationId ? { OR: [{ issueLocationId: filters.locationId }, { returnLocationId: filters.locationId }] } : {}),
+        ...(filters.status === "OPEN" ? { returnDate: null } : {}),
+        ...(filters.status === "RETURNED" ? { returnDate: { not: null } } : {})
+      },
+      include: {
+        customer: true,
+        cylinder: { include: { sku: true, currentLocation: true } },
+        issueLocation: true,
+        returnLocation: true
+      },
+      orderBy: { issueDate: "desc" },
+      take: 500
+    });
+
+    return custodies.map((custody) => ({
+      customer: custody.customer.name,
+      customerPhone: custody.customer.phone,
+      cylinder: custody.cylinder.serialNumber,
+      barcode: custody.cylinder.barcode ?? "",
+      sku: custody.cylinder.sku.name,
+      currentStatus: custody.cylinder.status,
+      currentLocation: custody.cylinder.currentLocation.name,
+      custodyStatus: custody.returnDate ? "RETURNED" : "OPEN",
+      issueLocation: custody.issueLocation?.name ?? "",
+      issueDate: custody.issueDate.toISOString().slice(0, 10),
+      expectedReturn: custody.expectedReturnFollowUpDate?.toISOString().slice(0, 10) ?? "",
+      returnLocation: custody.returnLocation?.name ?? "",
+      returnDate: custody.returnDate?.toISOString().slice(0, 10) ?? "",
+      reference: custody.refillReference ?? ""
     }));
   }
 

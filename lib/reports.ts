@@ -2,6 +2,9 @@ import { z } from "zod";
 import type { AppRole } from "@/lib/auth-types";
 
 export const reportTypes = [
+  "movement-report",
+  "stock-report",
+  "customer-custody-report",
   "inventory-levels",
   "cylinder-status",
   "cylinder-location",

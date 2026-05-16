@@ -10,11 +10,11 @@ export default async function EditReconciliationPage({ params }: { params: { id:
 
   const reconciliation = await prisma.dailyReconciliation.findUnique({ where: { id: params.id } });
   if (!reconciliation) notFound();
-  if (["RSO", "MSO"].includes(session.user.role) && reconciliation.ownerId !== session.user.id) redirect("/unauthorized");
+  if (["RSO", "MSO", "SERVICE_CENTRE_STAFF"].includes(session.user.role) && reconciliation.ownerId !== session.user.id) redirect("/unauthorized");
   if (!["DRAFT", "RETURNED"].includes(reconciliation.status)) redirect(`/reconciliations/${reconciliation.id}`);
 
   const users = await prisma.user.findMany({
-    where: { role: { name: { in: ["RSO", "MSO", "WAREHOUSE_MANAGER"] } } },
+    where: { role: { name: { in: ["RSO", "MSO", "WAREHOUSE_MANAGER", "SERVICE_CENTRE_STAFF"] } } },
     include: { role: true, location: true },
     orderBy: { name: "asc" }
   });

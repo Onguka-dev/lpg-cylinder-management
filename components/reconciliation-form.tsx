@@ -27,7 +27,7 @@ export function ReconciliationForm({ reconciliation, users, currentUserId, curre
   const router = useRouter();
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const defaultScope = currentRole === "WAREHOUSE_MANAGER" ? "WAREHOUSE" : currentRole === "MSO" ? "MSO" : "RSO";
+  const defaultScope = currentRole === "WAREHOUSE_MANAGER" ? "WAREHOUSE" : currentRole === "MSO" ? "MSO" : currentRole === "SERVICE_CENTRE_STAFF" ? "SERVICE_CENTRE" : "RSO";
   const canPickOwner = ["ADMIN", "WAREHOUSE_MANAGER"].includes(currentRole);
   const isEditing = Boolean(reconciliation?.id);
   const dateValue = reconciliation?.reconciliationDate ? new Date(reconciliation.reconciliationDate).toISOString().slice(0, 10) : "";

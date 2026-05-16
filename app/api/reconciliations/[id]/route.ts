@@ -14,7 +14,7 @@ export async function GET(_request: Request, { params }: { params: { id: string 
     include: { owner: { include: { role: true } }, location: true, createdBy: true, reviewedBy: true }
   });
   if (!reconciliation) return NextResponse.json({ error: "Reconciliation not found." }, { status: 404 });
-  if (["RSO", "MSO"].includes(auth.session.user.role) && reconciliation.ownerId !== auth.session.user.id) {
+  if (["RSO", "MSO", "SERVICE_CENTRE_STAFF"].includes(auth.session.user.role) && reconciliation.ownerId !== auth.session.user.id) {
     return NextResponse.json({ error: "You can only view your own reconciliation." }, { status: 403 });
   }
 
@@ -31,7 +31,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   if (!["DRAFT", "RETURNED"].includes(reconciliation.status)) {
     return NextResponse.json({ error: "Only draft or returned reconciliations can be edited. Approved reconciliations require Admin override." }, { status: 400 });
   }
-  if (["RSO", "MSO"].includes(auth.session.user.role) && reconciliation.ownerId !== auth.session.user.id) {
+  if (["RSO", "MSO", "SERVICE_CENTRE_STAFF"].includes(auth.session.user.role) && reconciliation.ownerId !== auth.session.user.id) {
     return NextResponse.json({ error: "You can only edit your own reconciliation." }, { status: 403 });
   }
 
@@ -47,13 +47,17 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   const roleScope: Partial<Record<RoleName, string>> = {
     RSO: "RSO",
     MSO: "MSO",
-    WAREHOUSE_MANAGER: "WAREHOUSE"
+    WAREHOUSE_MANAGER: "WAREHOUSE",
+    SERVICE_CENTRE_STAFF: "SERVICE_CENTRE"
   };
   if (roleScope[owner.role.name] !== parsed.data.scope) {
     return NextResponse.json({ error: "The selected user does not match the reconciliation scope." }, { status: 400 });
   }
-  if (["RSO", "MSO"].includes(auth.session.user.role) && owner.id !== auth.session.user.id) {
-    return NextResponse.json({ error: "RSO and MSO users can only edit their own reconciliation." }, { status: 403 });
+  if (["RSO", "MSO", "SERVICE_CENTRE_STAFF"].includes(auth.session.user.role) && owner.id !== auth.session.user.id) {
+    return NextResponse.json({ error: "Sales and service centre users can only edit their own reconciliation." }, { status: 403 });
+  }
+  if (auth.session.user.role === "SERVICE_CENTRE_STAFF" && parsed.data.scope !== "SERVICE_CENTRE") {
+    return NextResponse.json({ error: "Service centre users can only edit service centre reconciliations." }, { status: 403 });
   }
 
   const summary = await calculateReconciliationSummary({

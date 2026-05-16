@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import type { AppRole } from "@/lib/auth-types";
 import { prisma } from "@/lib/prisma";
 
-export const reconciliationScopes = ["RSO", "MSO", "WAREHOUSE"] as const;
+export const reconciliationScopes = ["RSO", "MSO", "WAREHOUSE", "SERVICE_CENTRE"] as const;
 export const reconciliationStatuses = ["DRAFT", "SUBMITTED", "APPROVED", "RETURNED"] as const;
 
 export const reconciliationCreateSchema = z.object({

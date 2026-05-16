@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   const query = url.searchParams.get("q")?.trim();
   const status = url.searchParams.get("status")?.trim();
   const scope = url.searchParams.get("scope")?.trim();
-  const ownOnly = ["RSO", "MSO"].includes(auth.session.user.role);
+  const ownOnly = ["RSO", "MSO", "SERVICE_CENTRE_STAFF"].includes(auth.session.user.role);
 
   const reconciliations = await prisma.dailyReconciliation.findMany({
     where: {
@@ -62,20 +62,24 @@ export async function POST(request: Request) {
   const roleScope: Partial<Record<RoleName, string>> = {
     RSO: "RSO",
     MSO: "MSO",
-    WAREHOUSE_MANAGER: "WAREHOUSE"
+    WAREHOUSE_MANAGER: "WAREHOUSE",
+    SERVICE_CENTRE_STAFF: "SERVICE_CENTRE"
   };
   if (roleScope[owner.role.name] !== parsed.data.scope) {
     return NextResponse.json({ error: "The selected user does not match the reconciliation scope." }, { status: 400 });
   }
 
-  if (["RSO", "MSO"].includes(auth.session.user.role) && owner.id !== auth.session.user.id) {
-    return NextResponse.json({ error: "RSO and MSO users can only create their own close-of-day reconciliation." }, { status: 403 });
+  if (["RSO", "MSO", "SERVICE_CENTRE_STAFF"].includes(auth.session.user.role) && owner.id !== auth.session.user.id) {
+    return NextResponse.json({ error: "Sales and service centre users can only create their own close-of-day reconciliation." }, { status: 403 });
   }
   if (auth.session.user.role === "RSO" && parsed.data.scope !== "RSO") {
     return NextResponse.json({ error: "RSO users can only create RSO reconciliations." }, { status: 403 });
   }
   if (auth.session.user.role === "MSO" && parsed.data.scope !== "MSO") {
     return NextResponse.json({ error: "MSO users can only create MSO reconciliations." }, { status: 403 });
+  }
+  if (auth.session.user.role === "SERVICE_CENTRE_STAFF" && parsed.data.scope !== "SERVICE_CENTRE") {
+    return NextResponse.json({ error: "Service centre users can only create service centre reconciliations." }, { status: 403 });
   }
 
   const summary = await calculateReconciliationSummary({

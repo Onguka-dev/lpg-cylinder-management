@@ -16,14 +16,14 @@ import {
 
 describe("daily reconciliation controls", () => {
   it("supports the Stage 11 scopes and review states", () => {
-    expect(reconciliationScopes).toEqual(["RSO", "MSO", "WAREHOUSE"]);
+    expect(reconciliationScopes).toEqual(["RSO", "MSO", "WAREHOUSE", "SERVICE_CENTRE"]);
     expect(reconciliationStatuses).toEqual(["DRAFT", "SUBMITTED", "APPROVED", "RETURNED"]);
   });
 
   it("validates close-of-day input clearly", () => {
     expect(reconciliationCreateSchema.safeParse({
       reconciliationDate: "2026-05-06",
-      scope: "RSO",
+      scope: "SERVICE_CENTRE",
       ownerId: "user-id",
       actualClosingStock: 10,
       actualCash: 1250

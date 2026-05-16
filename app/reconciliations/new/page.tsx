@@ -9,7 +9,7 @@ export default async function NewReconciliationPage() {
   if (!session || !canCreateReconciliations(session.user.role)) redirect("/unauthorized");
 
   const users = await prisma.user.findMany({
-    where: { role: { name: { in: ["RSO", "MSO", "WAREHOUSE_MANAGER"] } } },
+    where: { role: { name: { in: ["RSO", "MSO", "WAREHOUSE_MANAGER", "SERVICE_CENTRE_STAFF"] } } },
     include: { role: true, location: true },
     orderBy: { name: "asc" }
   });

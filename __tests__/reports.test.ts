@@ -10,6 +10,9 @@ import {
 
 describe("reporting and analytics", () => {
   it("includes required Stage 13 report types", () => {
+    expect(reportTypes).toContain("movement-report");
+    expect(reportTypes).toContain("stock-report");
+    expect(reportTypes).toContain("customer-custody-report");
     expect(reportTypes).toContain("inventory-levels");
     expect(reportTypes).toContain("sales-revenue");
     expect(reportTypes).toContain("reconciliation-variances");

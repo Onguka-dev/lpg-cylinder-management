@@ -93,6 +93,7 @@ describe("role-based access control", () => {
     expect(canAccessPath("RSO", "/reconciliations")).toBe(true);
     expect(canAccessPath("MSO", "/api/reconciliations")).toBe(true);
     expect(canAccessPath("WAREHOUSE_MANAGER", "/reconciliations/new")).toBe(true);
+    expect(canAccessPath("SERVICE_CENTRE_STAFF", "/api/reconciliations")).toBe(true);
     expect(canAccessPath("AUDITOR", "/reconciliations")).toBe(true);
     expect(canAccessPath("CUSTOMER", "/reconciliations")).toBe(false);
   });
