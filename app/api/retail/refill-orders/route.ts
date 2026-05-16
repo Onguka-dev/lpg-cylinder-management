@@ -100,7 +100,11 @@ export async function POST(request: Request) {
       if (!customerId) throw new Error("CUSTOMER_REQUIRED");
 
       const filledCode = normalizeScanValue(parsed.data.filledCylinderCode);
-      const emptyCode = normalizeScanValue(parsed.data.emptyReturnCylinderCode);
+      const emptyIdentifier = parsed.data.emptyReturnNoQr
+        ? parsed.data.emptyReturnSerialNumber
+        : parsed.data.emptyReturnCylinderCode;
+      if (!emptyIdentifier) throw new Error("EMPTY_RETURN_IDENTIFIER_REQUIRED");
+      const emptyCode = normalizeScanValue(emptyIdentifier);
 
       const [customer, sku, filledCylinder] = await Promise.all([
         tx.customer.findUnique({ where: { id: customerId } }),
@@ -148,16 +152,28 @@ export async function POST(request: Request) {
       const followUpDate = new Date();
       followUpDate.setDate(followUpDate.getDate() + 30);
 
+      const emptyLookupWhere = parsed.data.emptyReturnNoQr
+        ? {
+            OR: [
+              { serialNumber: { equals: emptyCode, mode: "insensitive" as const } },
+              { factorySerialNo: { equals: emptyCode, mode: "insensitive" as const } }
+            ]
+          }
+        : {
+            OR: [
+              { barcode: { equals: emptyCode, mode: "insensitive" as const } },
+              { serialNumber: { equals: emptyCode, mode: "insensitive" as const } },
+              { factorySerialNo: { equals: emptyCode, mode: "insensitive" as const } },
+              { qrCode: { equals: emptyCode, mode: "insensitive" as const } }
+            ]
+          };
+
       let emptyCylinder = await tx.cylinder.findFirst({
-        where: {
-          OR: [
-            { barcode: { equals: emptyCode, mode: "insensitive" } },
-            { serialNumber: { equals: emptyCode, mode: "insensitive" } },
-            { factorySerialNo: { equals: emptyCode, mode: "insensitive" } },
-            { qrCode: { equals: emptyCode, mode: "insensitive" } }
-          ]
-        }
+        where: emptyLookupWhere
       });
+      const returnedSizeKg = parsed.data.emptyReturnNoQr ? parsed.data.emptyReturnSizeKg : sku.capacityKg;
+      if (parsed.data.emptyReturnNoQr && returnedSizeKg !== sku.capacityKg) throw new Error("EMPTY_RETURN_SKU_MISMATCH");
+      if (emptyCylinder?.cylinderSizeKg && returnedSizeKg && emptyCylinder.cylinderSizeKg !== returnedSizeKg) throw new Error("EMPTY_RETURN_SKU_MISMATCH");
       if (emptyCylinder?.skuId !== undefined && emptyCylinder.skuId !== sku.id) throw new Error("EMPTY_RETURN_SKU_MISMATCH");
 
       const openReturnCustody = emptyCylinder
@@ -174,13 +190,15 @@ export async function POST(request: Request) {
         emptyCylinder = await tx.cylinder.create({
           data: {
             serialNumber: emptyCode,
-            barcode: emptyCode,
+            barcode: parsed.data.emptyReturnNoQr ? null : emptyCode,
             factorySerialNo: emptyCode,
-            cylinderSizeKg: sku.capacityKg,
+            cylinderSizeKg: returnedSizeKg ?? sku.capacityKg,
             skuId: sku.id,
             currentLocationId: locationId,
             status: "EMPTY",
-            notes: `Scanned legacy empty exchange received for refill ${orderNumber}`
+            notes: parsed.data.emptyReturnNoQr
+              ? `Non-coded empty exchange logged by serial for refill ${orderNumber}`
+              : `Scanned legacy empty exchange received for refill ${orderNumber}`
           }
         });
       } else {
@@ -189,7 +207,9 @@ export async function POST(request: Request) {
           data: {
             currentLocationId: locationId,
             status: "EMPTY",
-            notes: `Empty exchange returned by ${customer.name} for refill ${orderNumber}`
+            notes: parsed.data.emptyReturnNoQr
+              ? `Non-coded empty exchange returned by ${customer.name} for refill ${orderNumber}`
+              : `Empty exchange returned by ${customer.name} for refill ${orderNumber}`
           }
         });
       }
@@ -249,7 +269,13 @@ export async function POST(request: Request) {
             scannedLocationId: locationId,
             cylinderId: emptyCylinder.id,
             userId: auth.session.user.id,
-            metadata: { orderNumber, scanRole: "RETURNED_EMPTY_REFILL_EXCHANGE", custodyClosed: Boolean(openReturnCustody) }
+            metadata: {
+              orderNumber,
+              scanRole: "RETURNED_EMPTY_REFILL_EXCHANGE",
+              custodyClosed: Boolean(openReturnCustody),
+              nonCodedReturn: Boolean(parsed.data.emptyReturnNoQr),
+              returnedSizeKg
+            }
           }
         ]
       });
@@ -352,6 +378,7 @@ function errorMessage(message: string) {
     SKU_NOT_FOUND: "Selected SKU was not found.",
     NO_FILLED_STOCK: "No filled stock is available for this SKU at your assigned outlet.",
     SCANNED_FILLED_CYLINDER_NOT_AVAILABLE: "Scanned outgoing full cylinder is not available for this SKU at the selected sales location.",
+    EMPTY_RETURN_IDENTIFIER_REQUIRED: "Scan the returned empty cylinder, or enter the serial number for a no-QR return.",
     EMPTY_RETURN_SKU_MISMATCH: "Returned empty cylinder does not match the selected SKU/cylinder size.",
     EMPTY_RETURN_DIFFERENT_CUSTOMER: "Returned empty cylinder is currently assigned to a different customer.",
     CYLINDER_ALREADY_IN_CUSTOMER_CUSTODY: "This cylinder already has an open customer custody record."

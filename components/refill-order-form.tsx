@@ -29,6 +29,7 @@ export function RefillOrderForm({
   const [mode, setMode] = useState<"existing" | "new">("existing");
   const [selectedSkuId, setSelectedSkuId] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"CASH" | "MPESA" | "CARD">("CASH");
+  const [emptyReturnNoQr, setEmptyReturnNoQr] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const quantity = 1;
@@ -56,7 +57,10 @@ export function RefillOrderForm({
       skuId: formData.get("skuId"),
       locationId: formData.get("locationId") || undefined,
       filledCylinderCode: formData.get("filledCylinderCode"),
-      emptyReturnCylinderCode: formData.get("emptyReturnCylinderCode"),
+      emptyReturnCylinderCode: emptyReturnNoQr ? undefined : formData.get("emptyReturnCylinderCode"),
+      emptyReturnNoQr,
+      emptyReturnSerialNumber: emptyReturnNoQr ? formData.get("emptyReturnSerialNumber") : undefined,
+      emptyReturnSizeKg: emptyReturnNoQr ? formData.get("emptyReturnSizeKg") : undefined,
       paymentMethod: formData.get("paymentMethod"),
       paymentReference: formData.get("paymentReference") || undefined,
       notes: formData.get("notes") || undefined
@@ -167,7 +171,28 @@ export function RefillOrderForm({
         ) : null}
 
         <TextInput label="Outgoing full cylinder scan" name="filledCylinderCode" placeholder="Scan filled cylinder barcode / serial" required />
-        <TextInput label="Returned empty cylinder scan" name="emptyReturnCylinderCode" placeholder="Scan returned empty barcode / serial" required />
+        <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3 md:col-span-2">
+          <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <input className="h-4 w-4 rounded border-slate-300" checked={emptyReturnNoQr} onChange={(event) => setEmptyReturnNoQr(event.target.checked)} type="checkbox" />
+            Returned empty has no QR/barcode
+          </label>
+          {emptyReturnNoQr ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              <TextInput label="Returned empty serial number" name="emptyReturnSerialNumber" placeholder="Enter cylinder serial number" required />
+              <label className="block text-sm font-medium text-slate-700">
+                Returned empty size
+                <select className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 text-sm" name="emptyReturnSizeKg" required defaultValue="">
+                  <option value="">Select size...</option>
+                  <option value="6">6kg</option>
+                  <option value="13">13kg</option>
+                  <option value="50">50kg</option>
+                </select>
+              </label>
+            </div>
+          ) : (
+            <TextInput label="Returned empty cylinder scan" name="emptyReturnCylinderCode" placeholder="Scan returned empty barcode / serial" required />
+          )}
+        </div>
 
         <label className="block text-sm font-semibold text-slate-700">
           Payment Method

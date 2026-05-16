@@ -45,6 +45,27 @@ describe("RSO refill sales", () => {
     expect(parsed.success).toBe(true);
   });
 
+  it("validates no-QR empty returns with serial and size", () => {
+    const parsed = refillOrderSchema.safeParse({
+      customerId: "customer-id",
+      skuId: "sku-id",
+      filledCylinderCode: "FULL-004",
+      emptyReturnNoQr: true,
+      emptyReturnSerialNumber: "EMPTY-NOQR-004",
+      emptyReturnSizeKg: 6,
+      paymentMethod: "CASH"
+    });
+
+    expect(parsed.success).toBe(true);
+    expect(refillOrderSchema.safeParse({
+      customerId: "customer-id",
+      skuId: "sku-id",
+      filledCylinderCode: "FULL-005",
+      emptyReturnNoQr: true,
+      paymentMethod: "CASH"
+    }).success).toBe(false);
+  });
+
   it("requires a customer and limits refill creation to RSO/Admin", () => {
     expect(refillOrderSchema.safeParse({ skuId: "sku-id", paymentMethod: "CARD", filledCylinderCode: "FULL-003", emptyReturnCylinderCode: "EMPTY-003" }).success).toBe(false);
     expect(refillOrderSchema.safeParse({ customerId: "customer-id", skuId: "sku-id", paymentMethod: "CARD", filledCylinderCode: "SAME", emptyReturnCylinderCode: " same " }).success).toBe(false);
