@@ -7,6 +7,7 @@ import {
   findDuplicateCodes,
   formatSellingPointLabel,
   getDispatchableSourceStatuses,
+  getSellingPointRouteForLocationCode,
   getSellingPointRouteForDestination,
   getSellingPointRouteForSource,
   isWarehouseDestination,
@@ -72,6 +73,7 @@ describe("selling point distribution workflow", () => {
   it("keeps Nairobi and Western dispatch routes separate", () => {
     expect(getSellingPointRouteForSource("WH-LAKE-GAS-NBO")?.key).toBe("NAIROBI");
     expect(getSellingPointRouteForDestination("SC-DAGORETTI")?.key).toBe("NAIROBI");
+    expect(getSellingPointRouteForLocationCode("WH-OILCOM-NBO")?.destinationCodes).toContain("SC-MLOLONGO");
     expect(sourceCanDispatchToDestination("WH-LAKE-GAS-NBO", "SC-DAGORETTI")).toBe(true);
     expect(sourceCanDispatchToDestination("WH-OILCOM-NBO", "SC-GARDEN-ESTATE")).toBe(true);
     expect(sourceCanDispatchToDestination("WH-WANDIEGE-MAIN", "SC-DAGORETTI")).toBe(false);

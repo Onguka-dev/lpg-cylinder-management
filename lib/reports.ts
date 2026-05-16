@@ -5,6 +5,7 @@ export const reportTypes = [
   "movement-report",
   "stock-report",
   "customer-custody-report",
+  "nairobi-service-centre-stock",
   "inventory-levels",
   "cylinder-status",
   "cylinder-location",

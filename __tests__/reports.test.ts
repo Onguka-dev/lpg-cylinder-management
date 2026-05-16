@@ -13,6 +13,7 @@ describe("reporting and analytics", () => {
     expect(reportTypes).toContain("movement-report");
     expect(reportTypes).toContain("stock-report");
     expect(reportTypes).toContain("customer-custody-report");
+    expect(reportTypes).toContain("nairobi-service-centre-stock");
     expect(reportTypes).toContain("inventory-levels");
     expect(reportTypes).toContain("sales-revenue");
     expect(reportTypes).toContain("reconciliation-variances");

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { getCurrentSession } from "@/lib/auth";
 import { writeAuditLog } from "@/lib/audit";
+import { getAssignedMasterLocationId } from "@/lib/inventory-movement-access";
 import { prisma } from "@/lib/prisma";
 import {
   canManageSellingPointDispatch,
@@ -12,6 +13,7 @@ import {
 import {
   buildSellingPointSearchWhere,
   createSellingPointDispatch,
+  getLocationRegion,
   sellingPointActionErrorMessage
 } from "@/lib/selling-point-distribution-posting";
 
@@ -43,9 +45,15 @@ export async function POST(request: Request) {
   }
   const duplicate = findDuplicateCodes(parsed.data.cylinderCodes);
   if (duplicate) return NextResponse.json({ error: `Duplicate scanned cylinder in this batch: ${duplicate}.` }, { status: 409 });
+  const assignedLocationId = session.user.role === "ADMIN" ? null : await getAssignedMasterLocationId(session.user.id);
+  const assignedLocation = assignedLocationId
+    ? await prisma.masterDataRecord.findUnique({ where: { id: assignedLocationId } })
+    : null;
 
   try {
-    const movements = await createSellingPointDispatch(prisma, parsed.data, session.user.id, session.user.role);
+    const movements = await createSellingPointDispatch(prisma, parsed.data, session.user.id, session.user.role, {
+      allowedRegion: assignedLocation ? getLocationRegion(assignedLocation) : null
+    });
     await writeAuditLog({
       action: "SELLING_POINT_DISPATCHED",
       category: "INVENTORY",

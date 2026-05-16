@@ -49,9 +49,12 @@ export async function createSellingPointDispatch(
   db: Db,
   input: SellingPointDispatchInput,
   userId?: string | null,
-  userRole?: string | null
+  userRole?: string | null,
+  options?: { allowedRegion?: string | null }
 ) {
-  const { source: defaultSource, sources, destinations } = await getSellingPointLocations(db);
+  const { source: defaultSource, sources, destinations } = await getSellingPointLocations(db, {
+    preferredRegion: userRole === "ADMIN" ? null : options?.allowedRegion
+  });
   const source = input.sourceLocationId
     ? sources.find((location) => location.id === input.sourceLocationId)
     : defaultSource;

@@ -90,6 +90,35 @@ async function reportRows(type: ReportType, filters: ReturnType<typeof normalize
     }));
   }
 
+  if (type === "nairobi-service-centre-stock") {
+    const stock = await prisma.cylinder.groupBy({
+      by: ["currentLocationId", "cylinderSizeKg", "status"],
+      where: {
+        currentLocation: {
+          code: { in: ["SC-GARDEN-ESTATE", "SC-JOGOO-ROAD", "SC-NAIROBI-WEST", "SC-DAGORETTI", "SC-MLOLONGO"] }
+        },
+        ...(filters.skuId ? { skuId: filters.skuId } : {}),
+        ...(filters.locationId ? { currentLocationId: filters.locationId } : {}),
+        ...(cylinderStatuses.includes(filters.status ?? "") ? { status: filters.status as never } : {})
+      },
+      _count: { _all: true },
+      orderBy: [{ currentLocationId: "asc" }, { cylinderSizeKg: "asc" }, { status: "asc" }]
+    });
+    const locations = await prisma.masterDataRecord.findMany({
+      where: { id: { in: stock.map((row) => row.currentLocationId) } },
+      select: { id: true, code: true, name: true }
+    });
+    const locationById = new Map(locations.map((location) => [location.id, location]));
+
+    return stock.map((row) => ({
+      centreCode: locationById.get(row.currentLocationId)?.code ?? "",
+      centre: locationById.get(row.currentLocationId)?.name ?? "",
+      cylinderSizeKg: row.cylinderSizeKg ?? "",
+      status: row.status,
+      quantity: row._count._all
+    }));
+  }
+
   if (type === "sales-revenue") {
     const [refills, fieldSales, payments] = await Promise.all([
       prisma.refillOrder.findMany({ where: { ...(createdAt ? { createdAt } : {}), ...(filters.skuId ? { skuId: filters.skuId } : {}), ...(filters.locationId ? { locationId: filters.locationId } : {}) }, include: { customer: true, sku: true, location: true }, take: 500 }),
