@@ -305,6 +305,7 @@ enum NotificationEventType {
   MAINTENANCE_ALERT
   EMERGENCY_RECALL
   SAFETY_WARNING
+  REFILL_FOLLOW_UP
 }
 
 enum NotificationChannel {

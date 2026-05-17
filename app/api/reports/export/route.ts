@@ -83,6 +83,62 @@ async function reportRows(type: ReportType, filters: ReturnType<typeof normalize
     }));
   }
 
+  if (type === "customer-custody-report" && filters.status === "DUE_REFILL_FOLLOW_UP") {
+    const dueTo = new Date();
+    dueTo.setDate(dueTo.getDate() + 7);
+    const custodies = await prisma.customerCylinderCustody.findMany({
+      where: {
+        returnDate: null,
+        expectedReturnFollowUpDate: { gte: new Date(), lte: dueTo },
+        ...(filters.skuId ? { cylinder: { skuId: filters.skuId } } : {}),
+        ...(filters.locationId ? { issueLocationId: filters.locationId } : {})
+      },
+      include: { customer: true, cylinder: { include: { sku: true, currentLocation: true } }, issueLocation: true, returnLocation: true },
+      orderBy: { expectedReturnFollowUpDate: "asc" },
+      take: 500
+    });
+    return custodyRows(custodies, "DUE_REFILL_FOLLOW_UP");
+  }
+
+  if (type === "customer-custody-report" && filters.status === "INACTIVE_WITH_CYLINDERS") {
+    const custodies = await prisma.customerCylinderCustody.findMany({
+      where: {
+        returnDate: null,
+        customer: { status: { not: "ACTIVE" } },
+        ...(filters.skuId ? { cylinder: { skuId: filters.skuId } } : {}),
+        ...(filters.locationId ? { issueLocationId: filters.locationId } : {})
+      },
+      include: { customer: true, cylinder: { include: { sku: true, currentLocation: true } }, issueLocation: true, returnLocation: true },
+      orderBy: { issueDate: "desc" },
+      take: 500
+    });
+    return custodyRows(custodies, "INACTIVE_WITH_CYLINDERS");
+  }
+
+  if (type === "customer-custody-report" && filters.status === "HIGH_FREQUENCY") {
+    const start = new Date();
+    start.setDate(start.getDate() - 90);
+    const [refills, fullSales] = await Promise.all([
+      prisma.refillOrder.groupBy({ by: ["customerId"], where: { createdAt: { gte: start } }, _count: { _all: true } }),
+      prisma.fullCylinderSale.groupBy({ by: ["customerId"], where: { createdAt: { gte: start } }, _count: { _all: true } })
+    ]);
+    const counts = new Map<string, number>();
+    for (const row of refills) counts.set(row.customerId, (counts.get(row.customerId) ?? 0) + row._count._all);
+    for (const row of fullSales) counts.set(row.customerId, (counts.get(row.customerId) ?? 0) + row._count._all);
+    const highFrequencyIds = Array.from(counts.entries()).filter(([, count]) => count >= 3).map(([customerId]) => customerId);
+    const custodies = await prisma.customerCylinderCustody.findMany({
+      where: {
+        customerId: { in: highFrequencyIds },
+        ...(filters.skuId ? { cylinder: { skuId: filters.skuId } } : {}),
+        ...(filters.locationId ? { OR: [{ issueLocationId: filters.locationId }, { returnLocationId: filters.locationId }] } : {})
+      },
+      include: { customer: true, cylinder: { include: { sku: true, currentLocation: true } }, issueLocation: true, returnLocation: true },
+      orderBy: { issueDate: "desc" },
+      take: 500
+    });
+    return custodyRows(custodies, "HIGH_FREQUENCY", counts);
+  }
+
   if (type === "customer-custody-report") {
     const custodies = await prisma.customerCylinderCustody.findMany({
       where: {
@@ -102,22 +158,7 @@ async function reportRows(type: ReportType, filters: ReturnType<typeof normalize
       take: 500
     });
 
-    return custodies.map((custody) => ({
-      customer: custody.customer.name,
-      customerPhone: custody.customer.phone,
-      cylinder: custody.cylinder.serialNumber,
-      barcode: custody.cylinder.barcode ?? "",
-      sku: custody.cylinder.sku.name,
-      currentStatus: custody.cylinder.status,
-      currentLocation: custody.cylinder.currentLocation.name,
-      custodyStatus: custody.returnDate ? "RETURNED" : "OPEN",
-      issueLocation: custody.issueLocation?.name ?? "",
-      issueDate: custody.issueDate.toISOString().slice(0, 10),
-      expectedReturn: custody.expectedReturnFollowUpDate?.toISOString().slice(0, 10) ?? "",
-      returnLocation: custody.returnLocation?.name ?? "",
-      returnDate: custody.returnDate?.toISOString().slice(0, 10) ?? "",
-      reference: custody.refillReference ?? ""
-    }));
+    return custodyRows(custodies);
   }
 
   if (type === "nairobi-service-centre-stock") {
@@ -238,6 +279,39 @@ async function reportRows(type: ReportType, filters: ReturnType<typeof normalize
 
   const history = await prisma.cylinderHistory.findMany({ where: { ...(createdAt ? { createdAt } : {}) }, include: { cylinder: true, changedBy: true }, orderBy: { createdAt: "desc" }, take: 500 });
   return history.map((entry) => ({ date: entry.createdAt.toISOString(), cylinder: entry.cylinder.serialNumber, fromStatus: entry.previousStatus ?? "", toStatus: entry.newStatus, reason: entry.reason, changedBy: entry.changedBy?.name ?? "System" }));
+}
+
+type CustodyExportRecord = {
+  customerId: string;
+  customer: { name: string; phone: string };
+  cylinder: { serialNumber: string; barcode: string | null; status: string; sku: { name: string }; currentLocation: { name: string } };
+  issueLocation: { name: string } | null;
+  returnLocation: { name: string } | null;
+  issueDate: Date;
+  expectedReturnFollowUpDate: Date | null;
+  returnDate: Date | null;
+  refillReference: string | null;
+  saleReference: string | null;
+};
+
+function custodyRows(custodies: CustodyExportRecord[], statusOverride?: string, frequencyCounts?: Map<string, number>) {
+  return custodies.map((custody) => ({
+    customer: custody.customer.name,
+    customerPhone: custody.customer.phone,
+    cylinder: custody.cylinder.serialNumber,
+    barcode: custody.cylinder.barcode ?? "",
+    sku: custody.cylinder.sku.name,
+    currentStatus: custody.cylinder.status,
+    currentLocation: custody.cylinder.currentLocation.name,
+    custodyStatus: statusOverride ?? (custody.returnDate ? "RETURNED" : "OPEN"),
+    issueLocation: custody.issueLocation?.name ?? "",
+    issueDate: custody.issueDate.toISOString().slice(0, 10),
+    expectedReturn: custody.expectedReturnFollowUpDate?.toISOString().slice(0, 10) ?? "",
+    returnLocation: custody.returnLocation?.name ?? "",
+    returnDate: custody.returnDate?.toISOString().slice(0, 10) ?? "",
+    reference: custody.refillReference ?? custody.saleReference ?? "",
+    transactionCount90Days: frequencyCounts?.get(custody.customerId) ?? ""
+  }));
 }
 
 const cylinderStatuses = ["FILLED", "EMPTY", "EMPTY_AT_SELLING_POINT", "EMPTY_AT_WAREHOUSE", "EMPTY_IN_TRANSIT", "FILLED_IN_TRANSIT", "FILLED_AT_WAREHOUSE", "FILLED_AT_SELLING_POINT", "DAMAGED", "IN_TRANSIT", "RESERVED", "UNDER_MAINTENANCE", "WITH_CUSTOMER", "QUARANTINED", "SCRAPPED_WRITTEN_OFF", "LOST_OVERDUE"];

@@ -21,9 +21,10 @@ describe("notifications", () => {
       "PENDING_DELIVERY_ALERT",
       "MAINTENANCE_ALERT",
       "EMERGENCY_RECALL",
-      "SAFETY_WARNING"
+      "SAFETY_WARNING",
+      "REFILL_FOLLOW_UP"
     ]);
-    expect(seedNotificationTemplates).toHaveLength(24);
+    expect(seedNotificationTemplates).toHaveLength(27);
   });
 
   it("validates clear notification input", () => {

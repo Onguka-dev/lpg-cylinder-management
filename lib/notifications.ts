@@ -15,7 +15,8 @@ export const notificationEventTypes = [
   "PENDING_DELIVERY_ALERT",
   "MAINTENANCE_ALERT",
   "EMERGENCY_RECALL",
-  "SAFETY_WARNING"
+  "SAFETY_WARNING",
+  "REFILL_FOLLOW_UP"
 ] as const;
 
 export const notificationChannels = ["SMS", "EMAIL", "PUSH"] as const;
@@ -167,7 +168,8 @@ function defaultTemplateBody(eventType: NotificationEventType, channel: Notifica
     PENDING_DELIVERY_ALERT: `Pending delivery {{reference}} requires follow-up in {{zone}}.`,
     MAINTENANCE_ALERT: `Maintenance case {{reference}} needs action for cylinder {{cylinder}}.`,
     EMERGENCY_RECALL: `Emergency recall placeholder: {{reference}}. Follow the safety response process.`,
-    SAFETY_WARNING: `Safety warning: {{reference}}. Review compliance notes and quarantine guidance.`
+    SAFETY_WARNING: `Safety warning: {{reference}}. Review compliance notes and quarantine guidance.`,
+    REFILL_FOLLOW_UP: `Refill follow-up for {{customer}}: cylinder {{cylinder}} ({{sku}}) is due around {{dueDate}}.`
   };
 
   return bodies[eventType];
