@@ -48,6 +48,7 @@ export function RefillOrderForm({
         ? {
             name: formData.get("customerName"),
             phone: formData.get("phone"),
+            email: formData.get("email") || undefined,
             proofReference: formData.get("proofReference"),
             kraPin: formData.get("kraPin") || undefined,
             category: formData.get("category"),
@@ -64,6 +65,9 @@ export function RefillOrderForm({
       emptyReturnNoQr,
       emptyReturnSerialNumber: emptyReturnNoQr ? formData.get("emptyReturnSerialNumber") : undefined,
       emptyReturnSizeKg: emptyReturnNoQr ? formData.get("emptyReturnSizeKg") : undefined,
+      emptyReturnManufacturer: emptyReturnNoQr ? formData.get("emptyReturnManufacturer") : undefined,
+      emptyReturnCondition: emptyReturnNoQr ? formData.get("emptyReturnCondition") : undefined,
+      emptyReturnPhotoPlaceholder: emptyReturnNoQr ? formData.get("emptyReturnPhotoPlaceholder") : undefined,
       paymentMethod: formData.get("paymentMethod"),
       paymentReference: formData.get("paymentReference") || undefined,
       notes: formData.get("notes") || undefined
@@ -112,6 +116,7 @@ export function RefillOrderForm({
         <div className="grid gap-4 md:grid-cols-2">
           <TextInput label="Customer Name" name="customerName" required />
           <TextInput label="Phone" name="phone" required />
+          <TextInput label="Email" name="email" type="email" />
           <TextInput label="ID/Passport/Proof Ref" name="proofReference" required />
           <TextInput label="KRA PIN" name="kraPin" />
           <label className="block text-sm font-medium text-slate-700">
@@ -194,6 +199,23 @@ export function RefillOrderForm({
                   <option value="50">50kg</option>
                 </select>
               </label>
+              <TextInput label="Brand / manufacturer" name="emptyReturnManufacturer" />
+              <label className="block text-sm font-medium text-slate-700">
+                Returned condition
+                <select className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-3 text-sm" name="emptyReturnCondition" defaultValue="NON_CODED">
+                  <option value="GOOD">Good</option>
+                  <option value="DAMAGED">Damaged</option>
+                  <option value="LEAKING">Leaking</option>
+                  <option value="MISSING_VALVE">Missing Valve</option>
+                  <option value="WRONG_BRAND">Wrong Brand</option>
+                  <option value="UNCLEAR_SERIAL">Unclear Serial</option>
+                  <option value="NON_CODED">Non Coded</option>
+                </select>
+              </label>
+              <TextInput label="Photo placeholder" name="emptyReturnPhotoPlaceholder" />
+              <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 md:col-span-2">
+                The returned non-coded cylinder is held pending warehouse/admin review and barcode tagging.
+              </p>
             </div>
           ) : (
             <TextInput label="Returned empty cylinder scan" name="emptyReturnCylinderCode" placeholder="Scan returned empty barcode / serial" required />

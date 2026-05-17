@@ -36,6 +36,7 @@ export function FullCylinderSaleForm({
         customer: mode === "new" ? {
           name: formData.get("customerName"),
           phone: formData.get("phone"),
+          email: formData.get("email") || undefined,
           proofReference: formData.get("proofReference"),
           kraPin: formData.get("kraPin") || undefined,
           category: formData.get("category"),
@@ -84,6 +85,7 @@ export function FullCylinderSaleForm({
         <div className="grid gap-4 md:grid-cols-2">
           <Input label="Customer Name" name="customerName" required />
           <Input label="Phone" name="phone" required />
+          <Input label="Email" name="email" type="email" />
           <Input label="ID/Passport/Proof Ref" name="proofReference" required />
           <Input label="KRA PIN" name="kraPin" />
           <label className="block text-sm font-medium text-slate-700">

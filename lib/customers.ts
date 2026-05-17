@@ -12,6 +12,7 @@ export const customerSchema = z.object({
     .min(7, "Phone must be at least 7 digits.")
     .max(20, "Phone must be 20 characters or fewer.")
     .regex(/^\+?[0-9 -]+$/, "Phone can only include digits, spaces, hyphens, and an optional plus sign."),
+  email: z.string().trim().email("Enter a valid email address.").max(120).optional().nullable(),
   proofReference: z
     .string()
     .trim()
@@ -42,6 +43,7 @@ export function normalizeCustomerInput(input: CustomerFormValues) {
   return {
     name: input.name.trim(),
     phone: input.phone.trim(),
+    email: input.email?.trim().toLowerCase() || null,
     proofReference: input.proofReference.trim().toUpperCase(),
     kraPin: input.kraPin?.trim().toUpperCase() || null,
     category: input.category,

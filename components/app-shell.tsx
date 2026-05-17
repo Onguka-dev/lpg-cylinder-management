@@ -25,6 +25,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   ShoppingCart,
+  Tag,
   Truck,
   UserCog,
   Users,
@@ -401,6 +402,7 @@ function buildNavigationSections(role: AppRole) {
             { key: "plant-transfers", href: "/inventory/plant-transfers", label: "Plant Transfers", icon: Truck },
             { key: "selling-point-dispatches", href: "/inventory/selling-point-dispatches", label: "Selling Point Dispatches", icon: Truck },
             { key: "empty-return-transfers", href: "/inventory/empty-return-transfers", label: "Empty Return Transfers", icon: Truck },
+            { key: "non-coded-intakes", href: "/inventory/non-coded-intakes", label: "Non-Coded Intakes", icon: Tag },
             { key: "stock-movements", href: "/inventory/movements", label: "Stock Movements", icon: PackageCheck },
             { key: "transfer-requests", href: "/transfers", label: "Transfer Requests", icon: Truck },
             { key: "warehouse-reports", href: "/reports", label: "Warehouse Reports", icon: BarChart3 }

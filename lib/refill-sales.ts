@@ -13,6 +13,9 @@ export const refillOrderSchema = z.object({
   emptyReturnNoQr: z.coerce.boolean().optional().default(false),
   emptyReturnSerialNumber: z.string().trim().optional().nullable(),
   emptyReturnSizeKg: z.coerce.number().int().positive().optional().nullable(),
+  emptyReturnManufacturer: z.string().trim().max(80, "Returned cylinder brand/manufacturer must be 80 characters or fewer.").optional().nullable(),
+  emptyReturnCondition: z.enum(["GOOD", "DAMAGED", "LEAKING", "MISSING_VALVE", "WRONG_BRAND", "UNCLEAR_SERIAL", "NON_CODED"]).optional().default("NON_CODED"),
+  emptyReturnPhotoPlaceholder: z.string().trim().max(160, "Returned cylinder photo placeholder must be 160 characters or fewer.").optional().nullable(),
   paymentMethod: z.enum(paymentMethods),
   paymentReference: z.string().trim().max(80, "Payment reference must be 80 characters or fewer.").optional().nullable(),
   notes: z.string().trim().max(400, "Notes must be 400 characters or fewer.").optional().nullable()

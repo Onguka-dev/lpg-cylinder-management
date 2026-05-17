@@ -26,6 +26,8 @@ export const emptyReturnSchema = z.object({
   noCode: z.coerce.boolean().optional().default(false),
   serialNumber: z.string().trim().optional().nullable(),
   cylinderSizeKg: z.coerce.number().int().positive().optional().nullable(),
+  manufacturer: z.string().trim().max(80).optional().nullable(),
+  photoPlaceholder: z.string().trim().max(160).optional().nullable(),
   locationId: z.string().optional().nullable(),
   condition: z.enum(emptyReturnConditions),
   remarks: z.string().trim().max(500).optional().nullable()

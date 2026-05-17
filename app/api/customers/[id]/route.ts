@@ -51,6 +51,7 @@ export async function PUT(
       id: { not: params.id },
       OR: [
         { phone: parsed.data.phone.trim() },
+        ...(parsed.data.email ? [{ email: parsed.data.email.trim().toLowerCase() }] : []),
         { proofReference: parsed.data.proofReference.trim().toUpperCase() }
       ]
     }
@@ -66,6 +67,13 @@ export async function PUT(
   if (duplicate?.proofReference === parsed.data.proofReference.trim().toUpperCase()) {
     return NextResponse.json(
       { error: "A customer with this ID/passport/proof reference already exists." },
+      { status: 409 }
+    );
+  }
+
+  if (parsed.data.email && duplicate?.email === parsed.data.email.trim().toLowerCase()) {
+    return NextResponse.json(
+      { error: "A customer with this email address already exists." },
       { status: 409 }
     );
   }

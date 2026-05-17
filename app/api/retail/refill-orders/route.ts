@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { getCurrentSession } from "@/lib/auth";
 import { normalizeCustomerInput } from "@/lib/customers";
 import { assertNoOpenCustomerCustody } from "@/lib/inventory";
+import { createNonCodedCylinderIntake } from "@/lib/non-coded-intake-posting";
 import { prisma } from "@/lib/prisma";
 import { getSalesLocationForSession, requireRefillSalesManageSession, requireRefillSalesViewSession } from "@/lib/refill-sales-access";
 import { generateRetailReference, refillOrderSchema } from "@/lib/refill-sales";
@@ -84,6 +85,7 @@ export async function POST(request: Request) {
           where: {
             OR: [
               { phone: customerInput.phone },
+              ...(customerInput.email ? [{ email: customerInput.email }] : []),
               { proofReference: customerInput.proofReference }
             ]
           }
@@ -153,79 +155,89 @@ export async function POST(request: Request) {
       const followUpDate = new Date();
       followUpDate.setDate(followUpDate.getDate() + 30);
 
-      const emptyLookupWhere = parsed.data.emptyReturnNoQr
-        ? {
-            OR: [
-              { serialNumber: { equals: emptyCode, mode: "insensitive" as const } },
-              { factorySerialNo: { equals: emptyCode, mode: "insensitive" as const } }
-            ]
-          }
-        : {
+      const returnedSizeKg = parsed.data.emptyReturnNoQr ? parsed.data.emptyReturnSizeKg : sku.capacityKg;
+      if (parsed.data.emptyReturnNoQr && returnedSizeKg !== sku.capacityKg) throw new Error("EMPTY_RETURN_SKU_MISMATCH");
+
+      let nonCodedIntakeId: string | null = null;
+      let emptyCylinder = null as Awaited<ReturnType<typeof tx.cylinder.findFirst>>;
+      let openReturnCustody = null as Awaited<ReturnType<typeof tx.customerCylinderCustody.findFirst>>;
+
+      if (parsed.data.emptyReturnNoQr) {
+        const intake = await createNonCodedCylinderIntake(tx, {
+          customerId,
+          visibleSerialNumber: emptyCode,
+          cylinderSizeKg: returnedSizeKg ?? sku.capacityKg ?? 0,
+          manufacturer: parsed.data.emptyReturnManufacturer,
+          condition: parsed.data.emptyReturnCondition ?? "NON_CODED",
+          photoPlaceholder: parsed.data.emptyReturnPhotoPlaceholder,
+          intakeLocationId: locationId,
+          staffRemarks: parsed.data.notes
+        }, locationId, auth.session.user.id, { createPlaceholderCylinder: true, refillOrderNumber: orderNumber });
+        if (!intake.linkedCylinder) throw new Error("NON_CODED_PLACEHOLDER_MISSING");
+        nonCodedIntakeId = intake.id;
+        emptyCylinder = intake.linkedCylinder;
+      } else {
+        emptyCylinder = await tx.cylinder.findFirst({
+          where: {
             OR: [
               { barcode: { equals: emptyCode, mode: "insensitive" as const } },
               { serialNumber: { equals: emptyCode, mode: "insensitive" as const } },
               { factorySerialNo: { equals: emptyCode, mode: "insensitive" as const } },
               { qrCode: { equals: emptyCode, mode: "insensitive" as const } }
             ]
-          };
-
-      let emptyCylinder = await tx.cylinder.findFirst({
-        where: emptyLookupWhere
-      });
-      const returnedSizeKg = parsed.data.emptyReturnNoQr ? parsed.data.emptyReturnSizeKg : sku.capacityKg;
-      if (parsed.data.emptyReturnNoQr && returnedSizeKg !== sku.capacityKg) throw new Error("EMPTY_RETURN_SKU_MISMATCH");
-      if (emptyCylinder?.cylinderSizeKg && returnedSizeKg && emptyCylinder.cylinderSizeKg !== returnedSizeKg) throw new Error("EMPTY_RETURN_SKU_MISMATCH");
-      if (emptyCylinder?.skuId !== undefined && emptyCylinder.skuId !== sku.id) throw new Error("EMPTY_RETURN_SKU_MISMATCH");
-
-      const openReturnCustody = emptyCylinder
-        ? await tx.customerCylinderCustody.findFirst({
-            where: { cylinderId: emptyCylinder.id, returnDate: null }
-          })
-        : null;
-      if (openReturnCustody && openReturnCustody.customerId !== customerId) throw new Error("EMPTY_RETURN_DIFFERENT_CUSTOMER");
-
-      const previousEmptyStatus = emptyCylinder?.status ?? null;
-      const previousEmptyLocationId = emptyCylinder?.currentLocationId ?? null;
-
-      if (!emptyCylinder) {
-        emptyCylinder = await tx.cylinder.create({
-          data: {
-            serialNumber: emptyCode,
-            barcode: parsed.data.emptyReturnNoQr ? null : emptyCode,
-            factorySerialNo: emptyCode,
-            cylinderSizeKg: returnedSizeKg ?? sku.capacityKg,
-            skuId: sku.id,
-            currentLocationId: locationId,
-            status: "EMPTY_AT_SELLING_POINT",
-            notes: parsed.data.emptyReturnNoQr
-              ? `Non-coded empty exchange logged by serial for refill ${orderNumber}`
-              : `Scanned legacy empty exchange received for refill ${orderNumber}`
           }
         });
-      } else {
-        await tx.cylinder.update({
-          where: { id: emptyCylinder.id },
-          data: {
-            currentLocationId: locationId,
-            status: "EMPTY_AT_SELLING_POINT",
-            notes: parsed.data.emptyReturnNoQr
-              ? `Non-coded empty exchange returned by ${customer.name} for refill ${orderNumber}`
-              : `Empty exchange returned by ${customer.name} for refill ${orderNumber}`
-          }
-        });
+
+        if (emptyCylinder?.cylinderSizeKg && returnedSizeKg && emptyCylinder.cylinderSizeKg !== returnedSizeKg) throw new Error("EMPTY_RETURN_SKU_MISMATCH");
+        if (emptyCylinder?.skuId !== undefined && emptyCylinder.skuId !== sku.id) throw new Error("EMPTY_RETURN_SKU_MISMATCH");
+
+        openReturnCustody = emptyCylinder
+          ? await tx.customerCylinderCustody.findFirst({
+              where: { cylinderId: emptyCylinder.id, returnDate: null }
+            })
+          : null;
+        if (openReturnCustody && openReturnCustody.customerId !== customerId) throw new Error("EMPTY_RETURN_DIFFERENT_CUSTOMER");
+
+        if (!emptyCylinder) {
+          emptyCylinder = await tx.cylinder.create({
+            data: {
+              serialNumber: emptyCode,
+              barcode: emptyCode,
+              factorySerialNo: emptyCode,
+              cylinderSizeKg: returnedSizeKg ?? sku.capacityKg,
+              skuId: sku.id,
+              currentLocationId: locationId,
+              status: "EMPTY_AT_SELLING_POINT",
+              notes: `Scanned legacy empty exchange received for refill ${orderNumber}`
+            }
+          });
+        } else {
+          await tx.cylinder.update({
+            where: { id: emptyCylinder.id },
+            data: {
+              currentLocationId: locationId,
+              status: "EMPTY_AT_SELLING_POINT",
+              notes: `Empty exchange returned by ${customer.name} for refill ${orderNumber}`
+            }
+          });
+        }
+
+        if (openReturnCustody) {
+          await tx.customerCylinderCustody.update({
+            where: { id: openReturnCustody.id },
+            data: {
+              returnDate: new Date(),
+              returnLocationId: locationId,
+              refillReference: openReturnCustody.refillReference ?? orderNumber,
+              notes: openReturnCustody.notes ? `${openReturnCustody.notes}\nReturned during refill ${orderNumber}.` : `Returned during refill ${orderNumber}.`
+            }
+          });
+        }
       }
 
-      if (openReturnCustody) {
-        await tx.customerCylinderCustody.update({
-          where: { id: openReturnCustody.id },
-          data: {
-            returnDate: new Date(),
-            returnLocationId: locationId,
-            refillReference: openReturnCustody.refillReference ?? orderNumber,
-            notes: openReturnCustody.notes ? `${openReturnCustody.notes}\nReturned during refill ${orderNumber}.` : `Returned during refill ${orderNumber}.`
-          }
-        });
-      }
+      if (!emptyCylinder) throw new Error("EMPTY_RETURN_IDENTIFIER_REQUIRED");
+      const previousEmptyStatus = parsed.data.emptyReturnNoQr ? null : emptyCylinder.status;
+      const previousEmptyLocationId = parsed.data.emptyReturnNoQr ? null : emptyCylinder.currentLocationId;
 
       await tx.cylinder.update({
         where: { id: filledCylinder.id },
@@ -295,11 +307,13 @@ export async function POST(request: Request) {
           {
             cylinderId: emptyCylinder.id,
             previousStatus: previousEmptyStatus,
-            newStatus: "EMPTY_AT_SELLING_POINT",
+            newStatus: parsed.data.emptyReturnNoQr ? "QUARANTINED" : "EMPTY_AT_SELLING_POINT",
             previousLocationId: previousEmptyLocationId,
             newLocationId: locationId,
             changedById: auth.session.user.id,
-            reason: `Refill order ${orderNumber} received scanned empty cylinder`
+            reason: parsed.data.emptyReturnNoQr
+              ? `Refill order ${orderNumber} registered non-coded empty cylinder intake pending review`
+              : `Refill order ${orderNumber} received scanned empty cylinder`
           }
         ]
       });
@@ -336,10 +350,19 @@ export async function POST(request: Request) {
         include: { customer: true, sku: true, location: true, filledCylinder: true, emptyReturnCylinder: true, payment: true }
       });
 
+      if (nonCodedIntakeId) {
+        await tx.nonCodedCylinderIntake.update({
+          where: { id: nonCodedIntakeId },
+          data: { refillOrderId: created.id }
+        });
+      }
+
       await tx.auditLog.create({
         data: {
           action: "REFILL_TRANSACTION_CLOSED",
-          details: `${orderNumber} closed for ${customer.name}; filled cylinder ${filledCylinder.serialNumber} issued and empty cylinder ${emptyCylinder.serialNumber} received.`,
+          details: parsed.data.emptyReturnNoQr
+            ? `${orderNumber} closed for ${customer.name}; filled cylinder ${filledCylinder.serialNumber} issued and non-coded empty intake was queued.`
+            : `${orderNumber} closed for ${customer.name}; filled cylinder ${filledCylinder.serialNumber} issued and empty cylinder ${emptyCylinder.serialNumber} received.`,
           userId: auth.session.user.id
         }
       });
@@ -382,7 +405,8 @@ function errorMessage(message: string) {
     EMPTY_RETURN_IDENTIFIER_REQUIRED: "Scan the returned empty cylinder, or enter the serial number for a no-QR return.",
     EMPTY_RETURN_SKU_MISMATCH: "Returned empty cylinder does not match the selected SKU/cylinder size.",
     EMPTY_RETURN_DIFFERENT_CUSTOMER: "Returned empty cylinder is currently assigned to a different customer.",
-    CYLINDER_ALREADY_IN_CUSTOMER_CUSTODY: "This cylinder already has an open customer custody record."
+    CYLINDER_ALREADY_IN_CUSTOMER_CUSTODY: "This cylinder already has an open customer custody record.",
+    NON_CODED_PLACEHOLDER_MISSING: "The non-coded return could not be queued for warehouse review."
   };
 
   return messages[message];

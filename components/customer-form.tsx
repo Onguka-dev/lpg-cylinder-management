@@ -8,6 +8,7 @@ type CustomerFormRecord = {
   id?: string;
   name?: string;
   phone?: string;
+  email?: string | null;
   proofReference?: string;
   kraPin?: string | null;
   category?: string;
@@ -37,6 +38,7 @@ export function CustomerForm({ customer }: { customer?: CustomerFormRecord }) {
     const payload = {
       name: formData.get("name"),
       phone: formData.get("phone"),
+      email: formData.get("email") || undefined,
       proofReference: formData.get("proofReference"),
       kraPin: formData.get("kraPin") || undefined,
       category: formData.get("category"),
@@ -89,6 +91,7 @@ export function CustomerForm({ customer }: { customer?: CustomerFormRecord }) {
       <div className="grid gap-4 md:grid-cols-2">
         <TextInput label="Full Name" name="name" defaultValue={customer?.name} required />
         <TextInput label="Phone" name="phone" defaultValue={customer?.phone} required />
+        <TextInput label="Email" name="email" type="email" defaultValue={customer?.email ?? undefined} />
         <label className="block text-sm font-medium text-slate-700">
           ID Type
           <select

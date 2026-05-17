@@ -19,7 +19,7 @@ export async function createFullCylinderSale(
     if (!customerId && input.customer) {
       const normalized = normalizeCustomerInput(input.customer);
       const existing = await tx.customer.findFirst({
-        where: { OR: [{ phone: normalized.phone }, { proofReference: normalized.proofReference }] }
+        where: { OR: [{ phone: normalized.phone }, ...(normalized.email ? [{ email: normalized.email }] : []), { proofReference: normalized.proofReference }] }
       });
       customerId = existing?.id ?? (await tx.customer.create({ data: normalized })).id;
     }

@@ -77,6 +77,26 @@ enum CylinderStatus {
   LOST_OVERDUE
 }
 
+enum NonCodedCylinderIntakeStatus {
+  PENDING_REVIEW
+  TAGGING_PENDING
+  TAGGED_APPROVED
+  APPROVED_LINKED
+  APPROVED_NEW_CYLINDER
+  REJECTED
+  ESCALATED
+}
+
+enum NonCodedCylinderCondition {
+  GOOD
+  DAMAGED
+  LEAKING
+  MISSING_VALVE
+  WRONG_BRAND
+  UNCLEAR_SERIAL
+  NON_CODED
+}
+
 enum InventoryMovementType {
   OPENING_BALANCE
   RECEIPT
@@ -466,6 +486,8 @@ model User {
   createdNotifications             Notification[]             @relation("NotificationCreatedBy")
   createdCustomerComplaints        CustomerComplaint[]        @relation("CustomerComplaintCreatedBy")
   createdCustomerCylinderCustodies CustomerCylinderCustody[]  @relation("CustomerCylinderCustodyCreatedBy")
+  createdNonCodedCylinderIntakes   NonCodedCylinderIntake[]   @relation("NonCodedCylinderIntakeCreatedBy")
+  reviewedNonCodedCylinderIntakes  NonCodedCylinderIntake[]   @relation("NonCodedCylinderIntakeReviewedBy")
   scanEvents                       ScanEvent[]
   offlineSyncItems                 OfflineSyncItem[]
   integrationLogs                  IntegrationLog[]
@@ -593,6 +615,7 @@ model MasterDataRecord {
   refillBatches               RefillBatch[]             @relation("RefillBatchPlantLocation")
   custodyIssueLocations       CustomerCylinderCustody[] @relation("CustodyIssueLocation")
   custodyReturnLocations      CustomerCylinderCustody[] @relation("CustodyReturnLocation")
+  nonCodedCylinderIntakes     NonCodedCylinderIntake[]  @relation("NonCodedIntakeLocation")
   metadata                    Json?
   createdAt                   DateTime                  @default(now())
   updatedAt                   DateTime                  @updatedAt
@@ -602,29 +625,31 @@ model MasterDataRecord {
 }
 
 model Customer {
-  id                String                    @id @default(cuid())
-  name              String
-  phone             String                    @unique
-  proofReference    String                    @unique
-  kraPin            String?
-  category          CustomerCategory
-  address           String
-  latitude          Decimal?                  @db.Decimal(9, 6)
-  longitude         Decimal?                  @db.Decimal(9, 6)
-  status            CustomerStatus            @default(ACTIVE)
-  creditLimit       Decimal?                  @db.Decimal(12, 2)
-  notes             String?
-  documentPlaceholder String?
-  refillOrders      RefillOrder[]
-  customerOrders    CustomerOrder[]
-  fieldSales        FieldSale[]
-  fullCylinderSales FullCylinderSale[]
-  invoices          Invoice[]
-  billingPayments   BillingPayment[]
-  complaints        CustomerComplaint[]
-  cylinderCustodies CustomerCylinderCustody[]
-  createdAt         DateTime                  @default(now())
-  updatedAt         DateTime                  @updatedAt
+  id                      String                    @id @default(cuid())
+  name                    String
+  phone                   String                    @unique
+  email                   String?                   @unique
+  proofReference          String                    @unique
+  kraPin                  String?
+  category                CustomerCategory
+  address                 String
+  latitude                Decimal?                  @db.Decimal(9, 6)
+  longitude               Decimal?                  @db.Decimal(9, 6)
+  status                  CustomerStatus            @default(ACTIVE)
+  creditLimit             Decimal?                  @db.Decimal(12, 2)
+  notes                   String?
+  documentPlaceholder     String?
+  refillOrders            RefillOrder[]
+  customerOrders          CustomerOrder[]
+  fieldSales              FieldSale[]
+  fullCylinderSales       FullCylinderSale[]
+  invoices                Invoice[]
+  billingPayments         BillingPayment[]
+  complaints              CustomerComplaint[]
+  cylinderCustodies       CustomerCylinderCustody[]
+  nonCodedCylinderIntakes NonCodedCylinderIntake[]
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
 
   @@index([name])
   @@index([status])
@@ -802,6 +827,7 @@ model Cylinder {
   scanEvents              ScanEvent[]
   filledRefillOrders      RefillOrder[]               @relation("FilledRefillCylinder")
   emptyReturnRefillOrders RefillOrder[]               @relation("EmptyReturnCylinder")
+  nonCodedIntakes         NonCodedCylinderIntake[]    @relation("NonCodedLinkedCylinder")
   fieldFilledSales        FieldSale[]                 @relation("FieldFilledCylinder")
   fieldEmptyReturns       FieldSale[]                 @relation("FieldEmptyCylinder")
   fullCylinderSales       FullCylinderSale[]
@@ -852,6 +878,44 @@ model CustomerCylinderCustody {
   @@index([returnDate])
   @@index([saleReference])
   @@index([refillReference])
+}
+
+model NonCodedCylinderIntake {
+  id                  String                       @id @default(cuid())
+  intakeNumber        String                       @unique
+  customerId          String
+  customer            Customer                     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  visibleSerialNumber String
+  cylinderSizeKg      Int
+  manufacturer        String?
+  condition           NonCodedCylinderCondition
+  photoPlaceholder    String?
+  intakeLocationId    String
+  intakeLocation      MasterDataRecord             @relation("NonCodedIntakeLocation", fields: [intakeLocationId], references: [id])
+  staffRemarks        String?
+  status              NonCodedCylinderIntakeStatus @default(PENDING_REVIEW)
+  linkedCylinderId    String?
+  linkedCylinder      Cylinder?                    @relation("NonCodedLinkedCylinder", fields: [linkedCylinderId], references: [id], onDelete: SetNull)
+  refillOrderId       String?                      @unique
+  refillOrder         RefillOrder?                 @relation("NonCodedRefillOrder", fields: [refillOrderId], references: [id], onDelete: SetNull)
+  approvedBarcode     String?
+  approvedQrCode      String?
+  reviewNotes         String?
+  createdById         String?
+  createdBy           User?                        @relation("NonCodedCylinderIntakeCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  reviewedById        String?
+  reviewedBy          User?                        @relation("NonCodedCylinderIntakeReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt          DateTime?
+  createdAt           DateTime                     @default(now())
+  updatedAt           DateTime                     @updatedAt
+
+  @@index([customerId])
+  @@index([intakeLocationId])
+  @@index([linkedCylinderId])
+  @@index([status])
+  @@index([cylinderSizeKg])
+  @@index([visibleSerialNumber])
+  @@index([createdAt])
 }
 
 model ScanEvent {
@@ -1124,34 +1188,35 @@ model FullCylinderSale {
 }
 
 model RefillOrder {
-  id                    String            @id @default(cuid())
-  orderNumber           String            @unique
-  customerId            String
-  customer              Customer          @relation(fields: [customerId], references: [id])
-  skuId                 String
-  sku                   MasterDataRecord  @relation("RefillOrderSku", fields: [skuId], references: [id])
-  locationId            String
-  location              MasterDataRecord  @relation("RefillOrderLocation", fields: [locationId], references: [id])
-  filledCylinderId      String
-  filledCylinder        Cylinder          @relation("FilledRefillCylinder", fields: [filledCylinderId], references: [id])
-  emptyReturnCylinderId String
-  emptyReturnCylinder   Cylinder          @relation("EmptyReturnCylinder", fields: [emptyReturnCylinderId], references: [id])
-  status                RefillOrderStatus @default(DRAFT)
-  paymentMethod         PaymentMethod
-  subtotalAmount        Decimal           @db.Decimal(12, 2)
-  taxAmount             Decimal           @default(0) @db.Decimal(12, 2)
-  totalAmount           Decimal           @db.Decimal(12, 2)
-  invoiceNumber         String            @unique
-  receiptNumber         String            @unique
-  notes                 String?
-  deliveryPlaceholder   String?
-  creditPlaceholder     String?
-  createdById           String?
-  createdBy             User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  payment               Payment?
-  invoice               Invoice?          @relation("RefillInvoice")
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
+  id                     String                  @id @default(cuid())
+  orderNumber            String                  @unique
+  customerId             String
+  customer               Customer                @relation(fields: [customerId], references: [id])
+  skuId                  String
+  sku                    MasterDataRecord        @relation("RefillOrderSku", fields: [skuId], references: [id])
+  locationId             String
+  location               MasterDataRecord        @relation("RefillOrderLocation", fields: [locationId], references: [id])
+  filledCylinderId       String
+  filledCylinder         Cylinder                @relation("FilledRefillCylinder", fields: [filledCylinderId], references: [id])
+  emptyReturnCylinderId  String
+  emptyReturnCylinder    Cylinder                @relation("EmptyReturnCylinder", fields: [emptyReturnCylinderId], references: [id])
+  status                 RefillOrderStatus       @default(DRAFT)
+  paymentMethod          PaymentMethod
+  subtotalAmount         Decimal                 @db.Decimal(12, 2)
+  taxAmount              Decimal                 @default(0) @db.Decimal(12, 2)
+  totalAmount            Decimal                 @db.Decimal(12, 2)
+  invoiceNumber          String                  @unique
+  receiptNumber          String                  @unique
+  notes                  String?
+  deliveryPlaceholder    String?
+  creditPlaceholder      String?
+  createdById            String?
+  createdBy              User?                   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  payment                Payment?
+  invoice                Invoice?                @relation("RefillInvoice")
+  nonCodedCylinderIntake NonCodedCylinderIntake? @relation("NonCodedRefillOrder")
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
 
   @@index([customerId])
   @@index([skuId])

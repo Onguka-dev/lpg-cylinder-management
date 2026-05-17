@@ -88,6 +88,7 @@ export async function POST(request: Request) {
           where: {
             OR: [
               { phone: customerInput.phone },
+              ...(customerInput.email ? [{ email: customerInput.email }] : []),
               { proofReference: customerInput.proofReference }
             ]
           }

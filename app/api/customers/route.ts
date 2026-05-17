@@ -20,6 +20,7 @@ export async function GET(request: Request) {
           OR: [
             { name: { contains: query, mode: "insensitive" } },
             { phone: { contains: query, mode: "insensitive" } },
+            { email: { contains: query, mode: "insensitive" } },
             { proofReference: { contains: query, mode: "insensitive" } },
             { kraPin: { contains: query, mode: "insensitive" } }
           ]
@@ -53,6 +54,7 @@ export async function POST(request: Request) {
     where: {
       OR: [
         { phone: parsed.data.phone.trim() },
+        ...(parsed.data.email ? [{ email: parsed.data.email.trim().toLowerCase() }] : []),
         { proofReference: parsed.data.proofReference.trim().toUpperCase() }
       ]
     }
@@ -68,6 +70,13 @@ export async function POST(request: Request) {
   if (duplicate?.proofReference === parsed.data.proofReference.trim().toUpperCase()) {
     return NextResponse.json(
       { error: "A customer with this ID/passport/proof reference already exists." },
+      { status: 409 }
+    );
+  }
+
+  if (parsed.data.email && duplicate?.email === parsed.data.email.trim().toLowerCase()) {
+    return NextResponse.json(
+      { error: "A customer with this email address already exists." },
       { status: 409 }
     );
   }

@@ -22,6 +22,7 @@ export default async function CustomerProfilePage({
           take: 12
         },
         refillOrders: { include: { sku: true, filledCylinder: true, emptyReturnCylinder: true, location: true }, orderBy: { createdAt: "desc" }, take: 8 },
+        nonCodedCylinderIntakes: { include: { intakeLocation: true, linkedCylinder: true }, orderBy: { createdAt: "desc" }, take: 8 },
         fullCylinderSales: { include: { sku: true, cylinder: true, location: true }, orderBy: { createdAt: "desc" }, take: 8 }
       }
     })
@@ -57,6 +58,7 @@ export default async function CustomerProfilePage({
 
         <dl className="mt-8 grid gap-4 md:grid-cols-3">
           <Detail label="Proof Reference" value={customer.proofReference} />
+          <Detail label="Email" value={customer.email ?? "Not recorded"} />
           <Detail label="KRA PIN" value={customer.kraPin ?? "Not recorded"} />
           <Detail label="Category" value={formatEnum(customer.category)} />
           <Detail label="Status" value={formatEnum(customer.status)} />
@@ -113,6 +115,18 @@ export default async function CustomerProfilePage({
               </Link>
             ))}
             {!customer.billingPayments.length ? <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">No payments recorded yet.</p> : null}
+          </div>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
+          <h2 className="text-base font-semibold text-slate-950">Non-Coded Return Intakes</h2>
+          <div className="mt-4 grid gap-3">
+            {customer.nonCodedCylinderIntakes.map((intake) => (
+              <Link className="rounded-lg border border-slate-200 p-3 text-sm hover:border-brand-200 hover:bg-brand-50" href={`/inventory/non-coded-intakes/${intake.id}`} key={intake.id}>
+                <span className="font-medium text-slate-900">{intake.intakeNumber}</span>
+                <span className="mt-1 block text-slate-500">{intake.visibleSerialNumber} ({intake.cylinderSizeKg}kg) at {intake.intakeLocation.name}; {formatEnum(intake.status)}</span>
+              </Link>
+            ))}
+            {!customer.nonCodedCylinderIntakes.length ? <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">No non-coded returns recorded.</p> : null}
           </div>
         </div>
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">

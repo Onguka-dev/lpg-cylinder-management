@@ -149,6 +149,37 @@ async function reportRows(type: ReportType, filters: ReturnType<typeof normalize
     }));
   }
 
+  if (type === "non-coded-tagging-queue") {
+    const intakes = await prisma.nonCodedCylinderIntake.findMany({
+      where: {
+        ...(createdAt ? { createdAt } : {}),
+        ...(filters.status ? { status: filters.status as never } : {}),
+        ...(filters.locationId ? { intakeLocationId: filters.locationId } : {}),
+        ...(filters.skuId ? { linkedCylinder: { skuId: filters.skuId } } : {})
+      },
+      include: { customer: true, intakeLocation: true, linkedCylinder: true, reviewedBy: true },
+      orderBy: { createdAt: "desc" },
+      take: 500
+    });
+    return intakes.map((intake) => ({
+      intakeNumber: intake.intakeNumber,
+      customer: intake.customer.name,
+      customerPhone: intake.customer.phone,
+      visibleSerialNumber: intake.visibleSerialNumber,
+      cylinderSizeKg: intake.cylinderSizeKg,
+      manufacturer: intake.manufacturer ?? "",
+      condition: intake.condition,
+      intakeLocation: intake.intakeLocation.name,
+      status: intake.status,
+      linkedCylinder: intake.linkedCylinder?.serialNumber ?? "",
+      approvedBarcode: intake.approvedBarcode ?? "",
+      reviewedBy: intake.reviewedBy?.name ?? "",
+      createdAt: intake.createdAt.toISOString(),
+      reviewedAt: intake.reviewedAt?.toISOString() ?? "",
+      reviewNotes: intake.reviewNotes ?? ""
+    }));
+  }
+
   if (type === "sales-revenue") {
     const [refills, fieldSales, payments] = await Promise.all([
       prisma.refillOrder.findMany({ where: { ...(createdAt ? { createdAt } : {}), ...(filters.skuId ? { skuId: filters.skuId } : {}), ...(filters.locationId ? { locationId: filters.locationId } : {}) }, include: { customer: true, sku: true, location: true }, take: 500 }),

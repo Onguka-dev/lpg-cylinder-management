@@ -18,6 +18,7 @@ export const reportTypes = [
   "safety-compliance",
   "maintenance-due",
   "damaged-cylinders",
+  "non-coded-tagging-queue",
   "user-activity"
 ] as const;
 

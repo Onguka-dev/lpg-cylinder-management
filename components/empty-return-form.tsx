@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { emptyReturnConditions, parseConditionLabel } from "@/lib/reverse-logistics";
 
-type CustomerOption = { id: string; name: string; phone: string };
+type CustomerOption = { id: string; name: string; phone: string; email?: string | null };
 type LocationOption = { id: string; code: string; name: string };
 
 export function EmptyReturnForm({ customers, locations, isAdmin }: { customers: CustomerOption[]; locations: LocationOption[]; isAdmin: boolean }) {
@@ -29,17 +29,19 @@ export function EmptyReturnForm({ customers, locations, isAdmin }: { customers: 
         noCode,
         serialNumber: noCode ? formData.get("serialNumber") : undefined,
         cylinderSizeKg: noCode ? formData.get("cylinderSizeKg") : undefined,
+        manufacturer: noCode ? formData.get("manufacturer") : undefined,
+        photoPlaceholder: noCode ? formData.get("photoPlaceholder") : undefined,
         condition: formData.get("condition"),
         remarks: formData.get("remarks") || undefined
       })
     });
-    const result = (await response.json().catch(() => ({ error: "Unable to record empty return." }))) as { error?: string };
+    const result = (await response.json().catch(() => ({ error: "Unable to record empty return." }))) as { intake?: { id: string }; error?: string };
     setIsSubmitting(false);
     if (!response.ok) {
       setError(result.error ?? "Unable to record empty return.");
       return;
     }
-    router.push("/inventory/empty-return-transfers");
+    router.push(result.intake?.id ? `/inventory/non-coded-intakes/${result.intake.id}` : "/inventory/empty-return-transfers");
     router.refresh();
   }
 
@@ -50,12 +52,12 @@ export function EmptyReturnForm({ customers, locations, isAdmin }: { customers: 
           Customer
           <select className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" name="customerId">
             <option value="">Search by phone below...</option>
-            {customers.map((customer) => <option value={customer.id} key={customer.id}>{customer.name} - {customer.phone}</option>)}
+            {customers.map((customer) => <option value={customer.id} key={customer.id}>{customer.name} - {customer.phone}{customer.email ? ` - ${customer.email}` : ""}</option>)}
           </select>
         </label>
         <label className="block text-sm font-medium text-slate-700">
-          Customer Phone
-          <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" name="customerPhone" />
+          Customer Search
+          <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" name="customerPhone" placeholder="Phone, ID/passport, KRA PIN, email, or name" />
         </label>
         {isAdmin ? (
           <label className="block text-sm font-medium text-slate-700">
@@ -81,7 +83,7 @@ export function EmptyReturnForm({ customers, locations, isAdmin }: { customers: 
 
       {noCode ? (
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="block text-sm font-medium text-slate-700">Serial Number<input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" name="serialNumber" required /></label>
+          <label className="block text-sm font-medium text-slate-700">Visible Serial Number<input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" name="serialNumber" required /></label>
           <label className="block text-sm font-medium text-slate-700">
             Size
             <select className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" name="cylinderSizeKg" required defaultValue="">
@@ -91,6 +93,11 @@ export function EmptyReturnForm({ customers, locations, isAdmin }: { customers: 
               <option value="50">50kg</option>
             </select>
           </label>
+          <label className="block text-sm font-medium text-slate-700">Brand / Manufacturer<input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" name="manufacturer" placeholder="Visible brand if readable" /></label>
+          <label className="block text-sm font-medium text-slate-700">Photo Placeholder<input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" name="photoPlaceholder" placeholder="Photo/file reference placeholder" /></label>
+          <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 md:col-span-2">
+            Non-coded cylinders are recorded as Pending Review and cannot be sold until warehouse/admin approval and barcode tagging.
+          </p>
         </div>
       ) : (
         <label className="block text-sm font-medium text-slate-700">

@@ -21,7 +21,7 @@ export default async function NewEmptyReturnPage() {
       </section>
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-panel">
         <EmptyReturnForm
-          customers={customers.map((customer) => ({ id: customer.id, name: customer.name, phone: customer.phone }))}
+          customers={customers.map((customer) => ({ id: customer.id, name: customer.name, phone: customer.phone, email: customer.email }))}
           locations={locations.map((location) => ({ id: location.id, code: location.code, name: location.name }))}
           isAdmin={session.user.role === "ADMIN"}
         />
