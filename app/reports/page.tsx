@@ -3,6 +3,12 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { getCurrentSession } from "@/lib/auth";
 import { formatMoney } from "@/lib/billing";
+import {
+  cylinderMovementInventoryTabs,
+  formatCylinderReportTab,
+  getCylinderMovementInventoryReport,
+  type CylinderReportRow
+} from "@/lib/cylinder-movement-inventory-report";
 import { prisma } from "@/lib/prisma";
 import {
   canViewReports,
@@ -27,6 +33,9 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Rec
     skus,
     locations,
     regions,
+    customers,
+    salesUsers,
+    cylinderMovementInventoryReport,
     inventoryByStatus,
     inventoryByLocation,
     inventoryBySku,
@@ -49,6 +58,9 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Rec
     prisma.masterDataRecord.findMany({ where: { type: "SKU_MASTER", isActive: true }, orderBy: { name: "asc" } }),
     prisma.masterDataRecord.findMany({ where: { type: { in: ["LOCATION", "WAREHOUSE", "RETAIL_OUTLET", "VEHICLE", "MAINTENANCE_LOCATION", "DAMAGED_QUARANTINE_LOCATION"] }, isActive: true }, orderBy: { name: "asc" } }),
     prisma.masterDataRecord.findMany({ where: { type: "REGION", isActive: true }, orderBy: { name: "asc" } }),
+    prisma.customer.findMany({ orderBy: { name: "asc" }, take: 200 }),
+    prisma.user.findMany({ where: { role: { name: { in: ["ADMIN", "WAREHOUSE_MANAGER", "PLANT_MANAGER", "RSO", "MSO", "SERVICE_CENTRE_STAFF"] } } }, include: { role: true }, orderBy: { name: "asc" }, take: 200 }),
+    getCylinderMovementInventoryReport(filters),
     prisma.cylinder.groupBy({ by: ["status"], where: cylinderWhere(filters), _count: { _all: true } }),
     prisma.cylinder.groupBy({ by: ["currentLocationId"], where: cylinderWhere(filters), _count: { _all: true } }),
     prisma.cylinder.groupBy({ by: ["skuId"], where: cylinderWhere(filters), _count: { _all: true } }),
@@ -92,6 +104,15 @@ export default async function ReportsPage({ searchParams }: { searchParams?: Rec
       </section>
 
       <Filters filters={filters} skus={skus} locations={locations} regions={regions} />
+
+      <CylinderMovementInventorySection
+        customers={customers}
+        filters={filters}
+        locations={locations}
+        report={cylinderMovementInventoryReport}
+        salesUsers={salesUsers}
+        skus={skus}
+      />
 
       <section className="grid gap-3 md:grid-cols-4">
         <Summary label="Inventory Levels" value={String(totalCylinders)} />
@@ -188,6 +209,167 @@ function cylinderWhere(filters: ReportFilters) {
     ...(filters.locationId ? { currentLocationId: filters.locationId } : {}),
     ...(cylinderStatuses.includes(filters.status ?? "") ? { status: filters.status as never } : {})
   };
+}
+
+function CylinderMovementInventorySection({
+  customers,
+  filters,
+  locations,
+  report,
+  salesUsers,
+  skus
+}: {
+  customers: { id: string; name: string; phone: string }[];
+  filters: ReportFilters;
+  locations: { id: string; name: string; code: string }[];
+  report: Awaited<ReturnType<typeof getCylinderMovementInventoryReport>>;
+  salesUsers: { id: string; name: string; email: string; role: { name: string } }[];
+  skus: { id: string; name: string; code: string }[];
+}) {
+  const exportParams = new URLSearchParams(cleanFilterParams(filters));
+  exportParams.set("type", "cylinder-movement-inventory");
+  exportParams.set("tab", report.tab);
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-brand-700">Reports</p>
+          <h2 className="mt-1 text-xl font-semibold text-slate-950">Cylinder Movement & Inventory</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+            Real-time cylinder transfers, sales, stock, custody, in-transit, variance, loss, and empty return reporting from the operational ledgers.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link className="rounded-lg bg-brand-700 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-800" href={`/api/reports/export?${exportParams.toString()}`}>
+            Export visible CSV
+          </Link>
+          <span className="rounded-lg border border-dashed border-slate-300 px-3 py-2 text-xs font-semibold text-slate-400">Excel placeholder</span>
+          <span className="rounded-lg border border-dashed border-slate-300 px-3 py-2 text-xs font-semibold text-slate-400">PDF placeholder</span>
+        </div>
+      </div>
+
+      <div className="mt-5 flex gap-2 overflow-x-auto border-b border-slate-200 pb-2">
+        {cylinderMovementInventoryTabs.map((tab) => {
+          const params = new URLSearchParams(cleanFilterParams(filters));
+          params.set("tab", tab);
+          const isActive = tab === report.tab;
+          return (
+            <Link
+              className={`whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold ${isActive ? "bg-slate-950 text-white" : "border border-slate-200 text-slate-600 hover:border-brand-300 hover:text-brand-700"}`}
+              href={`/reports?${params.toString()}`}
+              key={tab}
+            >
+              {formatCylinderReportTab(tab)}
+            </Link>
+          );
+        })}
+      </div>
+
+      <CylinderReportFilters customers={customers} filters={filters} locations={locations} salesUsers={salesUsers} skus={skus} />
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+        <Summary label="Total Transfers" value={String(report.kpis.totalTransfers)} />
+        <Summary label="Full Cylinders Moved" value={String(report.kpis.fullCylindersMoved)} />
+        <Summary label="Empty Cylinders Moved" value={String(report.kpis.emptyCylindersMoved)} />
+        <Summary label="With Customer" value={String(report.kpis.withCustomer)} />
+        <Summary label="In Transit" value={String(report.kpis.inTransit)} />
+        <Summary label="Damaged/Quarantined" value={String(report.kpis.damagedQuarantined)} />
+        <Summary label="Unique Cylinder Types" value={String(report.kpis.uniqueCylinderTypes)} />
+      </div>
+
+      <div className="mt-5">
+        <LinkedTable columns={report.columns} rows={report.rows} />
+      </div>
+    </section>
+  );
+}
+
+function CylinderReportFilters({
+  customers,
+  filters,
+  locations,
+  salesUsers,
+  skus
+}: {
+  customers: { id: string; name: string; phone: string }[];
+  filters: ReportFilters;
+  locations: { id: string; name: string; code: string }[];
+  salesUsers: { id: string; name: string; email: string; role: { name: string } }[];
+  skus: { id: string; name: string; code: string }[];
+}) {
+  return (
+    <form className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <input name="tab" type="hidden" value={filters.tab ?? "cylinder-transfers"} />
+      <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-5">
+        <input className="rounded-lg border border-slate-300 px-3 py-2 text-sm" name="dateFrom" type="date" defaultValue={filters.dateFrom ?? ""} aria-label="Date from" />
+        <input className="rounded-lg border border-slate-300 px-3 py-2 text-sm" name="dateTo" type="date" defaultValue={filters.dateTo ?? ""} aria-label="Date to" />
+        <Select name="skuId" value={filters.skuId ?? ""} label="All cylinder sizes" options={skus} />
+        <Select name="locationId" value={filters.locationId ?? ""} label="Any location" options={locations} />
+        <select className="rounded-lg border border-slate-300 px-3 py-2 text-sm" name="entityType" defaultValue={filters.entityType ?? ""}>
+          <option value="">All entity types</option>
+          <option value="transfer">Transfers</option>
+          <option value="sale">Sales</option>
+          <option value="stock">Stock</option>
+          <option value="custody">Customer custody</option>
+          <option value="variance">Variance/loss</option>
+          <option value="return">Empty returns</option>
+        </select>
+        <Select name="sourceId" value={filters.sourceId ?? ""} label="Any source" options={locations} />
+        <Select name="destinationId" value={filters.destinationId ?? ""} label="Any destination" options={locations} />
+        <select className="rounded-lg border border-slate-300 px-3 py-2 text-sm" name="status" defaultValue={filters.status ?? ""}>
+          <option value="">All statuses</option>
+          {["FILLED_AT_WAREHOUSE", "FILLED_AT_SELLING_POINT", "EMPTY_AT_WAREHOUSE", "EMPTY_AT_SELLING_POINT", "WITH_CUSTOMER", "IN_TRANSIT", "EMPTY_IN_TRANSIT", "FILLED_IN_TRANSIT", "DAMAGED", "QUARANTINED", "LOST_OVERDUE", "REQUESTED", "APPROVED", "DISPATCHED", "RECEIVED", "COMPLETED", "VARIANCE_LOGGED", "OPEN", "RETURNED"].map((status) => (
+            <option value={status} key={status}>{formatReportLabel(status)}</option>
+          ))}
+        </select>
+        <select className="rounded-lg border border-slate-300 px-3 py-2 text-sm" name="customerId" defaultValue={filters.customerId ?? ""}>
+          <option value="">All customers</option>
+          {customers.map((customer) => <option value={customer.id} key={customer.id}>{customer.name} - {customer.phone}</option>)}
+        </select>
+        <select className="rounded-lg border border-slate-300 px-3 py-2 text-sm" name="salesPersonId" defaultValue={filters.salesPersonId ?? ""}>
+          <option value="">All sales people</option>
+          {salesUsers.map((user) => <option value={user.id} key={user.id}>{user.name} - {formatReportLabel(user.role.name)}</option>)}
+        </select>
+        <input className="rounded-lg border border-slate-300 px-3 py-2 text-sm" name="barcode" placeholder="Barcode, QR or serial" defaultValue={filters.barcode ?? ""} />
+      </div>
+      <div className="mt-3 flex flex-wrap gap-3">
+        <button className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white" type="submit">Apply report filters</button>
+        <Link className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700" href="/reports">Reset</Link>
+      </div>
+    </form>
+  );
+}
+
+function LinkedTable({ columns, rows }: { columns: string[]; rows: CylinderReportRow[] }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[860px] text-left text-sm">
+        <thead className="border-b border-slate-200 text-xs uppercase text-slate-500">
+          <tr>{columns.map((column) => <th className="px-3 py-2" key={column}>{column}</th>)}</tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {rows.length ? rows.map((row) => (
+            <tr className="hover:bg-slate-50" key={row.id}>
+              {columns.map((column, index) => {
+                const value = row.cells[column] ?? "";
+                const href = column === "Cylinder" ? row.cylinderHref : index === 0 ? row.href : undefined;
+                return (
+                  <td className="px-3 py-2 text-slate-600" key={`${row.id}-${column}`}>
+                    {href ? <Link className="font-semibold text-brand-700 hover:text-brand-900" href={href}>{value}</Link> : value}
+                  </td>
+                );
+              })}
+            </tr>
+          )) : (
+            <tr>
+              <td className="px-3 py-4 text-slate-500" colSpan={columns.length}>No records found.</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 const cylinderStatuses = ["FILLED", "EMPTY", "EMPTY_AT_SELLING_POINT", "EMPTY_AT_WAREHOUSE", "EMPTY_IN_TRANSIT", "FILLED_IN_TRANSIT", "FILLED_AT_WAREHOUSE", "FILLED_AT_SELLING_POINT", "DAMAGED", "IN_TRANSIT", "RESERVED", "UNDER_MAINTENANCE", "WITH_CUSTOMER", "QUARANTINED", "SCRAPPED_WRITTEN_OFF", "LOST_OVERDUE"];

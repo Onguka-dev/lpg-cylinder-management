@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { cylinderMovementInventoryTabs, normalizeCylinderReportTab } from "@/lib/cylinder-movement-inventory-report";
 import {
   canViewReports,
   dateRange,
@@ -10,6 +11,7 @@ import {
 
 describe("reporting and analytics", () => {
   it("includes required Stage 13 report types", () => {
+    expect(reportTypes).toContain("cylinder-movement-inventory");
     expect(reportTypes).toContain("movement-report");
     expect(reportTypes).toContain("stock-report");
     expect(reportTypes).toContain("customer-custody-report");
@@ -22,11 +24,26 @@ describe("reporting and analytics", () => {
   });
 
   it("normalizes filters and date range", () => {
-    const filters = normalizeReportFilters({ dateFrom: "2026-05-01", dateTo: "2026-05-07", skuId: "" });
+    const filters = normalizeReportFilters({ dateFrom: "2026-05-01", dateTo: "2026-05-07", skuId: "", barcode: " WG-13 " });
     const range = dateRange(filters);
     expect(filters.skuId).toBeNull();
+    expect(filters.barcode).toBe(" WG-13 ");
     expect(range?.gte?.toISOString().slice(0, 10)).toBe("2026-05-01");
     expect(range?.lte?.getHours()).toBe(23);
+  });
+
+  it("declares cylinder movement inventory report tabs", () => {
+    expect(cylinderMovementInventoryTabs).toEqual([
+      "cylinder-transfers",
+      "sales-by-cylinder",
+      "stock-levels",
+      "customer-custody",
+      "in-transit",
+      "variance-loss",
+      "empty-returns"
+    ]);
+    expect(normalizeCylinderReportTab("stock-levels")).toBe("stock-levels");
+    expect(normalizeCylinderReportTab("unknown")).toBe("cylinder-transfers");
   });
 
   it("exports CSV with escaping", () => {

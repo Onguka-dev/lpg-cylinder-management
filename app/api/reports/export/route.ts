@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 import { formatMoney } from "@/lib/billing";
+import { cylinderReportExportRows, getCylinderMovementInventoryReport } from "@/lib/cylinder-movement-inventory-report";
 import { prisma } from "@/lib/prisma";
 import { canViewReports, dateRange, normalizeReportFilters, reportTypes, toCsv, type ReportType } from "@/lib/reports";
 
@@ -29,6 +30,11 @@ export async function GET(request: Request) {
 
 async function reportRows(type: ReportType, filters: ReturnType<typeof normalizeReportFilters>) {
   const createdAt = dateRange(filters);
+
+  if (type === "cylinder-movement-inventory") {
+    const report = await getCylinderMovementInventoryReport(filters);
+    return cylinderReportExportRows(report);
+  }
 
   if (type === "stock-report" || type === "inventory-levels" || type === "cylinder-status" || type === "cylinder-location") {
     const cylinders = await prisma.cylinder.findMany({

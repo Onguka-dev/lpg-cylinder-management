@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { AppRole } from "@/lib/auth-types";
 
 export const reportTypes = [
+  "cylinder-movement-inventory",
   "movement-report",
   "stock-report",
   "customer-custody-report",
@@ -30,7 +31,14 @@ export const reportFilterSchema = z.object({
   role: z.string().optional().nullable(),
   customerCategory: z.string().optional().nullable(),
   skuId: z.string().optional().nullable(),
-  status: z.string().optional().nullable()
+  status: z.string().optional().nullable(),
+  tab: z.string().optional().nullable(),
+  entityType: z.string().optional().nullable(),
+  sourceId: z.string().optional().nullable(),
+  destinationId: z.string().optional().nullable(),
+  customerId: z.string().optional().nullable(),
+  salesPersonId: z.string().optional().nullable(),
+  barcode: z.string().optional().nullable()
 });
 
 export type ReportFilters = z.infer<typeof reportFilterSchema>;
