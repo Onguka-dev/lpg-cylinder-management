@@ -13,7 +13,7 @@ export async function POST(_request: Request, { params }: { params: { id: string
   if (!["DRAFT", "RETURNED"].includes(reconciliation.status)) {
     return NextResponse.json({ error: "Only draft or returned reconciliations can be submitted." }, { status: 400 });
   }
-  if (["RSO", "MSO"].includes(auth.session.user.role) && reconciliation.ownerId !== auth.session.user.id) {
+  if (["RSO", "MSO", "SERVICE_CENTRE_STAFF"].includes(auth.session.user.role) && reconciliation.ownerId !== auth.session.user.id) {
     return NextResponse.json({ error: "You can only submit your own reconciliation." }, { status: 403 });
   }
 
@@ -25,6 +25,9 @@ export async function POST(_request: Request, { params }: { params: { id: string
     await tx.auditLog.create({
       data: {
         action: "RECONCILIATION_SUBMITTED",
+        category: "RECONCILIATION",
+        entityType: "DailyReconciliation",
+        entityId: reconciliation.id,
         details: `${reconciliation.reference} submitted for supervisor review.`,
         userId: auth.session.user.id
       }

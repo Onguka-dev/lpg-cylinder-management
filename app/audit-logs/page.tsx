@@ -1,12 +1,13 @@
 import { redirect } from "next/navigation";
-import { auditCategories, auditSeverities } from "@/lib/audit";
+import Link from "next/link";
+import { auditCategories, auditSeverities, criticalAuditActions } from "@/lib/audit";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export default async function AuditLogsPage({
   searchParams
 }: {
-  searchParams?: { category?: string; severity?: string; q?: string };
+  searchParams?: { category?: string; severity?: string; q?: string; critical?: string };
 }) {
   const session = await getCurrentSession();
 
@@ -16,10 +17,12 @@ export default async function AuditLogsPage({
   const category = searchParams?.category;
   const severity = searchParams?.severity;
   const q = searchParams?.q?.trim();
+  const critical = searchParams?.critical === "true";
   const logs = await prisma.auditLog.findMany({
     where: {
       ...(category && auditCategories.includes(category as never) ? { category: category as never } : {}),
       ...(severity && auditSeverities.includes(severity as never) ? { severity: severity as never } : {}),
+      ...(critical ? { action: { in: [...criticalAuditActions] } } : {}),
       ...(q ? {
         OR: [
           { action: { contains: q, mode: "insensitive" } },
@@ -40,11 +43,19 @@ export default async function AuditLogsPage({
         <p className="text-sm font-semibold text-brand-700">Stage 17</p>
         <h1 className="mt-2 text-2xl font-semibold text-slate-950">Audit Logs</h1>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-          Review authentication, master data, customer, inventory, approval, order, delivery, invoice, payment, reconciliation, and compliance events.
+          Review authentication, master data, customer, inventory, approval, order, delivery, invoice, payment, reconciliation, compliance, and critical stock-control events.
         </p>
       </section>
 
+      <section className="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-white p-4 shadow-panel">
+        <Link className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-brand-300 hover:text-brand-700" href="/audit-logs?critical=true">Critical stock controls</Link>
+        {criticalAuditActions.map((action) => (
+          <Link className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:border-brand-300 hover:text-brand-700" href={`/audit-logs?q=${encodeURIComponent(action)}`} key={action}>{action}</Link>
+        ))}
+      </section>
+
       <form className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-panel md:grid-cols-[1fr_1fr_2fr_auto]">
+        {critical ? <input name="critical" type="hidden" value="true" /> : null}
         <select className="rounded-lg border border-slate-300 px-3 py-2 text-sm" name="category" defaultValue={category ?? ""}>
           <option value="">All categories</option>
           {auditCategories.map((item) => <option key={item} value={item}>{item}</option>)}

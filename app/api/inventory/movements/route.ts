@@ -116,6 +116,18 @@ export async function POST(request: Request) {
         }
       });
 
+      await tx.auditLog.create({
+        data: {
+          action: created.type === "ADJUSTMENT" ? "INVENTORY_ADJUSTMENT_REQUESTED" : "MOVEMENT_REQUESTED",
+          category: "INVENTORY",
+          severity: created.type === "ADJUSTMENT" ? "WARNING" : "INFO",
+          entityType: "InventoryMovement",
+          entityId: created.id,
+          details: `${created.reference}: ${created.type} request for ${created.requestedQuantity} cylinder(s). Approval is required before dispatch or receipt.`,
+          userId: session?.user.id
+        }
+      });
+
       return created;
     });
 

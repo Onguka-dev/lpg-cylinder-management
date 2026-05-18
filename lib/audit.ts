@@ -23,6 +23,26 @@ export const auditCategories = [
 
 export const auditSeverities = ["INFO", "WARNING", "CRITICAL"] as const;
 
+export const criticalAuditActions = [
+  "SUPPLIER_RECEIPT_POSTED",
+  "MOVEMENT_DISPATCHED",
+  "MOVEMENT_RECEIVED",
+  "FULL_CYLINDER_SALE_COMPLETED",
+  "REFILL_ORDER_COMPLETED",
+  "FIELD_SALE_RECORDED",
+  "EMPTY_RETURN_LOGGED",
+  "NON_CODED_INTAKE_CREATED",
+  "INVENTORY_ADJUSTMENT_REQUESTED",
+  "DAMAGED_QUARANTINE",
+  "CYLINDER_STATUS_CHANGED",
+  "RECONCILIATION_VARIANCE_CASES_CREATED",
+  "RECONCILIATION_ADMIN_OVERRIDE"
+] as const;
+
+export function isCriticalAuditAction(action: string) {
+  return criticalAuditActions.some((item) => action.toUpperCase().includes(item) || item.includes(action.toUpperCase()));
+}
+
 export async function writeAuditLog(input: {
   action: string;
   category: (typeof auditCategories)[number];

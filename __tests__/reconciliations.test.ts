@@ -4,20 +4,29 @@ import {
   canCreateReconciliations,
   canReviewReconciliations,
   canViewReconciliations,
+  actualClosingFromCountLines,
   dayRange,
   formatReconciliationLabel,
+  reconciliationCountModes,
+  reconciliationCountStatuses,
   reconciliationCreateSchema,
   reconciliationLocked,
   reconciliationOverrideSchema,
   reconciliationReviewSchema,
   reconciliationScopes,
-  reconciliationStatuses
+  reconciliationStatuses,
+  reconciliationVarianceStatuses,
+  reconciliationVarianceTypes
 } from "@/lib/reconciliations";
 
 describe("daily reconciliation controls", () => {
   it("supports the Stage 11 scopes and review states", () => {
     expect(reconciliationScopes).toEqual(["RSO", "MSO", "WAREHOUSE", "SERVICE_CENTRE"]);
-    expect(reconciliationStatuses).toEqual(["DRAFT", "SUBMITTED", "APPROVED", "RETURNED"]);
+    expect(reconciliationStatuses).toEqual(["DRAFT", "SUBMITTED", "APPROVED", "RETURNED", "CLOSED"]);
+    expect(reconciliationCountModes).toEqual(["SUMMARY", "SCAN"]);
+    expect(reconciliationCountStatuses).toContain("FILLED_AT_SELLING_POINT");
+    expect(reconciliationVarianceTypes).toContain("OVERDUE_IN_TRANSIT");
+    expect(reconciliationVarianceStatuses).toContain("RESOLVED");
   });
 
   it("validates close-of-day input clearly", () => {
@@ -25,8 +34,8 @@ describe("daily reconciliation controls", () => {
       reconciliationDate: "2026-05-06",
       scope: "SERVICE_CENTRE",
       ownerId: "user-id",
-      actualClosingStock: 10,
-      actualCash: 1250
+      actualCash: 1250,
+      countLines: [{ skuId: "sku-6kg", status: "FILLED_AT_SELLING_POINT", actualCount: 7, scannedCount: 7, countMode: "SCAN" }]
     }).success).toBe(true);
     expect(reconciliationCreateSchema.safeParse({
       reconciliationDate: "2026-05-06",
@@ -39,6 +48,7 @@ describe("daily reconciliation controls", () => {
 
   it("validates supervisor review and admin override", () => {
     expect(reconciliationReviewSchema.safeParse({ status: "APPROVED", supervisorNotes: "Balanced" }).success).toBe(true);
+    expect(reconciliationReviewSchema.safeParse({ status: "CLOSED", supervisorNotes: "All variances closed" }).success).toBe(true);
     expect(reconciliationReviewSchema.safeParse({ status: "DRAFT" }).success).toBe(false);
     expect(reconciliationOverrideSchema.safeParse({
       actualClosingStock: 9,
@@ -64,7 +74,13 @@ describe("daily reconciliation controls", () => {
     expect(range.start.getHours()).toBe(0);
     expect(range.end.getTime() - range.start.getTime()).toBe(24 * 60 * 60 * 1000);
     expect(reconciliationLocked("APPROVED")).toBe(true);
+    expect(reconciliationLocked("CLOSED")).toBe(true);
     expect(reconciliationLocked("SUBMITTED")).toBe(false);
+  });
+
+  it("uses physical count lines as the closing stock source when present", () => {
+    expect(actualClosingFromCountLines(99, [{ actualCount: 3 }, { actualCount: 4 }])).toBe(7);
+    expect(actualClosingFromCountLines(8, [])).toBe(8);
   });
 
   it("formats reconciliation labels", () => {

@@ -84,7 +84,17 @@ export function ReconciliationActions({
         </form>
       ) : null}
 
-      {canOverride && status === "APPROVED" ? (
+      {canReview && status === "APPROVED" ? (
+        <form className="grid gap-3 md:grid-cols-[1fr_auto]" onSubmit={review}>
+          <input name="status" type="hidden" value="CLOSED" />
+          <input className="rounded-lg border border-slate-300 px-3 py-2 text-sm" name="supervisorNotes" placeholder="Closure notes" />
+          <button className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-70" type="submit" disabled={busy.includes("/review")}>
+            {busy.includes("/review") ? "Closing..." : "Close reconciliation"}
+          </button>
+        </form>
+      ) : null}
+
+      {canOverride && ["APPROVED", "CLOSED"].includes(status) ? (
         <form className="space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-4" onSubmit={override}>
           <div>
             <h3 className="text-sm font-semibold text-amber-950">Admin override</h3>

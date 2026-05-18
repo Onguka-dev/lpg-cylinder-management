@@ -17,7 +17,10 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   const reconciliation = await prisma.dailyReconciliation.findUnique({ where: { id: params.id } });
   if (!reconciliation) return NextResponse.json({ error: "Reconciliation not found." }, { status: 404 });
-  if (reconciliation.status !== "SUBMITTED") {
+  if (parsed.data.status === "CLOSED" && reconciliation.status !== "APPROVED") {
+    return NextResponse.json({ error: "Only approved reconciliations can be closed." }, { status: 400 });
+  }
+  if (parsed.data.status !== "CLOSED" && reconciliation.status !== "SUBMITTED") {
     return NextResponse.json({ error: "Only submitted reconciliations can be approved or returned." }, { status: 400 });
   }
 
@@ -31,12 +34,21 @@ export async function POST(request: Request, { params }: { params: { id: string 
         reviewedById: auth.session.user.id,
         approvedAt: parsed.data.status === "APPROVED" ? now : null,
         returnedAt: parsed.data.status === "RETURNED" ? now : null,
-        lockedAt: parsed.data.status === "APPROVED" ? now : null
+        lockedAt: parsed.data.status === "APPROVED" || parsed.data.status === "CLOSED" ? reconciliation.lockedAt ?? now : null
       }
     });
+    if (parsed.data.status === "CLOSED") {
+      await tx.reconciliationVarianceCase.updateMany({
+        where: { reconciliationId: reconciliation.id, status: { in: ["RESOLVED", "CLOSED"] } },
+        data: { status: "CLOSED", resolvedById: auth.session.user.id, resolvedAt: now }
+      });
+    }
     await tx.auditLog.create({
       data: {
-        action: parsed.data.status === "APPROVED" ? "RECONCILIATION_APPROVED" : "RECONCILIATION_RETURNED",
+        action: parsed.data.status === "APPROVED" ? "RECONCILIATION_APPROVED" : parsed.data.status === "CLOSED" ? "RECONCILIATION_CLOSED" : "RECONCILIATION_RETURNED",
+        category: "RECONCILIATION",
+        entityType: "DailyReconciliation",
+        entityId: reconciliation.id,
         details: `${reconciliation.reference} ${parsed.data.status.toLowerCase()}.`,
         userId: auth.session.user.id
       }

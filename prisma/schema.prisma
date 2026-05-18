@@ -263,6 +263,30 @@ enum ReconciliationStatus {
   SUBMITTED
   APPROVED
   RETURNED
+  CLOSED
+}
+
+enum ReconciliationCountMode {
+  SUMMARY
+  SCAN
+}
+
+enum ReconciliationVarianceType {
+  MISSING
+  EXTRA
+  DUPLICATE
+  WRONG_LOCATION
+  WRONG_STATUS
+  OVERDUE_IN_TRANSIT
+  STOCK_VARIANCE
+  PAYMENT_VARIANCE
+}
+
+enum ReconciliationVarianceStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  CLOSED
 }
 
 enum CylinderMaintenanceStatus {
@@ -489,6 +513,8 @@ model User {
   createdCustomerCylinderCustodies CustomerCylinderCustody[]  @relation("CustomerCylinderCustodyCreatedBy")
   createdNonCodedCylinderIntakes   NonCodedCylinderIntake[]   @relation("NonCodedCylinderIntakeCreatedBy")
   reviewedNonCodedCylinderIntakes  NonCodedCylinderIntake[]   @relation("NonCodedCylinderIntakeReviewedBy")
+  createdReconciliationVariances   ReconciliationVarianceCase[] @relation("ReconciliationVarianceCreatedBy")
+  resolvedReconciliationVariances  ReconciliationVarianceCase[] @relation("ReconciliationVarianceResolvedBy")
   scanEvents                       ScanEvent[]
   offlineSyncItems                 OfflineSyncItem[]
   integrationLogs                  IntegrationLog[]
@@ -608,6 +634,11 @@ model MasterDataRecord {
   deliveryZones               Delivery[]                @relation("DeliveryZone")
   deliveryVehicles            Delivery[]                @relation("DeliveryVehicle")
   reconciliationLocations     DailyReconciliation[]     @relation("ReconciliationLocation")
+  reconciliationCountSkus     ReconciliationCountLine[] @relation("ReconciliationCountSku")
+  reconciliationVarianceSkus  ReconciliationVarianceCase[] @relation("ReconciliationVarianceSku")
+  reconciliationVarianceLocations ReconciliationVarianceCase[] @relation("ReconciliationVarianceLocation")
+  reconciliationVarianceExpectedLocations ReconciliationVarianceCase[] @relation("ReconciliationVarianceExpectedLocation")
+  reconciliationVarianceScannedLocations ReconciliationVarianceCase[] @relation("ReconciliationVarianceScannedLocation")
   complaintLocations          CustomerComplaint[]       @relation("CustomerComplaintLocation")
   supplierReceipts            SupplierReceipt[]         @relation("SupplierReceiptWarehouse")
   sourcePlantTransfers        PlantTransfer[]           @relation("PlantTransferSourceLocation")
@@ -839,6 +870,7 @@ model Cylinder {
   maintenanceStatus       CylinderMaintenanceStatus   @default(NONE)
   maintenanceCases        MaintenanceCase[]
   safetyIncidents         SafetyIncident[]
+  reconciliationVarianceCases ReconciliationVarianceCase[]
   createdAt               DateTime                    @default(now())
   updatedAt               DateTime                    @updatedAt
 
@@ -1349,6 +1381,8 @@ model DailyReconciliation {
   approvedAt           DateTime?
   returnedAt           DateTime?
   lockedAt             DateTime?
+  countLines           ReconciliationCountLine[]
+  varianceCases        ReconciliationVarianceCase[]
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt
 
@@ -1356,6 +1390,70 @@ model DailyReconciliation {
   @@index([status])
   @@index([scope])
   @@index([reconciliationDate])
+  @@index([locationId])
+}
+
+model ReconciliationCountLine {
+  id               String                  @id @default(cuid())
+  reconciliationId String
+  reconciliation   DailyReconciliation     @relation(fields: [reconciliationId], references: [id], onDelete: Cascade)
+  skuId            String
+  sku              MasterDataRecord        @relation("ReconciliationCountSku", fields: [skuId], references: [id])
+  status           CylinderStatus
+  systemCount      Int                     @default(0)
+  actualCount      Int                     @default(0)
+  scannedCount     Int?
+  variance         Int                     @default(0)
+  countMode        ReconciliationCountMode @default(SUMMARY)
+  notes            String?
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  @@unique([reconciliationId, skuId, status])
+  @@index([skuId])
+  @@index([status])
+}
+
+model ReconciliationVarianceCase {
+  id                 String                       @id @default(cuid())
+  reference          String                       @unique
+  reconciliationId   String
+  reconciliation     DailyReconciliation          @relation(fields: [reconciliationId], references: [id], onDelete: Cascade)
+  type               ReconciliationVarianceType
+  status             ReconciliationVarianceStatus @default(OPEN)
+  cylinderId         String?
+  cylinder           Cylinder?                    @relation(fields: [cylinderId], references: [id], onDelete: SetNull)
+  movementId         String?
+  movement           InventoryMovement?           @relation(fields: [movementId], references: [id], onDelete: SetNull)
+  skuId              String?
+  sku                MasterDataRecord?            @relation("ReconciliationVarianceSku", fields: [skuId], references: [id], onDelete: SetNull)
+  locationId         String?
+  location           MasterDataRecord?            @relation("ReconciliationVarianceLocation", fields: [locationId], references: [id], onDelete: SetNull)
+  expectedStatus     CylinderStatus?
+  scannedStatus      CylinderStatus?
+  expectedLocationId String?
+  expectedLocation   MasterDataRecord?            @relation("ReconciliationVarianceExpectedLocation", fields: [expectedLocationId], references: [id], onDelete: SetNull)
+  scannedLocationId  String?
+  scannedLocation    MasterDataRecord?            @relation("ReconciliationVarianceScannedLocation", fields: [scannedLocationId], references: [id], onDelete: SetNull)
+  expectedQuantity   Int?
+  actualQuantity     Int?
+  varianceQuantity   Int?
+  details            String
+  resolutionNotes    String?
+  createdById        String?
+  createdBy          User?                        @relation("ReconciliationVarianceCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  resolvedById       String?
+  resolvedBy         User?                        @relation("ReconciliationVarianceResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedAt         DateTime?
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+
+  @@index([reconciliationId])
+  @@index([type])
+  @@index([status])
+  @@index([cylinderId])
+  @@index([movementId])
+  @@index([skuId])
   @@index([locationId])
 }
 
@@ -1400,6 +1498,7 @@ model InventoryMovement {
   completedAt           DateTime?
   cylinders             InventoryMovementCylinder[]
   historyEntries        InventoryMovementHistory[]
+  reconciliationVarianceCases ReconciliationVarianceCase[]
   supplierReceiptLines  SupplierReceiptLine[]
   plantTransfers        PlantTransfer[]
   createdAt             DateTime                    @default(now())

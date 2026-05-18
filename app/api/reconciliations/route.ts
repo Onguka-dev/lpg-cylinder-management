@@ -3,6 +3,9 @@ import { Prisma, RoleName } from "@prisma/client";
 import { getCurrentSession } from "@/lib/auth";
 import { requireReconciliationCreateSession, requireReconciliationViewSession } from "@/lib/reconciliation-access";
 import {
+  actualClosingFromCountLines,
+  buildReconciliationCountLines,
+  buildReconciliationVarianceCases,
   calculateReconciliationSummary,
   generateReconciliationReference,
   reconciliationCreateSchema
@@ -89,7 +92,12 @@ export async function POST(request: Request) {
   });
   const actualCash = new Prisma.Decimal(parsed.data.actualCash).toDecimalPlaces(2);
   const paymentVariance = actualCash.minus(summary.expectedCash).toDecimalPlaces(2);
-  const stockVariance = parsed.data.actualClosingStock - summary.expectedClosingStock;
+  const countLines = await buildReconciliationCountLines({
+    locationId: summary.location?.id ?? null,
+    countLines: parsed.data.countLines
+  });
+  const actualClosingStock = actualClosingFromCountLines(parsed.data.actualClosingStock, countLines);
+  const stockVariance = actualClosingStock - summary.expectedClosingStock;
 
   try {
     const reconciliation = await prisma.$transaction(async (tx) => {
@@ -107,7 +115,7 @@ export async function POST(request: Request) {
           returns: summary.returns,
           damagedCylinders: summary.damagedCylinders,
           expectedClosingStock: summary.expectedClosingStock,
-          actualClosingStock: parsed.data.actualClosingStock,
+          actualClosingStock,
           stockVariance,
           stockExplanation: parsed.data.stockExplanation?.trim() || null,
           cashCollections: summary.cashCollections,
@@ -122,9 +130,28 @@ export async function POST(request: Request) {
         include: { owner: true, location: true }
       });
 
+      if (countLines.length) {
+        await tx.reconciliationCountLine.createMany({
+          data: countLines.map((line) => ({
+            reconciliationId: created.id,
+            skuId: line.skuId,
+            status: line.status,
+            systemCount: line.systemCount,
+            actualCount: line.actualCount,
+            scannedCount: line.scannedCount,
+            variance: line.variance,
+            countMode: line.countMode,
+            notes: line.notes
+          }))
+        });
+      }
+
       await tx.auditLog.create({
         data: {
           action: "RECONCILIATION_CREATED",
+          category: "RECONCILIATION",
+          entityType: "DailyReconciliation",
+          entityId: created.id,
           details: `${created.reference} created for ${owner.name}.`,
           userId: auth.session.user.id
         }
@@ -132,6 +159,30 @@ export async function POST(request: Request) {
 
       return created;
     });
+
+    const varianceCases = await buildReconciliationVarianceCases({
+      reconciliationId: reconciliation.id,
+      locationId: reconciliation.locationId,
+      date: reconciliation.reconciliationDate,
+      stockVariance,
+      paymentVariance,
+      countLines,
+      createdById: auth.session.user.id
+    });
+    if (varianceCases.length) {
+      await prisma.reconciliationVarianceCase.createMany({ data: varianceCases, skipDuplicates: true });
+      await prisma.auditLog.create({
+        data: {
+          action: "RECONCILIATION_VARIANCE_CASES_CREATED",
+          category: "RECONCILIATION",
+          severity: "WARNING",
+          entityType: "DailyReconciliation",
+          entityId: reconciliation.id,
+          details: `${varianceCases.length} variance case(s) created for ${reconciliation.reference}.`,
+          userId: auth.session.user.id
+        }
+      });
+    }
 
     return NextResponse.json({ reconciliation }, { status: 201 });
   } catch (error) {

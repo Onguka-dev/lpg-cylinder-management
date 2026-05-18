@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
-import { auditCategories, auditSeverities } from "@/lib/audit";
+import { auditCategories, auditSeverities, criticalAuditActions } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
@@ -15,11 +15,13 @@ export async function GET(request: Request) {
   const category = url.searchParams.get("category");
   const severity = url.searchParams.get("severity");
   const q = url.searchParams.get("q")?.trim();
+  const critical = url.searchParams.get("critical") === "true";
 
   const logs = await prisma.auditLog.findMany({
     where: {
       ...(category && auditCategories.includes(category as never) ? { category: category as never } : {}),
       ...(severity && auditSeverities.includes(severity as never) ? { severity: severity as never } : {}),
+      ...(critical ? { action: { in: [...criticalAuditActions] } } : {}),
       ...(q ? {
         OR: [
           { action: { contains: q, mode: "insensitive" } },

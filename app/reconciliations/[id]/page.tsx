@@ -19,10 +19,17 @@ export default async function ReconciliationDetailPage({ params }: { params: { i
 
   const reconciliation = await prisma.dailyReconciliation.findUnique({
     where: { id: params.id },
-    include: { owner: { include: { role: true } }, location: true, createdBy: true, reviewedBy: true }
+    include: {
+      owner: { include: { role: true } },
+      location: true,
+      createdBy: true,
+      reviewedBy: true,
+      countLines: { include: { sku: true }, orderBy: [{ sku: { name: "asc" } }, { status: "asc" }] },
+      varianceCases: { include: { cylinder: true, movement: true, sku: true, location: true }, orderBy: { createdAt: "desc" } }
+    }
   });
   if (!reconciliation) notFound();
-  if (["RSO", "MSO"].includes(session.user.role) && reconciliation.ownerId !== session.user.id) redirect("/unauthorized");
+  if (["RSO", "MSO", "SERVICE_CENTRE_STAFF"].includes(session.user.role) && reconciliation.ownerId !== session.user.id) redirect("/unauthorized");
 
   const canSubmit = canCreateReconciliations(session.user.role) && (["ADMIN", "WAREHOUSE_MANAGER"].includes(session.user.role) || reconciliation.ownerId === session.user.id);
   const canReview = canReviewReconciliations(session.user.role);
@@ -74,6 +81,34 @@ export default async function ReconciliationDetailPage({ params }: { params: { i
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
+        <Panel title="Physical Count Lines">
+          <SimpleTable
+            headers={["SKU", "Status", "System", "Actual", "Scanned", "Variance"]}
+            rows={reconciliation.countLines.map((line) => [
+              line.sku.name,
+              formatReconciliationLabel(line.status),
+              String(line.systemCount),
+              String(line.actualCount),
+              line.scannedCount === null ? "" : String(line.scannedCount),
+              String(line.variance)
+            ])}
+          />
+        </Panel>
+        <Panel title="Variance Cases">
+          <SimpleTable
+            headers={["Reference", "Type", "Status", "Cylinder/Movement", "Variance"]}
+            rows={reconciliation.varianceCases.map((variance) => [
+              variance.reference,
+              formatReconciliationLabel(variance.type),
+              formatReconciliationLabel(variance.status),
+              variance.cylinder?.serialNumber ?? variance.movement?.reference ?? variance.sku?.name ?? variance.location?.name ?? "",
+              variance.varianceQuantity === null ? "" : String(variance.varianceQuantity)
+            ])}
+          />
+        </Panel>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-2">
         <Panel title="Explanations">
           <TextBlock label="Stock explanation" value={reconciliation.stockExplanation} />
           <TextBlock label="Payment explanation" value={reconciliation.paymentExplanation} />
@@ -121,4 +156,23 @@ function Metric({ label, value, strong }: { label: string; value: string; strong
 
 function TextBlock({ label, value }: { label: string; value?: string | null }) {
   return <div className="py-3 text-sm"><p className="font-medium text-slate-700">{label}</p><p className="mt-1 text-slate-500">{value || "None recorded."}</p></div>;
+}
+
+function SimpleTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
+  return (
+    <div className="overflow-x-auto py-3">
+      <table className="w-full min-w-[560px] text-left text-sm">
+        <thead className="border-b border-slate-200 text-xs uppercase text-slate-500">
+          <tr>{headers.map((header) => <th className="px-3 py-2" key={header}>{header}</th>)}</tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {rows.length ? rows.map((row, index) => (
+            <tr key={index}>{row.map((cell, cellIndex) => <td className="px-3 py-2 text-slate-600" key={`${index}-${cellIndex}`}>{cell}</td>)}</tr>
+          )) : (
+            <tr><td className="px-3 py-4 text-slate-500" colSpan={headers.length}>No records found.</td></tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
 }

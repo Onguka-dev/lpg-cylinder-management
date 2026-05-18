@@ -17,8 +17,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   const reconciliation = await prisma.dailyReconciliation.findUnique({ where: { id: params.id } });
   if (!reconciliation) return NextResponse.json({ error: "Reconciliation not found." }, { status: 404 });
-  if (reconciliation.status !== "APPROVED") {
-    return NextResponse.json({ error: "Admin override is only available after approval locks the reconciliation." }, { status: 400 });
+  if (!["APPROVED", "CLOSED"].includes(reconciliation.status)) {
+    return NextResponse.json({ error: "Admin override is only available after approval or closure locks the reconciliation." }, { status: 400 });
   }
 
   const actualCash = new Prisma.Decimal(parsed.data.actualCash).toDecimalPlaces(2);
@@ -42,6 +42,10 @@ export async function POST(request: Request, { params }: { params: { id: string 
     await tx.auditLog.create({
       data: {
         action: "RECONCILIATION_ADMIN_OVERRIDE",
+        category: "RECONCILIATION",
+        severity: "WARNING",
+        entityType: "DailyReconciliation",
+        entityId: reconciliation.id,
         details: `${reconciliation.reference} overridden by Admin: ${parsed.data.adminOverrideReason.trim()}`,
         userId: session.user.id
       }

@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 import { Prisma, RoleName } from "@prisma/client";
 import { getCurrentSession } from "@/lib/auth";
 import { requireReconciliationCreateSession, requireReconciliationViewSession } from "@/lib/reconciliation-access";
-import { calculateReconciliationSummary, reconciliationCreateSchema } from "@/lib/reconciliations";
+import {
+  actualClosingFromCountLines,
+  buildReconciliationCountLines,
+  buildReconciliationVarianceCases,
+  calculateReconciliationSummary,
+  reconciliationCreateSchema
+} from "@/lib/reconciliations";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(_request: Request, { params }: { params: { id: string } }) {
@@ -67,10 +73,17 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   });
   const actualCash = new Prisma.Decimal(parsed.data.actualCash).toDecimalPlaces(2);
   const paymentVariance = actualCash.minus(summary.expectedCash).toDecimalPlaces(2);
-  const stockVariance = parsed.data.actualClosingStock - summary.expectedClosingStock;
+  const countLines = await buildReconciliationCountLines({
+    locationId: summary.location?.id ?? null,
+    countLines: parsed.data.countLines
+  });
+  const actualClosingStock = actualClosingFromCountLines(parsed.data.actualClosingStock, countLines);
+  const stockVariance = actualClosingStock - summary.expectedClosingStock;
 
   try {
     const updated = await prisma.$transaction(async (tx) => {
+      await tx.reconciliationCountLine.deleteMany({ where: { reconciliationId: reconciliation.id } });
+      await tx.reconciliationVarianceCase.deleteMany({ where: { reconciliationId: reconciliation.id, status: "OPEN" } });
       const saved = await tx.dailyReconciliation.update({
         where: { id: reconciliation.id },
         data: {
@@ -85,7 +98,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
           returns: summary.returns,
           damagedCylinders: summary.damagedCylinders,
           expectedClosingStock: summary.expectedClosingStock,
-          actualClosingStock: parsed.data.actualClosingStock,
+          actualClosingStock,
           stockVariance,
           stockExplanation: parsed.data.stockExplanation?.trim() || null,
           cashCollections: summary.cashCollections,
@@ -101,15 +114,57 @@ export async function PUT(request: Request, { params }: { params: { id: string }
           returnedAt: null
         }
       });
+      if (countLines.length) {
+        await tx.reconciliationCountLine.createMany({
+          data: countLines.map((line) => ({
+            reconciliationId: reconciliation.id,
+            skuId: line.skuId,
+            status: line.status,
+            systemCount: line.systemCount,
+            actualCount: line.actualCount,
+            scannedCount: line.scannedCount,
+            variance: line.variance,
+            countMode: line.countMode,
+            notes: line.notes
+          }))
+        });
+      }
       await tx.auditLog.create({
         data: {
           action: "RECONCILIATION_UPDATED",
+          category: "RECONCILIATION",
+          entityType: "DailyReconciliation",
+          entityId: reconciliation.id,
           details: `${reconciliation.reference} updated before approval.`,
           userId: auth.session.user.id
         }
       });
       return saved;
     });
+
+    const varianceCases = await buildReconciliationVarianceCases({
+      reconciliationId: updated.id,
+      locationId: updated.locationId,
+      date: updated.reconciliationDate,
+      stockVariance,
+      paymentVariance,
+      countLines,
+      createdById: auth.session.user.id
+    });
+    if (varianceCases.length) {
+      await prisma.reconciliationVarianceCase.createMany({ data: varianceCases, skipDuplicates: true });
+      await prisma.auditLog.create({
+        data: {
+          action: "RECONCILIATION_VARIANCE_CASES_CREATED",
+          category: "RECONCILIATION",
+          severity: "WARNING",
+          entityType: "DailyReconciliation",
+          entityId: updated.id,
+          details: `${varianceCases.length} variance case(s) refreshed for ${reconciliation.reference}.`,
+          userId: auth.session.user.id
+        }
+      });
+    }
 
     return NextResponse.json({ reconciliation: updated });
   } catch (error) {

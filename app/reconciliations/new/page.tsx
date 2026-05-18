@@ -8,11 +8,14 @@ export default async function NewReconciliationPage() {
   const session = await getCurrentSession();
   if (!session || !canCreateReconciliations(session.user.role)) redirect("/unauthorized");
 
-  const users = await prisma.user.findMany({
-    where: { role: { name: { in: ["RSO", "MSO", "WAREHOUSE_MANAGER", "SERVICE_CENTRE_STAFF"] } } },
-    include: { role: true, location: true },
-    orderBy: { name: "asc" }
-  });
+  const [users, skus] = await Promise.all([
+    prisma.user.findMany({
+      where: { role: { name: { in: ["RSO", "MSO", "WAREHOUSE_MANAGER", "SERVICE_CENTRE_STAFF"] } } },
+      include: { role: true, location: true },
+      orderBy: { name: "asc" }
+    }),
+    prisma.masterDataRecord.findMany({ where: { type: "SKU_MASTER", isActive: true }, orderBy: { name: "asc" } })
+  ]);
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -22,7 +25,7 @@ export default async function NewReconciliationPage() {
         <p className="mt-3 text-sm leading-6 text-slate-600">The system calculates expected stock and collection figures. Enter actual closing counts and cash received.</p>
       </section>
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-panel">
-        <ReconciliationForm users={users} currentUserId={session.user.id} currentRole={session.user.role} />
+        <ReconciliationForm users={users} skus={skus} currentUserId={session.user.id} currentRole={session.user.role} />
       </section>
     </div>
   );

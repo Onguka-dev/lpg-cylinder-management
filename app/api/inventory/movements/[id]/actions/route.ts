@@ -85,6 +85,7 @@ export async function POST(
           }
         });
         await addHistory(tx, movement.id, movement.status, saved.status, "Movement approved", `${approvedQuantity} cylinder(s) approved.`, session?.user.id);
+        await addAudit(tx, "MOVEMENT_APPROVED", movement.id, movement.reference, `${approvedQuantity} cylinder(s) approved.`, session?.user.id);
         return saved;
       }
 
@@ -96,6 +97,7 @@ export async function POST(
           data: { status: "REJECTED" }
         });
         await addHistory(tx, movement.id, movement.status, saved.status, "Movement rejected", parsed.data.notes ?? "Movement rejected.", session?.user.id);
+        await addAudit(tx, "MOVEMENT_REJECTED", movement.id, movement.reference, parsed.data.notes ?? "Movement rejected.", session?.user.id);
         return saved;
       }
 
@@ -155,6 +157,7 @@ export async function POST(
           }
         });
         await addHistory(tx, movement.id, movement.status, saved.status, "Movement dispatched", `${quantity} cylinder(s) dispatched.`, session?.user.id);
+        await addAudit(tx, "MOVEMENT_DISPATCHED", movement.id, movement.reference, `${quantity} cylinder(s) dispatched from controlled stock.`, session?.user.id);
         const remaining = await tx.cylinder.count({
           where: {
             skuId: movement.skuId,
@@ -270,6 +273,7 @@ export async function POST(
           }
         });
         await addHistory(tx, movement.id, movement.status, saved.status, "Movement received", `${receivedQuantity} cylinder(s) received. Variance: ${varianceQuantity}.`, session?.user.id);
+        await addAudit(tx, "MOVEMENT_RECEIVED", movement.id, movement.reference, `${receivedQuantity} cylinder(s) received. Variance: ${varianceQuantity}.`, session?.user.id, varianceQuantity === 0 ? "INFO" : "WARNING");
         return saved;
       }
 
@@ -284,6 +288,7 @@ export async function POST(
           }
         });
         await addHistory(tx, movement.id, movement.status, saved.status, "Variance logged", saved.varianceReason ?? "Variance logged.", session?.user.id);
+        await addAudit(tx, "MOVEMENT_VARIANCE_LOGGED", movement.id, movement.reference, saved.varianceReason ?? "Variance logged.", session?.user.id, "WARNING");
         return saved;
       }
 
@@ -298,6 +303,7 @@ export async function POST(
           }
         });
         await addHistory(tx, movement.id, movement.status, saved.status, "Movement completed", parsed.data.notes ?? "Variance reviewed and movement completed.", session?.user.id);
+        await addAudit(tx, "MOVEMENT_VARIANCE_CLOSED", movement.id, movement.reference, parsed.data.notes ?? "Variance reviewed and movement completed.", session?.user.id);
         return saved;
       }
 
@@ -313,6 +319,28 @@ export async function POST(
 
     throw error;
   }
+}
+
+async function addAudit(
+  tx: Prisma.TransactionClient,
+  action: string,
+  movementId: string,
+  reference: string,
+  details: string,
+  userId?: string,
+  severity: "INFO" | "WARNING" | "CRITICAL" = "INFO"
+) {
+  await tx.auditLog.create({
+    data: {
+      action,
+      category: "INVENTORY",
+      severity,
+      entityType: "InventoryMovement",
+      entityId: movementId,
+      details: `${reference}: ${details}`,
+      userId
+    }
+  });
 }
 
 async function addHistory(
