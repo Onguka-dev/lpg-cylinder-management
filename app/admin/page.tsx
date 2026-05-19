@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { MetricCard } from "@/components/metric-card";
 import { PageHeader } from "@/components/page-header";
+import { RoleQuickActions } from "@/components/role-quick-actions";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { prisma } from "@/lib/prisma";
@@ -87,6 +88,8 @@ export default async function AdminPage() {
           tone="warning"
         />
       </section>
+
+      <RoleQuickActions role="ADMIN" />
 
       <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
         <SectionCard

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { EmptyState } from "@/components/empty-state";
+import { RoleQuickActions } from "@/components/role-quick-actions";
 import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -36,6 +38,8 @@ export default async function AuditorPage() {
         <Metric label="Variances" value={variances} />
       </section>
 
+      <RoleQuickActions role="AUDITOR" />
+
       <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
           <div className="flex items-center justify-between gap-3">
@@ -43,7 +47,7 @@ export default async function AuditorPage() {
             <Link className="text-sm font-semibold text-brand-700" href="/audit-logs">Open logs</Link>
           </div>
           <div className="mt-4 space-y-3">
-            {recentLogs.map((log) => (
+            {recentLogs.length ? recentLogs.map((log) => (
               <div className="rounded-lg border border-slate-100 bg-slate-50 p-3" key={log.id}>
                 <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
                   <span>{log.category}</span>
@@ -53,7 +57,7 @@ export default async function AuditorPage() {
                 <p className="mt-1 text-sm font-semibold text-slate-950">{log.action}</p>
                 <p className="mt-1 text-sm text-slate-600">{log.details}</p>
               </div>
-            ))}
+            )) : <EmptyState title="No audit activity yet" description="Critical actions will appear here once users post operational transactions." />}
           </div>
         </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { Barcode, Camera, CheckCircle2, Keyboard, Trash2, XCircle } from "lucide-react";
+import { Barcode, Camera, CheckCircle2, Keyboard, Trash2, Wifi, WifiOff, XCircle } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
 import { formatCylinderStatus } from "@/lib/inventory";
 import type { ScannerValidationResponse } from "@/lib/scanning";
@@ -55,9 +55,32 @@ export function BatchScanPanel({
   const [lastResult, setLastResult] = useState<ScannerValidationResponse | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [feedback, setFeedback] = useState<"idle" | "success" | "error">("idle");
+  const [isOnline, setIsOnline] = useState(true);
   const scannedCodes = useMemo(() => items.map((item) => item.code), [items]);
 
+  useEffect(() => {
+    if (typeof navigator === "undefined") return;
+    const updateStatus = () => setIsOnline(navigator.onLine);
+    updateStatus();
+    window.addEventListener("online", updateStatus);
+    window.addEventListener("offline", updateStatus);
+    return () => {
+      window.removeEventListener("online", updateStatus);
+      window.removeEventListener("offline", updateStatus);
+    };
+  }, []);
+
   async function validateScan(code: string) {
+    if (!isOnline) {
+      setLastResult({
+        ok: false,
+        result: "FAILED",
+        message: "You are offline. Reconnect before validating live cylinder scans."
+      });
+      setFeedback("error");
+      return;
+    }
+
     setIsScanning(true);
     setFeedback("idle");
 
@@ -100,7 +123,13 @@ export function BatchScanPanel({
           <h2 className="text-base font-bold text-slate-950">{title}</h2>
           <p className="text-sm text-slate-500">{items.length} cylinders in this batch</p>
         </div>
-        <ScanResultBadge result={lastResult?.result} />
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={isOnline ? "inline-flex items-center gap-1 rounded-md border border-success-100 bg-success-50 px-2 py-1 text-xs font-semibold text-success-700" : "inline-flex items-center gap-1 rounded-md border border-warning-100 bg-warning-50 px-2 py-1 text-xs font-semibold text-warning-700"}>
+            {isOnline ? <Wifi size={14} aria-hidden="true" /> : <WifiOff size={14} aria-hidden="true" />}
+            {isOnline ? "Online" : "Offline"}
+          </span>
+          <ScanResultBadge result={lastResult?.result} />
+        </div>
       </div>
 
       <BarcodeScanInput disabled={isScanning} feedback={feedback} onScan={validateScan} />
@@ -137,8 +166,29 @@ export function BatchScanPanel({
             ))}
           </ul>
         ) : (
-          <p className="px-3 py-4 text-sm text-slate-500">Validated cylinders will appear here.</p>
+          <p className="px-3 py-4 text-sm text-slate-500">Validated cylinders will appear here after the first scan.</p>
         )}
+      </div>
+
+      <div className="sticky bottom-20 z-10 rounded-lg border border-slate-200 bg-white/95 p-3 shadow-panel backdrop-blur sm:static sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-bold text-slate-950">{items.length} scanned</p>
+            <p className="text-xs text-slate-500">{isScanning ? "Validating scan..." : "Ready for next scan"}</p>
+          </div>
+          <button
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
+            disabled={!items.length}
+            onClick={() => {
+              setItems([]);
+              setLastResult(null);
+              setFeedback("idle");
+            }}
+            type="button"
+          >
+            Clear batch
+          </button>
+        </div>
       </div>
     </section>
   );
@@ -179,6 +229,8 @@ export function BarcodeScanInput({
           <Barcode className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={22} aria-hidden="true" />
           <input
             ref={inputRef}
+            aria-describedby="barcode-scan-feedback"
+            aria-label="Scan cylinder barcode or QR code"
             autoCapitalize="characters"
             autoComplete="off"
             className="min-h-14 w-full rounded-lg border border-slate-300 pl-12 pr-4 text-lg font-semibold tracking-normal text-slate-950 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100 disabled:bg-slate-100"
@@ -191,12 +243,13 @@ export function BarcodeScanInput({
           />
         </div>
         <button
+          aria-label="Validate scanned cylinder"
           className="inline-flex min-h-14 items-center justify-center gap-2 rounded-lg bg-brand-600 px-5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
           disabled={disabled}
           type="submit"
         >
           <Keyboard size={18} aria-hidden="true" />
-          Validate
+          {disabled ? "Checking..." : "Validate"}
         </button>
         <button
           aria-label="Camera scan placeholder"
@@ -208,9 +261,10 @@ export function BarcodeScanInput({
           <Camera size={20} aria-hidden="true" />
         </button>
       </div>
-      <div aria-live="polite" className="min-h-5 text-sm">
+      <div aria-live="polite" className="min-h-5 text-sm" id="barcode-scan-feedback">
         {feedback === "success" ? <span className="font-semibold text-success-700">Accepted</span> : null}
         {feedback === "error" ? <span className="font-semibold text-danger-700">Needs attention</span> : null}
+        {disabled ? <span className="font-semibold text-brand-700">Validating scan</span> : null}
       </div>
     </form>
   );
@@ -239,6 +293,7 @@ export function ManualEntryFallback({
         Manual barcode entry
       </label>
       <input
+        aria-label="Manual barcode entry"
         className="min-h-11 flex-1 rounded-lg border border-slate-300 px-3 text-sm disabled:bg-slate-100"
         disabled={disabled}
         id="manual-scan-code"
@@ -247,6 +302,7 @@ export function ManualEntryFallback({
         value={manualCode}
       />
       <button
+        aria-label="Add manually entered barcode"
         className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
         disabled={disabled}
         type="submit"

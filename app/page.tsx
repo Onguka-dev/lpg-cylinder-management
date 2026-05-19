@@ -19,6 +19,7 @@ import { EmptyState } from "@/components/empty-state";
 import { MetricCard } from "@/components/metric-card";
 import { ClientReadyEmptyStates, FeaturePlaceholderPanel, RecentActivityFeed, TaskAlertPanel } from "@/components/operations-insight-panels";
 import { PageHeader } from "@/components/page-header";
+import { RoleQuickActions } from "@/components/role-quick-actions";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { TrendChip } from "@/components/trend-chip";
@@ -160,6 +161,8 @@ export default async function HomePage({
           </div>
         }
       />
+
+      <RoleQuickActions role={session?.user.role ?? "ADMIN"} />
 
       <DashboardFilters
         searchParams={searchParams}

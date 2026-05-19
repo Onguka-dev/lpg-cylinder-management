@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { MetricCard } from "@/components/metric-card";
 import { PageHeader } from "@/components/page-header";
+import { RoleQuickActions } from "@/components/role-quick-actions";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { DEFAULT_CURRENCY, DEFAULT_CURRENCY_LOCALE } from "@/lib/currency";
@@ -134,6 +135,8 @@ export default async function RetailSalesPage() {
         <CompactStat label="Filled stock" value={filledStock} tone={filledStock <= 5 ? "warning" : "success"} />
         <CompactStat label="Empty returns" value={emptyStock} tone="info" />
       </section>
+
+      <RoleQuickActions role={session?.user.role ?? "RSO"} />
 
       <SectionCard title="Quick actions" description="Large touch targets for common RSO counter tasks.">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">

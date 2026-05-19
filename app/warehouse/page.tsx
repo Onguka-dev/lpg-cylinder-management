@@ -15,6 +15,7 @@ import {
 import { EmptyState } from "@/components/empty-state";
 import { MetricCard } from "@/components/metric-card";
 import { PageHeader } from "@/components/page-header";
+import { RoleQuickActions } from "@/components/role-quick-actions";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { formatCylinderStatus } from "@/lib/inventory";
@@ -189,6 +190,8 @@ export default async function WarehousePage({
         <MetricCard icon={AlertTriangle} label="Low Stock Alerts" value={lowStockItems.toLocaleString()} detail={`Threshold: ${threshold} per SKU`} tone={lowStockItems ? "warning" : "success"} />
         <MetricCard icon={Wrench} label="Maintenance Queue" value={maintenanceQueue.toLocaleString()} detail="Open safety and repair cases" tone={maintenanceQueue ? "danger" : "success"} />
       </section>
+
+      <RoleQuickActions role="WAREHOUSE_MANAGER" />
 
       <section className="grid gap-4 lg:grid-cols-4">
         {zoneCards.map((zone) => {

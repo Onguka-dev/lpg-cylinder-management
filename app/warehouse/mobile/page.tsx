@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowDownToLine, Barcode, ClipboardCheck, PackageX, Search, Truck, UserCircle, Warehouse } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Barcode, BarChart3, ClipboardCheck, PackageX, ReceiptText, RefreshCw, Search, Truck, Warehouse } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
 import { MetricCard } from "@/components/metric-card";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
@@ -57,16 +58,20 @@ export default async function WarehouseMobileHomePage() {
         <MetricCard icon={PackageX} label="Assets Rejected" value={String(assetsRejected)} detail="Damaged or maintenance status" tone={assetsRejected ? "danger" : "success"} />
       </section>
 
-      <section className="grid grid-cols-4 gap-2">
-        <MobileAction href="/warehouse/mobile/incoming" icon={ArrowDownToLine} label="Incoming" />
-        <MobileAction href="/warehouse/mobile/scan" icon={Barcode} label="Scan" />
-        <MobileAction href="/warehouse/mobile/tasks" icon={ClipboardCheck} label="Tasks" />
-        <MobileAction href="/warehouse/mobile/profile" icon={UserCircle} label="Profile" />
+      <section className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <MobileAction href="/warehouse/mobile/incoming" icon={ArrowDownToLine} label="Receive Cylinders" />
+        <MobileAction href="/inventory/selling-point-dispatches/new" icon={ArrowUpFromLine} label="Dispatch Cylinders" />
+        <MobileAction href="/warehouse/mobile/scan" icon={Barcode} label="Scan Batch" />
+        <MobileAction href="/retail-sales/pos" icon={ReceiptText} label="Scan Sale" />
+        <MobileAction href="/retail-sales/empty-returns/new" icon={RefreshCw} label="Log Empty Return" />
+        <MobileAction href="/retail-sales/empty-returns/new?mode=no-code" icon={PackageX} label="Non-Coded Return" />
+        <MobileAction href="/reconciliations/new" icon={ClipboardCheck} label="Stock Count" />
+        <MobileAction href="/reports" icon={BarChart3} label="Reports" />
       </section>
 
       <SectionCard title="Return / incoming list" description="Receipt movements remain the source of truth.">
         <div className="space-y-3">
-          {incoming.map((movement) => (
+          {incoming.length ? incoming.map((movement) => (
             <Link className="block rounded-2xl border border-slate-200 bg-slate-50 p-4" href={`/inventory/movements/${movement.id}`} key={movement.id}>
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -77,7 +82,7 @@ export default async function WarehouseMobileHomePage() {
               </div>
               <p className="mt-3 text-sm text-slate-500">Assets: {movement.requestedQuantity} · Received {movement.updatedAt.toISOString().slice(11, 16)}</p>
             </Link>
-          ))}
+          )) : <EmptyState title="No incoming movements" description="Receipt batches will appear here when cylinders are ready for warehouse action." />}
         </div>
       </SectionCard>
     </div>
@@ -86,7 +91,7 @@ export default async function WarehouseMobileHomePage() {
 
 function MobileAction({ href, icon: Icon, label }: { href: string; icon: typeof Warehouse; label: string }) {
   return (
-    <Link className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-panel" href={href}>
+    <Link aria-label={label} className="flex min-h-24 flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-panel outline-none ring-brand-200 focus:ring-2" href={href}>
       <Icon className="mx-auto text-brand-700" size={20} aria-hidden="true" />
       <p className="mt-2 text-xs font-bold text-slate-700">{label}</p>
     </Link>

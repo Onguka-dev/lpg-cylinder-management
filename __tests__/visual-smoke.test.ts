@@ -7,12 +7,12 @@ const root = process.cwd();
 
 const visualRoutes = [
   { label: "login page", path: "app/login/page.tsx", markers: ["BrandHeader", "Sign in to", "Professional LPG control"] },
-  { label: "dashboard", path: "app/page.tsx", markers: ["TaskAlertPanel", "RecentActivityFeed", "Wells Gas operations view"] },
-  { label: "warehouse overview", path: "app/warehouse/page.tsx", markers: ["Wells Gas Warehouse Overview", "Zone A Incoming", "Stock Health"] },
+  { label: "dashboard", path: "app/page.tsx", markers: ["TaskAlertPanel", "RecentActivityFeed", "Wells Gas operations view", "RoleQuickActions"] },
+  { label: "warehouse overview", path: "app/warehouse/page.tsx", markers: ["Wells Gas Warehouse Overview", "Zone A Incoming", "Stock Health", "RoleQuickActions"] },
   { label: "Zone A incoming", path: "app/warehouse/incoming/page.tsx", markers: ["Incoming Asset Receiving", "Zone A incoming form", "Workflow guardrails"] },
   { label: "retail POS", path: "app/retail-sales/page.tsx", markers: ["Retail Point Sales", "Quick actions", "Payment readiness"] },
   { label: "MSO mobile dashboard", path: "app/field-sales/page.tsx", markers: ["Wells Gas / Green Wells Energies", "Assigned vehicle inventory", "Offline Drafts"] },
-  { label: "warehouse mobile dashboard", path: "app/warehouse/mobile/page.tsx", markers: ["Warehouse Mobile", "pending sync", "Return / incoming list"] },
+  { label: "warehouse mobile dashboard", path: "app/warehouse/mobile/page.tsx", markers: ["Warehouse Mobile", "pending sync", "Return / incoming list", "Receive Cylinders"] },
   { label: "reports", path: "app/reports/page.tsx", markers: ["Reporting & Analytics Dashboards", "Exports", "CSV"] }
 ];
 

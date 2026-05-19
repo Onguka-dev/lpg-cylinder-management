@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { MetricCard } from "@/components/metric-card";
 import { PageHeader } from "@/components/page-header";
+import { RoleQuickActions } from "@/components/role-quick-actions";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { getCurrentSession } from "@/lib/auth";
@@ -125,6 +126,8 @@ export default async function FieldSalesPage() {
         <MetricCard icon={CreditCard} label="Payments Collected" value={formatMoney(paymentsCollected)} detail="Cash/mobile/card placeholders" tone="info" />
         <MetricCard icon={RefreshCw} label="Empty Returns" value={emptyReturns.toLocaleString()} detail="Collected on vehicle" tone="success" />
       </section>
+
+      <RoleQuickActions role={session.user.role} />
 
       {canCreate ? (
         <SectionCard title="Quick actions" description="Phone-sized actions for the MSO field workflow.">
