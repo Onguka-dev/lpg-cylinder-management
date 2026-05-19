@@ -1,5 +1,6 @@
 # Known Limitations
 
+- Cylinder tracking UAT limitations are maintained in [Cylinder Tracking Known Limitations](cylinder-tracking-known-limitations.md).
 - Payment gateway, Mpesa, card, SMS, email, SAP/accounting, barcode/RFID, GPS/maps, photo upload, signature, Excel/PDF export, and scheduled reports are placeholders or mock adapters.
 - Offline mode stores draft/sync data for demonstration, but conflict resolution remains manual.
 - Password hashing is intentionally simple for the staged prototype and must be upgraded before real production use.

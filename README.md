@@ -83,7 +83,11 @@ All seeded users use the same demo password: `password123`.
 ## Tests
 
 ```bash
+npx prisma generate
+npm run lint
+npm run typecheck
 npm test
+npm run build
 ```
 
 Full UAT readiness check:
@@ -91,6 +95,23 @@ Full UAT readiness check:
 ```bash
 npm run uat:check
 ```
+
+Prompt 17 cylinder tracking UAT readiness docs:
+
+- [Cylinder Tracking UAT Script](docs/uat-cylinder-tracking.md)
+- [Cylinder Tracking Known Limitations](docs/cylinder-tracking-known-limitations.md)
+- [Production Readiness Checklist](docs/production-readiness-checklist.md)
+
+Recommended UAT database preparation:
+
+```bash
+npx prisma generate
+npm run db:migrate
+npm run db:seed
+npm run uat:check
+```
+
+The seed data includes demo users, locations, customers, 6kg, 13kg and 50kg cylinders, sample movements, reconciliation records, audit markers, and mock integration records for end-to-end validation.
 
 ## Deployment Readiness
 
