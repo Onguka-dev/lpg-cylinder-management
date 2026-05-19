@@ -10,6 +10,7 @@ import { generateRetailReference, refillOrderSchema } from "@/lib/refill-sales";
 import { normalizeScanValue } from "@/lib/scanning";
 import { saleEligibleCylinderWhere } from "@/lib/safety";
 import { createMockNotification } from "@/lib/notifications";
+import { safeEnqueueSapPosting } from "@/lib/sap-posting";
 
 export async function GET(request: Request) {
   const session = await getCurrentSession();
@@ -377,6 +378,26 @@ export async function POST(request: Request) {
       });
 
       return created;
+    });
+
+    await safeEnqueueSapPosting(prisma, {
+      sourceModule: "REFILL_ORDER",
+      sourceRecordId: order.id,
+      sourceReference: order.orderNumber,
+      action: "POST_REFILL_ORDER",
+      customerId: order.customerId,
+      skuId: order.skuId,
+      plantLocationId: order.locationId,
+      storageLocationId: order.locationId,
+      amount: order.totalAmount,
+      payload: {
+        orderNumber: order.orderNumber,
+        invoiceNumber: order.invoiceNumber,
+        receiptNumber: order.receiptNumber,
+        totalAmount: order.totalAmount.toString(),
+        pricingMode: "Demo app pricing; SAP pricing integration placeholder."
+      },
+      createdById: auth.session.user.id
     });
 
     return NextResponse.json({ order }, { status: 201 });

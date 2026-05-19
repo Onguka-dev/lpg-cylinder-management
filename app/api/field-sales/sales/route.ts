@@ -6,6 +6,7 @@ import { fieldSaleSchema, generateFieldSaleNumber } from "@/lib/field-sales";
 import { getFieldAssignment, requireFieldSalesManageSession, requireFieldSalesViewSession } from "@/lib/field-sales-access";
 import { assertNoOpenCustomerCustody } from "@/lib/inventory";
 import { prisma } from "@/lib/prisma";
+import { safeEnqueueSapPosting } from "@/lib/sap-posting";
 import { saleEligibleCylinderWhere } from "@/lib/safety";
 
 export async function GET(request: Request) {
@@ -222,6 +223,25 @@ export async function POST(request: Request) {
       });
 
       return created;
+    });
+
+    await safeEnqueueSapPosting(prisma, {
+      sourceModule: "FIELD_SALE",
+      sourceRecordId: sale.id,
+      sourceReference: sale.saleNumber,
+      action: "POST_FIELD_SALE",
+      customerId: sale.customerId,
+      skuId: sale.skuId,
+      plantLocationId: sale.vehicleId,
+      storageLocationId: sale.vehicleId,
+      amount: sale.amount,
+      payload: {
+        saleNumber: sale.saleNumber,
+        amount: sale.amount.toString(),
+        deliveryStatus: sale.deliveryStatus,
+        pricingMode: "Demo app pricing; SAP pricing integration placeholder."
+      },
+      createdById: auth.session.user.id
     });
 
     return NextResponse.json({ sale }, { status: 201 });

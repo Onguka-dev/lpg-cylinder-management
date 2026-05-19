@@ -227,6 +227,38 @@ async function reportRows(type: ReportType, filters: ReturnType<typeof normalize
     }));
   }
 
+  if (type === "sap-reconciliation-report") {
+    const queue = await prisma.sapPostingQueue.findMany({
+      where: {
+        ...(createdAt ? { createdAt } : {}),
+        ...(sapPostingStatuses.includes(filters.status ?? "") ? { status: filters.status as never } : {})
+      },
+      include: { integrationLog: true, createdBy: true },
+      orderBy: { createdAt: "desc" },
+      take: 500
+    });
+    return queue.map((item) => ({
+      sourceModule: item.sourceModule,
+      sourceRecordId: item.sourceRecordId,
+      sourceReference: item.sourceReference,
+      action: item.action,
+      status: item.status,
+      sapDocumentNo: item.sapDocumentNo ?? "",
+      sapCustomerCode: item.sapCustomerCode ?? "",
+      sapMaterialCode: item.sapMaterialCode ?? "",
+      sapPlantCode: item.sapPlantCode ?? "",
+      sapStorageLocationCode: item.sapStorageLocationCode ?? "",
+      amount: item.amount?.toString() ?? "",
+      currency: item.currency,
+      retryCount: item.retryCount,
+      mismatchReason: item.mismatchReason ?? "",
+      errorMessage: item.errorMessage ?? item.integrationLog?.errorMessage ?? "",
+      createdBy: item.createdBy?.name ?? "System",
+      createdAt: item.createdAt.toISOString(),
+      postedAt: item.postedAt?.toISOString() ?? ""
+    }));
+  }
+
   if (type === "sales-revenue") {
     const [refills, fieldSales, payments] = await Promise.all([
       prisma.refillOrder.findMany({ where: { ...(createdAt ? { createdAt } : {}), ...(filters.skuId ? { skuId: filters.skuId } : {}), ...(filters.locationId ? { locationId: filters.locationId } : {}) }, include: { customer: true, sku: true, location: true }, take: 500 }),
@@ -325,3 +357,4 @@ const deliveryStatuses = ["ASSIGNED", "LOADING_CONFIRMED", "CUSTOMER_ARRIVAL", "
 const invoiceStatuses = ["DRAFT", "ISSUED", "PARTIALLY_PAID", "PAID", "OVERDUE", "CANCELLED"];
 const reconciliationStatuses = ["DRAFT", "SUBMITTED", "APPROVED", "RETURNED"];
 const maintenanceStatuses = ["OPEN", "INSPECTION_RECORDED", "QUARANTINED", "APPROVED_RETURN_TO_STOCK", "SCRAP_PLACEHOLDER", "CLOSED"];
+const sapPostingStatuses = ["QUEUED", "POSTED", "FAILED", "RETRY_QUEUED", "MISMATCHED"];

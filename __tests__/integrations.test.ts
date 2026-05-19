@@ -11,6 +11,7 @@ import {
   mockIntegrationSend,
   seedIntegrationSettings
 } from "@/lib/integrations";
+import { sapDocumentPlaceholder, sapPostingStatuses, sapSourceModules } from "@/lib/sap-posting";
 
 describe("integrations", () => {
   it("defines Stage 16 mock adapter types", () => {
@@ -56,5 +57,11 @@ describe("integrations", () => {
 
   it("formats provider labels", () => {
     expect(formatIntegrationProvider("SAP_ACCOUNTING")).toBe("Sap Accounting");
+  });
+
+  it("defines safe SAP mock queue statuses and document placeholders", () => {
+    expect(sapPostingStatuses).toEqual(["QUEUED", "POSTED", "FAILED", "RETRY_QUEUED", "MISMATCHED"]);
+    expect(sapSourceModules).toContain("FULL_CYLINDER_SALE");
+    expect(sapDocumentPlaceholder("FULL_CYLINDER_SALE", "SALE/001")).toBe("MOCK-SAP-FULL_CYLINDER_SALE-SALE-001");
   });
 });

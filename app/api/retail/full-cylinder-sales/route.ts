@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { getCurrentSession } from "@/lib/auth";
 import { getSalesLocationForSession } from "@/lib/refill-sales-access";
 import { prisma } from "@/lib/prisma";
+import { safeEnqueueSapPosting } from "@/lib/sap-posting";
 import { canManageFullCylinderSales, canViewFullCylinderSales, fullCylinderSaleSchema } from "@/lib/full-cylinder-sales";
 import { createFullCylinderSale, fullCylinderSaleErrorMessage } from "@/lib/full-cylinder-sale-posting";
 
@@ -56,6 +57,25 @@ export async function POST(request: Request) {
 
   try {
     const sale = await createFullCylinderSale(prisma, parsed.data, locationId, session.user.id);
+    await safeEnqueueSapPosting(prisma, {
+      sourceModule: "FULL_CYLINDER_SALE",
+      sourceRecordId: sale.id,
+      sourceReference: sale.saleNumber,
+      action: "POST_FULL_CYLINDER_SALE",
+      customerId: sale.customerId,
+      skuId: sale.skuId,
+      plantLocationId: sale.locationId,
+      storageLocationId: sale.locationId,
+      amount: sale.totalAmount,
+      payload: {
+        saleNumber: sale.saleNumber,
+        invoiceNumber: sale.invoiceNumber,
+        receiptNumber: sale.receiptNumber,
+        totalAmount: sale.totalAmount.toString(),
+        pricingMode: "Demo app pricing; SAP pricing integration placeholder."
+      },
+      createdById: session.user.id
+    });
     return NextResponse.json({ sale }, { status: 201 });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {

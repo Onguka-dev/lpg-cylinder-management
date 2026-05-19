@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 import { writeAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
+import { safeEnqueueSapPosting } from "@/lib/sap-posting";
 import { canManageSupplierReceipts } from "@/lib/supplier-receipts";
 import { postSupplierReceipt, receiptSummaryMetadata } from "@/lib/supplier-receipt-posting";
 
@@ -58,6 +59,19 @@ export async function POST(
       request,
       metadata: receiptSummaryMetadata(receipt)
     }).catch(() => null);
+
+    if (action === "post") {
+      await safeEnqueueSapPosting(prisma, {
+        sourceModule: "SUPPLIER_RECEIPT",
+        sourceRecordId: receipt.id,
+        sourceReference: receipt.reference,
+        action: "POST_SUPPLIER_RECEIPT",
+        plantLocationId: receipt.warehouseId,
+        storageLocationId: receipt.warehouseId,
+        payload: receiptSummaryMetadata(receipt),
+        createdById: session.user.id
+      });
+    }
 
     return NextResponse.json({ receipt });
   } catch (error) {

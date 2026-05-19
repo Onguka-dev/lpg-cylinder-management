@@ -20,6 +20,7 @@ export const reportTypes = [
   "maintenance-due",
   "damaged-cylinders",
   "non-coded-tagging-queue",
+  "sap-reconciliation-report",
   "user-activity"
 ] as const;
 

@@ -5,6 +5,7 @@ import { getSalesLocationForSession } from "@/lib/refill-sales-access";
 import { canManageEmptyReturns, emptyReturnSchema } from "@/lib/reverse-logistics";
 import { recordCustomerEmptyReturn, reverseLogisticsErrorMessage } from "@/lib/reverse-logistics-posting";
 import { prisma } from "@/lib/prisma";
+import { safeEnqueueSapPosting } from "@/lib/sap-posting";
 
 export async function POST(request: Request) {
   const session = await getCurrentSession();
@@ -35,10 +36,42 @@ export async function POST(request: Request) {
         intakeLocationId: locationId,
         staffRemarks: parsed.data.remarks
       }, locationId, session.user.id);
+      await safeEnqueueSapPosting(prisma, {
+        sourceModule: "EMPTY_RETURN",
+        sourceRecordId: intake.id,
+        sourceReference: intake.intakeNumber,
+        action: "POST_EMPTY_RETURN",
+        customerId: intake.customerId,
+        plantLocationId: locationId,
+        storageLocationId: locationId,
+        payload: {
+          intakeNumber: intake.intakeNumber,
+          visibleSerialNumber: intake.visibleSerialNumber,
+          condition: intake.condition,
+          nonCoded: true
+        },
+        createdById: session.user.id
+      });
       return NextResponse.json({ intake }, { status: 201 });
     }
 
     const cylinder = await recordCustomerEmptyReturn(prisma, parsed.data, locationId, session.user.id);
+    if (!cylinder) return NextResponse.json({ error: "Returned cylinder was not found." }, { status: 404 });
+    await safeEnqueueSapPosting(prisma, {
+      sourceModule: "EMPTY_RETURN",
+      sourceRecordId: cylinder.id,
+      sourceReference: cylinder.serialNumber,
+      action: "POST_EMPTY_RETURN",
+      skuId: cylinder.skuId,
+      plantLocationId: locationId,
+      storageLocationId: locationId,
+      payload: {
+        cylinder: cylinder.serialNumber,
+        barcode: cylinder.barcode,
+        status: cylinder.status
+      },
+      createdById: session.user.id
+    });
     return NextResponse.json({ cylinder }, { status: 201 });
   } catch (error) {
     if (error instanceof Error) {

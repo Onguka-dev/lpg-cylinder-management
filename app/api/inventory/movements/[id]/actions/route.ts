@@ -15,6 +15,7 @@ import {
 } from "@/lib/inventory-movements";
 import { createMockNotification } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
+import { safeEnqueueSapPosting } from "@/lib/sap-posting";
 import { saleEligibleCylinderWhere } from "@/lib/safety";
 
 export async function POST(
@@ -309,6 +310,26 @@ export async function POST(
 
       throw new Error("UNKNOWN_ACTION");
     });
+
+    if ((action === "receive" || action === "complete" || (action === "dispatch" && updated.status === "COMPLETED")) && ["COMPLETED", "VARIANCE_LOGGED"].includes(updated.status)) {
+      await safeEnqueueSapPosting(prisma, {
+        sourceModule: "INVENTORY_MOVEMENT",
+        sourceRecordId: updated.id,
+        sourceReference: updated.reference,
+        action: "POST_INVENTORY_MOVEMENT",
+        skuId: updated.skuId,
+        plantLocationId: updated.destinationLocationId ?? updated.sourceLocationId,
+        storageLocationId: updated.destinationLocationId ?? updated.sourceLocationId,
+        payload: {
+          reference: updated.reference,
+          type: updated.type,
+          status: updated.status,
+          quantity: updated.receivedQuantity ?? updated.dispatchedQuantity ?? updated.approvedQuantity ?? updated.requestedQuantity,
+          varianceQuantity: updated.varianceQuantity ?? 0
+        },
+        createdById: session?.user.id
+      });
+    }
 
     return NextResponse.json({ movement: updated });
   } catch (error) {
