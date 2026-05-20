@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 
-const vercelPostgresUrlKeys = ["POSTGRES_PRISMA_URL", "POSTGRES_URL", "POSTGRES_URL_NON_POOLING"];
+const migrationPostgresUrlKeys = ["POSTGRES_URL_NON_POOLING", "POSTGRES_URL", "POSTGRES_PRISMA_URL"];
 
 function isUsableEnvValue(value) {
   if (!value) return false;
@@ -11,7 +11,7 @@ function isUsableEnvValue(value) {
 function resolveDatabaseUrl(env) {
   if (isUsableEnvValue(env.DATABASE_URL)) return env.DATABASE_URL;
 
-  const vercelUrl = vercelPostgresUrlKeys.map((key) => env[key]).find(isUsableEnvValue);
+  const vercelUrl = migrationPostgresUrlKeys.map((key) => env[key]).find(isUsableEnvValue);
   if (vercelUrl) return vercelUrl;
 
   if (
