@@ -29,6 +29,34 @@ describe("database environment resolution", () => {
     expect(resolvePrismaDatabaseUrl(env)).toBe("postgresql://vercel/general");
   });
 
+  it("builds a connection string from Vercel Postgres parts", () => {
+    const env = {
+      POSTGRES_HOST: "db.example.test",
+      POSTGRES_USER: "demo user",
+      POSTGRES_PASSWORD: "pass/word",
+      POSTGRES_DATABASE: "wells gas"
+    } as unknown as NodeJS.ProcessEnv;
+
+    expect(resolvePrismaDatabaseUrl(env)).toBe(
+      "postgresql://demo%20user:pass%2Fword@db.example.test:5432/wells%20gas?schema=public&sslmode=require"
+    );
+  });
+
+  it("ignores empty quoted provider placeholders", () => {
+    const env = {
+      POSTGRES_PRISMA_URL: "\"\"",
+      POSTGRES_URL: "''",
+      POSTGRES_HOST: "db.example.test",
+      POSTGRES_USER: "demo",
+      POSTGRES_PASSWORD: "secret",
+      POSTGRES_DATABASE: "wells"
+    } as unknown as NodeJS.ProcessEnv;
+
+    expect(resolvePrismaDatabaseUrl(env)).toBe(
+      "postgresql://demo:secret@db.example.test:5432/wells?schema=public&sslmode=require"
+    );
+  });
+
   it("returns undefined when no supported database URL is configured", () => {
     expect(resolvePrismaDatabaseUrl({} as NodeJS.ProcessEnv)).toBeUndefined();
   });
